@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Interface Name="BSAG.IOCTalk.Common.Interface.Container.IGenericContainerHost">
+    <Position X="2.5" Y="1" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAAAAAAAAIAAAIAAAAAAAAAIAABCAAA=</HashCode>
+      <FileName>Interface\Container\IGenericContainerHost.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="BSAG.IOCTalk.Common.Interface.Container.IServiceContractSessionManager&lt;TServiceContractSession&gt;">
+    <Position X="9.25" Y="3" Width="4.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAABAAAAAACAAAAAAAAAAAAAAAAAAAAAAACAAAAA=</HashCode>
+      <FileName>Interface\Container\IServiceContractSessionManager.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="BSAG.IOCTalk.Common.Interface.Container.IGenericContractContainerHost&lt;TServiceContractSession, TServiceContractSessionManager&gt;">
+    <Position X="0.5" Y="4" Width="6.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAgAIAAAAAAAAAAEAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Interface\Container\IGenericContractContainerHost.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

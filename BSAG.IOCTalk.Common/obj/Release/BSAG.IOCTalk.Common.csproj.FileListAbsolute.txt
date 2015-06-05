@@ -1,0 +1,16 @@
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Release\BSAG.IOCTalk.Common.XML
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Release\BSAG.IOCTalk.Common.dll
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Release\BSAG.IOCTalk.Common.pdb
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Release\BSAG.IOCTalk.Common.dll.CodeAnalysisLog.xml
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Release\BSAG.IOCTalk.Common.dll.lastcodeanalysissucceeded
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Release\ResolveAssemblyReference.cache
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Release\BSAG.IOCTalk.Common.dll
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Release\BSAG.IOCTalk.Common.pdb
+Z:\Daten\Projekte\IOC-Talk\Codeplex\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Release\BSAG.IOCTalk.Common.XML
+Z:\Daten\Projekte\IOC-Talk\Codeplex\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Release\BSAG.IOCTalk.Common.dll
+Z:\Daten\Projekte\IOC-Talk\Codeplex\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Release\BSAG.IOCTalk.Common.pdb
+Z:\Daten\Projekte\IOC-Talk\Codeplex\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Release\BSAG.IOCTalk.Common.dll.CodeAnalysisLog.xml
+Z:\Daten\Projekte\IOC-Talk\Codeplex\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Release\BSAG.IOCTalk.Common.dll.lastcodeanalysissucceeded
+Z:\Daten\Projekte\IOC-Talk\Codeplex\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Release\ResolveAssemblyReference.cache
+Z:\Daten\Projekte\IOC-Talk\Codeplex\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Release\BSAG.IOCTalk.Common.dll
+Z:\Daten\Projekte\IOC-Talk\Codeplex\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Release\BSAG.IOCTalk.Common.pdb

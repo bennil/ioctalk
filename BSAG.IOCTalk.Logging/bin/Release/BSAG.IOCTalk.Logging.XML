@@ -1,0 +1,181 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BSAG.IOCTalk.Logging</name>
+    </assembly>
+    <members>
+        <member name="T:BSAG.IOCTalk.Logging.DataStream.StreamLogItem">
+            <summary>
+            Pending stream log data holder
+            </summary>
+            <remarks>
+             <para>
+              Author: blink, created at 9/9/2014 2:19:40 PM.
+             </para>
+            </remarks>
+        </member>
+        <member name="F:BSAG.IOCTalk.Logging.DataStream.StreamLogItem.ReceivedChar">
+            <summary>
+            Receive indicator char
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Logging.DataStream.StreamLogItem.SentChar">
+            <summary>
+            Send indicator char
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Logging.DataStream.StreamLogItem.TimeFormatString">
+            <summary>
+            Time format definition
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.DataStream.StreamLogItem.#ctor(System.Int32,System.Boolean,System.String)">
+            <summary>
+            Creates and initializes an instance of the class <c>StreamLogItem</c>.
+            </summary>
+            <param name="sessionId">The session id.</param>
+            <param name="isReceive">if set to <c>true</c> [is receive].</param>
+            <param name="messageDataString">The message data string.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.DataStream.StreamLogItem.#ctor(System.Int32,System.Boolean,System.Byte[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Logging.DataStream.StreamLogItem"/> class.
+            </summary>
+            <param name="sessionId">The session id.</param>
+            <param name="isReceive">if set to <c>true</c> [is receive].</param>
+            <param name="messageData">The message data.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.DataStream.StreamLogItem.CreateLogString">
+            <summary>
+            Creates the log string.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:BSAG.IOCTalk.Logging.DataStream.StreamLogItem.Time">
+            <summary>
+            Gets the time.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Logging.DataStream.StreamLogItem.SessionId">
+            <summary>
+            Gets the session.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Logging.DataStream.StreamLogItem.IsReceive">
+            <summary>
+            Gets a value indicating whether this instance is receive.
+            </summary>
+            <value>
+            	<c>true</c> if this instance is receive; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Logging.DataStream.StreamLogItem.MessageDataString">
+            <summary>
+            Gets the message data.
+            </summary>
+        </member>
+        <member name="T:BSAG.IOCTalk.Logging.DataStream.DataStreamLogger">
+            <summary>
+            Logs the data stream
+            </summary>
+            <remarks>
+             <para>
+              Author: blink, created at 9/9/2014 12:10:58 PM.
+             </para>
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.DataStream.DataStreamLogger.#ctor">
+            <summary>
+            Creates and initializes an instance of the class <c>DataStreamLogger</c>.
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.DataStream.DataStreamLogger.Init(BSAG.IOCTalk.Common.Interface.Communication.IGenericCommunicationService,System.String,System.Xml.Linq.XElement)">
+            <summary>
+            Inits the specified source.
+            </summary>
+            <param name="source">The source.</param>
+            <param name="loggerName">Name of the logger.</param>
+            <param name="configXml">The config XML.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.DataStream.DataStreamLogger.Dispose">
+            <summary>
+            Stops the asynchronous logging.
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.DataStream.DataStreamLogger.LogStreamMessage(System.Int32,System.Boolean,System.Byte[])">
+            <summary>
+            Logs the stream message.
+            </summary>
+            <param name="sessionId">The session id.</param>
+            <param name="isReceive">if set to <c>true</c> [is receive].</param>
+            <param name="messageData">The message data.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.DataStream.DataStreamLogger.LogStreamMessage(System.Int32,System.Boolean,System.String)">
+            <summary>
+            Logs the stream message.
+            </summary>
+            <param name="session">The session.</param>
+            <param name="isReceive">if set to <c>true</c> [is receive].</param>
+            <param name="messageDataString">The message data string.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.DataStream.DataStreamLogger.OnSessionCreated(BSAG.IOCTalk.Common.Interface.Session.ISession)">
+            <summary>
+            Called when [session created].
+            </summary>
+            <param name="session"></param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.DataStream.DataStreamLogger.OnSessionTerminated(BSAG.IOCTalk.Common.Interface.Session.ISession)">
+            <summary>
+            Called when the session is terminated.
+            </summary>
+            <param name="session"></param>
+        </member>
+        <member name="P:BSAG.IOCTalk.Logging.DataStream.DataStreamLogger.TargetDir">
+            <summary>
+            Gets or sets the target dir.
+            </summary>
+            <value>
+            The target dir.
+            </value>
+        </member>
+        <member name="T:BSAG.IOCTalk.Logging.TraceLogger">
+            <summary>
+            System.Diagnostics.Trace logger
+            </summary>
+            <remarks>
+             <para>
+              Author: blink, created at 9/11/2014 11:58:03 AM.
+             </para>
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.TraceLogger.#ctor">
+            <summary>
+            Creates and initializes an instance of the class <c>TraceLogger</c>.
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.TraceLogger.Debug(System.String)">
+            <summary>
+            Log debug message.
+            </summary>
+            <param name="message">The message.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.TraceLogger.Info(System.String)">
+            <summary>
+            Log info message.
+            </summary>
+            <param name="message">The message.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.TraceLogger.Warn(System.String)">
+            <summary>
+            Log warn message.
+            </summary>
+            <param name="message">The message.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Logging.TraceLogger.Error(System.String)">
+            <summary>
+            Log error message.
+            </summary>
+            <param name="message">The message.</param>
+        </member>
+    </members>
+</doc>

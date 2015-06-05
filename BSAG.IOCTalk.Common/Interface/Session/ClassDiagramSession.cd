@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Interface Name="BSAG.IOCTalk.Common.Interface.Session.ISession">
+    <Position X="7" Y="2.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABAAgAAAAEAAAAAAIAAAAAAAAAAQAAACAAAA=</HashCode>
+      <FileName>Interface\Session\ISession.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="BSAG.IOCTalk.Common.Interface.Session.ISessionStateChanged">
+    <Position X="3.25" Y="2.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAgAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Interface\Session\ISessionStateChanged.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

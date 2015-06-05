@@ -1,0 +1,10 @@
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.dll
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.pdb
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Common.dll
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Test.Common.dll
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Common.pdb
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Common.xml
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Test.Common.pdb
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\obj\Debug\ResolveAssemblyReference.cache
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\obj\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.dll
+E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\obj\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.pdb
