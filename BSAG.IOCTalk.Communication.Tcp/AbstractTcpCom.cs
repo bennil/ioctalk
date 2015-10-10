@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
 using BSAG.IOCTalk.Common.Interface.Logging;
+using System.IO;
 
 namespace BSAG.IOCTalk.Communication.Tcp
 {
@@ -32,11 +33,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
         protected Socket socket;
 
-        private AsyncCallback receiveCallback = null;
-
         private event EventHandler<ConnectionStateChangedEventArgs> connectionClosed;
         private event EventHandler<ConnectionStateChangedEventArgs> connectionEstablished;
-        private Thread receiveThread;
         private RawMessageReceivedDelegate rawMessageReceivedDelegate;
         private int maxReadBufferSize = 3276800;
         private int receiveBufferSize = 32768;
@@ -226,7 +224,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             SocketState state = new SocketState(receiveBufferSize);
             state.Client = client;
 
-            receiveThread = new Thread(new ParameterizedThreadStart(OnReceiveData));
+            var receiveThread = new Thread(new ParameterizedThreadStart(OnReceiveData));
             receiveThread.Start(state);
 
             return state;
@@ -240,66 +238,125 @@ namespace BSAG.IOCTalk.Communication.Tcp
         protected void OnReceiveData(object socketStateObj)
         {
             SocketState state = (SocketState)socketStateObj;
-            Socket socket = state.Client.socket;
+            Socket clientSocket = state.Client.socket;
+            Stream clientStream = state.Client.stream;
+            byte[] readBuffer = state.readBuffer;
+            int readBufferLength = readBuffer.Length;
 
             try
             {
-                SpinWait spinWait = new SpinWait();
+                //SpinWait spinWait = new SpinWait();
                 IRawMessage rawMessage = new RawMessage(state.Client.SessionId);
                 IRawMessage pendingMessage = null;
                 IRawMessage receivedMessage;
-                bool pollResult;
-                while (socket.Connected)
+                //bool pollResult;
+                while (clientSocket.Connected)
                 {
-                    pollResult = socket.Poll(socketPollWaitMicroSec, SelectMode.SelectRead);
-
-                    if (socket.Available > 0)
+                    int bytesReadCount = clientStream.Read(readBuffer, 0, readBufferLength);
+                    if (bytesReadCount > 0)
                     {
-                        byte[] readBuffer = state.readBuffer;
-                        int bytesReadCount = socket.Receive(readBuffer);
-                        if (bytesReadCount > 0)
+                        int readIndex = 0;
+                        while ((receivedMessage = ReadRawMessage(readBuffer, ref readIndex, bytesReadCount, rawMessage, ref pendingMessage)) != null)
                         {
-                            int readIndex = 0;
-                            while ((receivedMessage = ReadRawMessage(readBuffer, ref readIndex, bytesReadCount, rawMessage, ref pendingMessage)) != null)
-                            {
-                                // raw message received
-                                rawMessageReceivedDelegate(receivedMessage);
-                            }
-
-                            if (bytesReadCount == readBuffer.Length
-                                && bytesReadCount < maxReadBufferSize)
-                            {
-                                // auto extend internal read buffer size if complete buffer is filled
-                                int newSize = readBuffer.Length * 2;
-                                state.readBuffer = new byte[newSize];
-                            }
-                        }
-                        else
-                        {
-                            // Connection closed
-                            Close(state.Client);
-                            return;
+                            // raw message received
+                            rawMessageReceivedDelegate(receivedMessage);
                         }
 
-                        spinWait.Reset();
+                        if (bytesReadCount == readBuffer.Length
+                            && bytesReadCount < maxReadBufferSize)
+                        {
+                            // auto extend internal read buffer size if complete buffer is filled
+                            int newSize = readBuffer.Length * 2;
+                            state.readBuffer = new byte[newSize];
+                            readBuffer = state.readBuffer;
+                            readBufferLength = newSize;
+                        }
                     }
-                    else if (pollResult)
+                    else
                     {
                         // Connection closed
                         Close(state.Client);
                         return;
                     }
-                    else
-                    {
-                        // continue to wait for incoming data
-                        spinWait.SpinOnce();
-                    }
+
+                    //pollResult = clientSocket.Poll(socketPollWaitMicroSec, SelectMode.SelectRead);
+
+                    //if (clientSocket.Available > 0)
+                    //{
+                    //    byte[] readBuffer = state.readBuffer;
+                    //    int bytesReadCount = clientSocket.Receive(readBuffer);
+                    //    if (bytesReadCount > 0)
+                    //    {
+                    //        int readIndex = 0;
+                    //        while ((receivedMessage = ReadRawMessage(readBuffer, ref readIndex, bytesReadCount, rawMessage, ref pendingMessage)) != null)
+                    //        {
+                    //            // raw message received
+                    //            rawMessageReceivedDelegate(receivedMessage);
+                    //        }
+
+                    //        if (bytesReadCount == readBuffer.Length
+                    //            && bytesReadCount < maxReadBufferSize)
+                    //        {
+                    //            // auto extend internal read buffer size if complete buffer is filled
+                    //            int newSize = readBuffer.Length * 2;
+                    //            state.readBuffer = new byte[newSize];
+                    //        }
+                    //    }
+                    //    else
+                    //    {
+                    //        // Connection closed
+                    //        Close(state.Client);
+                    //        return;
+                    //    }
+
+                    //    spinWait.Reset();
+                    //}
+                    //else if (pollResult)
+                    //{
+                    //    // Connection closed
+                    //    Close(state.Client);
+                    //    return;
+                    //}
+                    //else
+                    //{
+                    //    // continue to wait for incoming data
+                    //    spinWait.SpinOnce();
+                    //}
                 }
 
                 if (!state.Client.socket.Connected)
                 {
                     Close(state.Client);
                     return;
+                }
+            }
+            catch (IOException ioEx)
+            {
+                if (ioEx.InnerException is SocketException)
+                {
+                    SocketException sockEx = (SocketException)ioEx.InnerException;
+
+                    SocketError errorCode = (SocketError)sockEx.ErrorCode;
+                    switch (errorCode)
+                    {
+                        case SocketError.Shutdown:
+                        case SocketError.ConnectionAborted:
+                        case SocketError.ConnectionReset:
+                        case SocketError.Disconnecting:
+                            Close(state.Client);
+                            break;
+
+                        default:
+                            Logger.Error(ioEx.ToString());
+                            Close(state.Client);
+                            break;
+                    }
+                }
+                else
+                {
+                    Logger.Error(ioEx.ToString());
+
+                    Close(state.Client);
                 }
             }
             catch (SocketException)

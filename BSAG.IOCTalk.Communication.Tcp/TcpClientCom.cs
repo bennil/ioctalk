@@ -24,7 +24,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         // TcpClientCom fields
         // ----------------------------------------------------------------------------------------
 
-        private Client client = null;
+        protected Client client = null;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -141,7 +141,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 this.InitSocketProperties(this.socket);
                 this.socket.Connect(EndPoint);
 
-                this.client = new Client(this.socket, new ConcurrentQueue<IGenericMessage>(), socket.LocalEndPoint, socket.RemoteEndPoint, Logger);
+                this.client = new Client(this.socket, new NetworkStream(this.socket), new ConcurrentQueue<IGenericMessage>(), socket.LocalEndPoint, socket.RemoteEndPoint, Logger);
 
                 OnConnectionEstablished(client);
 

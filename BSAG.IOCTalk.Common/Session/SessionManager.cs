@@ -91,7 +91,11 @@ namespace BSAG.IOCTalk.Common.Session
         {
             for (int sessionIndex = 0; sessionIndex < serviceContractSessions.Count; )
             {
-                if (serviceContractSessions[sessionIndex].Session.SessionId == session.SessionId)
+                var sessionMapping = serviceContractSessions[sessionIndex];
+                var sessionItem = sessionMapping.Session;
+
+                if (sessionItem == null
+                    || sessionItem.SessionId == session.SessionId)
                 {
                     serviceContractSessions.RemoveAt(sessionIndex);
                 }

@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BSAG.IOCTalk.Common.Interface.Config;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
+using BSAG.IOCTalk.Communication.Tcp.Security;
 
 namespace BSAG.IOCTalk.Communication.Tcp
 {
@@ -36,6 +37,18 @@ namespace BSAG.IOCTalk.Communication.Tcp
         public const string ConfigParamConnectionType = "ConnectionType";
         public const string ConfigParamHost = "Host";
         public const string ConfigParamPort = "Port";
+
+
+        public const string ConfigElementSecurity = "Security";
+        public const string ConfigParamSecProtocol = "Protocol";
+        public const string ConfigParamServerName = "ServerName";
+        public const string ConfigParamCertificateName = "CertificateName";
+        public const string ConfigParamClientCertificateRequired = "ClientCertificateRequired";
+        public const string ConfigParamProvideClientCertificate = "ProvideClientCertificate";
+        public const string ConfigParamClientCertificateName = "ClientCertificateName";
+
+        public const string ConfigAttributeEnabled = "enabled";
+
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -101,57 +114,106 @@ namespace BSAG.IOCTalk.Communication.Tcp
             {
                 throw new InvalidOperationException(GetType().Name + " already initialized!");
             }
-            
+
             ConnectionType connType = Config.Root.GetConfigParameterValue<ConnectionType>(ConfigParamConnectionType);
+            var securityXml = Config.Root.Element(ConfigElementSecurity);
+            bool isSecurityEnabled = false;
+            if (securityXml != null)
+            {
+                var enabledAttr = securityXml.Attribute(ConfigAttributeEnabled);
+                if (enabledAttr != null)
+                {
+                    isSecurityEnabled = bool.Parse(enabledAttr.Value);
+                }
+            }
 
             if (connType == ConnectionType.Client)
             {
-                TcpClientCom client = new TcpClientCom();
-                client.Logger = this.logger;                
-                client.ConnectionClosed += new EventHandler<ConnectionStateChangedEventArgs>(OnClient_ConnectionClosed);
-                SubscribeCommunicationEvents(client);
-
-                client.Init(Config.Root.GetConfigParameterValue<string>(ConfigParamHost), Config.Root.GetConfigParameterValue<int>(ConfigParamPort));
-
-                this.communication = client;
-                
-                string errMsg;
-                if (this.communication.Connect(out errMsg))
-                {
-                    logger.Info(string.Format("Tcp client connection \"{0}\" established", client.EndPoint.ToString()));
-                }
-                else
-                {
-                    logger.Error(errMsg);
-
-                    // Start async auto reconnect
-                    StartAutoReconnectAsync();
-                }
+                InitClient(securityXml, isSecurityEnabled);
             }
             else if (connType == ConnectionType.Service)
             {
-                TcpServiceCom service = new TcpServiceCom();
-                service.Logger = this.logger;
-                
-                SubscribeCommunicationEvents(service);
-
-                int servicePort = Config.Root.GetConfigParameterValue<int>(ConfigParamPort);
-                service.Init(servicePort);
-                this.communication = service;
-
-                string errMsg;
-                if (this.communication.Connect(out errMsg)) 
-                {
-                    logger.Info(string.Format("Tcp service established on port {0}", servicePort));               
-                }
-                else
-                {
-                    throw new InvalidOperationException(errMsg);
-                }
+                InitService(securityXml, isSecurityEnabled);
             }
             else
             {
                 throw new InvalidOperationException("TCP ConnectionType is undefined!");
+            }
+        }
+
+        private void InitClient(XElement securityXml, bool isSecurityEnabled)
+        {
+            TcpClientCom client;
+            if (isSecurityEnabled)
+            {
+                var secureClient = new SecureTcpClient();
+                secureClient.ServerName = securityXml.GetConfigParameterValue<string>(ConfigParamServerName);
+                secureClient.ProvideClientCertificate = securityXml.GetConfigParameterValueOrDefault<bool>(false, ConfigParamProvideClientCertificate);
+                if (secureClient.ProvideClientCertificate)
+                {
+                    secureClient.ClientCertificateName = securityXml.GetConfigParameterValue<string>(ConfigParamClientCertificateName);
+                }
+
+                client = secureClient;
+            }
+            else
+            {
+                client = new TcpClientCom();
+            }
+
+            client.Logger = this.logger;
+            client.ConnectionClosed += new EventHandler<ConnectionStateChangedEventArgs>(OnClient_ConnectionClosed);
+            SubscribeCommunicationEvents(client);
+
+            client.Init(Config.Root.GetConfigParameterValue<string>(ConfigParamHost), Config.Root.GetConfigParameterValue<int>(ConfigParamPort));
+
+            this.communication = client;
+
+            string errMsg;
+            if (this.communication.Connect(out errMsg))
+            {
+                logger.Info(string.Format("Tcp client connection \"{0}\" established", client.EndPoint.ToString()));
+            }
+            else
+            {
+                logger.Error(errMsg);
+
+                // Start async auto reconnect
+                StartAutoReconnectAsync();
+            }
+        }
+
+        private void InitService(XElement securityXml, bool isSecurityEnabled)
+        {
+            TcpServiceCom service;
+            if (isSecurityEnabled)
+            {
+                var secureService = new SecureTcpServer();
+                secureService.CertificateName = securityXml.GetConfigParameterValue<string>(ConfigParamCertificateName);
+                secureService.ClientCertificateRequired = securityXml.GetConfigParameterValueOrDefault<bool>(false, ConfigParamClientCertificateRequired);
+                service = secureService;
+            }
+            else
+            {
+                service = new TcpServiceCom();
+            }
+            service.Logger = this.logger;
+
+
+            SubscribeCommunicationEvents(service);
+
+            int servicePort = Config.Root.GetConfigParameterValue<int>(ConfigParamPort);
+            service.Init(servicePort);
+            this.communication = service;
+
+            string errMsg;
+            if (this.communication.Connect(out errMsg))
+            {
+                logger.Info(string.Format("Tcp service established on port {0}", servicePort));
+            }
+            else
+            {
+                throw new InvalidOperationException(errMsg);
             }
         }
 

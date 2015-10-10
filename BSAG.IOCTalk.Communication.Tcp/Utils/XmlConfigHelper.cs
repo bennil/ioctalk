@@ -25,7 +25,7 @@ namespace BSAG.IOCTalk.Communication.Tcp.Utils
 
         #region methods
 
-
+        
 
         /// <summary>
         /// Gets the config parameter value.
@@ -43,6 +43,32 @@ namespace BSAG.IOCTalk.Communication.Tcp.Utils
                 if (configElement == null)
                 {
                     throw new KeyNotFoundException(string.Format("The TCP configuration XML Element \"{0}\" was not found in \"{1}\"", param, lastElement));
+                }
+                else
+                {
+                    lastElement = configElement;
+                }
+            }
+
+            return (T)GetTargetTypeValue(lastElement.Value, typeof(T));
+        }
+
+        /// <summary>
+        /// Gets the config parameter value.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="paramPath">The param path.</param>
+        /// <returns></returns>
+        public static T GetConfigParameterValueOrDefault<T>(this XElement xmlElement, T defaultValue, params string[] paramPath)
+        {
+            XElement lastElement = xmlElement;
+            foreach (var param in paramPath)
+            {
+                var configElement = lastElement.Element(param);
+
+                if (configElement == null)
+                {
+                    return defaultValue;
                 }
                 else
                 {

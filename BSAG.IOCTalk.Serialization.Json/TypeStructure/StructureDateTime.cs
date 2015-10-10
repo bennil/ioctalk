@@ -20,6 +20,11 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         // StructureDateTime fields
         // ----------------------------------------------------------------------------------------
 
+        /// <summary>
+        /// Ticks in one microsecond
+        /// </summary>
+        public const long TicksPerMicrosecond = 10;
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -102,13 +107,152 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
                 string dateTimeStr = json.Substring(startValueIndex, endValueIndex - startValueIndex);
 
-                return DateTime.Parse(dateTimeStr, CultureInfo.InvariantCulture);
+                return DateTimeParseExactInvariantCulture(dateTimeStr);
             }
             else
             {
                 throw new InvalidOperationException("Unexptected JSON TimeSpan value!");
             }
         }
+
+
+        /// <summary>
+        /// Converts the given fixed format string representation of a date and time to its System.DateTime equivalent.
+        /// This is way faster than the default parse method.
+        /// 
+        /// Supported formats:
+        /// yyyy-MM-dd HH:mm:ss
+        /// yyyy-MM-dd HH:mm:ss.f
+        /// to
+        /// yyyy-MM-dd HH:mm:ss.fffffff
+        /// </summary>
+        /// <param name="dateTimeStr">The date time STR.</param>
+        /// <param name="offset">The offset.</param>
+        /// <returns></returns>
+        private static DateTime DateTimeParseExactInvariantCulture(string dateTimeStr, int offset = 0)
+        {
+            int year = 0;
+            year = year * 10 + (dateTimeStr[offset] - '0');
+            year = year * 10 + (dateTimeStr[++offset] - '0');
+            year = year * 10 + (dateTimeStr[++offset] - '0');
+            year = year * 10 + (dateTimeStr[++offset] - '0');
+
+            offset += 2;
+
+            int month = 0;
+            month = month * 10 + (dateTimeStr[offset] - '0');
+            month = month * 10 + (dateTimeStr[++offset] - '0');
+
+            offset += 2;
+
+            int day = 0;
+            day = day * 10 + (dateTimeStr[offset] - '0');
+            day = day * 10 + (dateTimeStr[++offset] - '0');
+
+            offset += 2;
+
+            int hour = 0;
+            hour = hour * 10 + (dateTimeStr[offset] - '0');
+            hour = hour * 10 + (dateTimeStr[++offset] - '0');
+
+            offset += 2;
+
+            int minute = 0;
+            minute = minute * 10 + (dateTimeStr[offset] - '0');
+            minute = minute * 10 + (dateTimeStr[++offset] - '0');
+
+            offset += 2;
+
+            int second = 0;
+            second = second * 10 + (dateTimeStr[offset] - '0');
+            second = second * 10 + (dateTimeStr[++offset] - '0');
+
+            // check if datetime string contains milliseconds
+            if (dateTimeStr.Length > offset + 2
+                && dateTimeStr[++offset] == '.')
+            {
+                int milliseconds = 0;
+                bool parseMicroseconds = true;
+                for (int i = 0; i < 3; i++)
+                {
+                    offset++;
+
+                    if (offset >= dateTimeStr.Length)
+                    {
+                        parseMicroseconds = false;
+                        break;
+                    }
+
+                    char c = dateTimeStr[offset];
+
+                    if (char.IsNumber(c))
+                    {
+                        milliseconds = milliseconds * 10 + (c - '0');
+                    }
+                    else
+                    {
+                        parseMicroseconds = false;
+                        break;
+                    }
+                }
+                DateTime result = new DateTime(year, month, day, hour, minute, second, milliseconds);
+                if (parseMicroseconds)
+                {
+                    int microSeconds = 0;
+                    bool parseTicks = true;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        offset++;
+
+                        if (offset >= dateTimeStr.Length)
+                        {
+                            parseTicks = false;
+                            break;
+                        }
+
+                        char c = dateTimeStr[offset];
+
+                        if (char.IsNumber(c))
+                        {
+                            microSeconds = microSeconds * 10 + (c - '0');
+                        }
+                        else
+                        {
+                            parseTicks = false;
+                            break;
+                        }
+                    }
+
+                    long microSecondsTicks = microSeconds * TicksPerMicrosecond;
+
+                    result = result.AddTicks(microSecondsTicks);
+
+                    if (parseTicks)
+                    {
+                        if (offset < dateTimeStr.Length)
+                        {
+                            int ticks = 0;
+                            offset++;
+
+                            char c = dateTimeStr[offset];
+
+                            if (char.IsNumber(c))
+                            {
+                                ticks = ticks * 10 + (c - '0');
+                            }
+
+                            result = result.AddTicks(ticks);
+                        }
+                    }
+                }
+                return result;
+            }
+            else
+            {
+                return new DateTime(year, month, day, hour, minute, second);
+            }
+        }
+
         // ----------------------------------------------------------------------------------------
         #endregion
 

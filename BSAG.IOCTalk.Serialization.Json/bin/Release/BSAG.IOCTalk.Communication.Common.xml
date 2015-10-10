@@ -257,6 +257,33 @@
             Occurs when a session is terminated.
             </summary>
         </member>
+        <member name="T:BSAG.IOCTalk.Communication.Common.ICustomResponseWaitHandler">
+            <summary>
+            Custom response wait handler
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.ICustomResponseWaitHandler.WaitForResponse(BSAG.IOCTalk.Communication.Common.InvokeState)">
+            <summary>
+            Waits for response.
+            </summary>
+            <param name="state">The state.</param>
+        </member>
+        <member name="T:BSAG.IOCTalk.Communication.Common.Factory.IOCTalkLoader">
+            <summary>
+            IOC-Talk communication loader
+            </summary>
+            <remarks>
+             <para>
+              Author: blink, created at 1/23/2015 3:54:33 PM.
+             </para>
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.Factory.IOCTalkLoader.InitFromAppConfig">
+            <summary>
+            Initializes the IOC-Talk communication using the application configuration.
+            </summary>
+            <returns></returns>
+        </member>
         <member name="T:BSAG.IOCTalk.Communication.Common.InvokeState">
             <summary>
             Default method invoke state implementation
@@ -326,17 +353,6 @@
             <value>
             The method source.
             </value>
-        </member>
-        <member name="T:BSAG.IOCTalk.Communication.Common.ICustomResponseWaitHandler">
-            <summary>
-            Custom response wait handler
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.ICustomResponseWaitHandler.WaitForResponse(BSAG.IOCTalk.Communication.Common.InvokeState)">
-            <summary>
-            Waits for response.
-            </summary>
-            <param name="state">The state.</param>
         </member>
         <member name="T:BSAG.IOCTalk.Communication.Common.GenericMessage">
             <summary>
@@ -440,6 +456,28 @@
             The payload.
             </value>
         </member>
+        <member name="T:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport">
+            <summary>
+            Common communication interface
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.SendMessage(BSAG.IOCTalk.Common.Interface.Communication.IGenericMessage,System.Int32,System.Object)">
+            <summary>
+            Sends the generic message.
+            </summary>
+            <param name="message">The message.</param>
+            <param name="receiverSessionId">The receiver session id.</param>
+            <param name="context">The context.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.IsAsyncSendCurrentlyPossible(BSAG.IOCTalk.Common.Interface.Session.ISession)">
+            <summary>
+            Determines whether [is async send currently possible] depending on the current load situation.
+            </summary>
+            <param name="session">The session.</param>
+            <returns>
+              <c>true</c> if [is async send currently possible] [the specified session]; otherwise, <c>false</c>.
+            </returns>
+        </member>
         <member name="T:BSAG.IOCTalk.Communication.Common.Factory.AppConfigSection">
             <summary>
             App config section parser
@@ -465,44 +503,6 @@
             <returns>
             Returns the configuration section XML as XDocument object.
             </returns>
-        </member>
-        <member name="T:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport">
-            <summary>
-            Common communication interface
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.SendMessage(BSAG.IOCTalk.Common.Interface.Communication.IGenericMessage,System.Int32,System.Object)">
-            <summary>
-            Sends the generic message.
-            </summary>
-            <param name="message">The message.</param>
-            <param name="receiverSessionId">The receiver session id.</param>
-            <param name="context">The context.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.IsAsyncSendCurrentlyPossible(BSAG.IOCTalk.Common.Interface.Session.ISession)">
-            <summary>
-            Determines whether [is async send currently possible] depending on the current load situation.
-            </summary>
-            <param name="session">The session.</param>
-            <returns>
-              <c>true</c> if [is async send currently possible] [the specified session]; otherwise, <c>false</c>.
-            </returns>
-        </member>
-        <member name="T:BSAG.IOCTalk.Communication.Common.Factory.IOCTalkLoader">
-            <summary>
-            IOC-Talk communication loader
-            </summary>
-            <remarks>
-             <para>
-              Author: blink, created at 1/23/2015 3:54:33 PM.
-             </para>
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.Factory.IOCTalkLoader.InitFromAppConfig">
-            <summary>
-            Initializes the IOC-Talk communication using the application configuration.
-            </summary>
-            <returns></returns>
         </member>
     </members>
 </doc>

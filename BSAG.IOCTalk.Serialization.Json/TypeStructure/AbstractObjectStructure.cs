@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using BSAG.IOCTalk.Common.Reflection;
+using System.Collections.Concurrent;
 
 namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 {
@@ -42,12 +43,12 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         /// <summary>
         /// Type serialization cache
         /// </summary>
-        protected Dictionary<Type, IJsonTypeStructure> typeSerializerCache;
+        protected ConcurrentDictionary<Type, IJsonTypeStructure> typeSerializerCache;
 
         /// <summary>
         /// Type name serialization cache
         /// </summary>
-        protected Dictionary<string, IJsonTypeStructure> typeNameSerializerCache;
+        protected ConcurrentDictionary<string, IJsonTypeStructure> typeNameSerializerCache;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -103,7 +104,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
             string typeName = (string)readTypeTagSerailaizer.Deserialize(json, ref currentReadIndex, context);
 
             if (typeNameSerializerCache == null)
-                typeNameSerializerCache = new Dictionary<string, IJsonTypeStructure>();
+                typeNameSerializerCache = new ConcurrentDictionary<string, IJsonTypeStructure>();
 
             IJsonTypeStructure currentObjectStructure;
             if (!typeNameSerializerCache.TryGetValue(typeName, out currentObjectStructure))
@@ -115,7 +116,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 }
                 currentObjectStructure = Structure.DetermineStructure(objectTargetType, this.key, context, true);
 
-                typeNameSerializerCache.Add(typeName, currentObjectStructure);
+                typeNameSerializerCache.TryAdd(typeName, currentObjectStructure);
             }
             return currentObjectStructure.Deserialize(json, ref currentReadIndex, context);
         }

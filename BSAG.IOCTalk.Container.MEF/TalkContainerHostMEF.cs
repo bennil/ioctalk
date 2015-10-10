@@ -245,14 +245,14 @@ namespace BSAG.IOCTalk.Container.MEF
 
             if (contractSession != null)
             {
+                sessionManager.OnServiceContractSessionCreated(e.Session, contractSession);
+
                 if (SessionCreated != null)
                 {
                     SessionCreated(contractSession, e);
                 }
 
                 SessionInstanceManager.CheckSessionStateCreatedCall(e.Session, contractSession);
-
-                sessionManager.OnServiceContractSessionCreated(e.Session, contractSession);
             }
         }
 

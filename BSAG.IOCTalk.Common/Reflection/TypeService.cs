@@ -414,6 +414,7 @@ namespace BSAG.IOCTalk.Common.Reflection
                 compilerParams.TempFiles = new TempFileCollection(Environment.GetEnvironmentVariable("TEMP"), true);
             }
 
+            compilerParams.ReferencedAssemblies.Add("System.dll");
             compilerParams.ReferencedAssemblies.Add("System.ComponentModel.Composition.dll");
             compilerParams.ReferencedAssemblies.Add(GetAssemblyPath(typeof(TypeService)));
             compilerParams.ReferencedAssemblies.Add(GetAssemblyPath(interfaceType));

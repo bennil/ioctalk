@@ -6,6 +6,7 @@ using System.Collections;
 using System.Globalization;
 using BSAG.IOCTalk.Common.Attributes;
 using System.Reflection;
+using System.Collections.Concurrent;
 
 namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 {
@@ -30,7 +31,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         private IJsonTypeStructure itemSerializer;
         private IJsonTypeStructure itemDeSerializer;
         
-        private Dictionary<Type, MethodInfo> specialCollectionTypeAddMethodCache;
+        private ConcurrentDictionary<Type, MethodInfo> specialCollectionTypeAddMethodCache;
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -104,7 +105,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
             if (isObject)
             {
-                this.typeSerializerCache = new Dictionary<Type, IJsonTypeStructure>();
+                this.typeSerializerCache = new ConcurrentDictionary<Type, IJsonTypeStructure>();
             }
         }
 
@@ -349,8 +350,8 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                             miAdd = targetCollectionType.GetMethod("Add");
                             if (miAdd != null)
                             {
-                                specialCollectionTypeAddMethodCache = new Dictionary<Type, MethodInfo>();
-                                specialCollectionTypeAddMethodCache.Add(targetCollectionType, miAdd);
+                                specialCollectionTypeAddMethodCache = new ConcurrentDictionary<Type, MethodInfo>();
+                                specialCollectionTypeAddMethodCache.TryAdd(targetCollectionType, miAdd);
                             }
                             else
                             {

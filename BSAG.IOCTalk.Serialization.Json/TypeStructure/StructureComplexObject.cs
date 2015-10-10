@@ -7,6 +7,7 @@ using System.ComponentModel;
 using BSAG.IOCTalk.Common.Reflection;
 using FastMember;
 using BSAG.IOCTalk.Common.Attributes;
+using System.Collections.Concurrent;
 
 namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 {
@@ -80,7 +81,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
             if (this.isObject)
             {
-                this.typeSerializerCache = new Dictionary<Type, IJsonTypeStructure>();
+                this.typeSerializerCache = new ConcurrentDictionary<Type, IJsonTypeStructure>();
             }
             else
             {
@@ -134,6 +135,11 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 {
                     continue;
                 }
+                if (prop.PropertyType.Equals(type))
+                {
+                    // ignore same nested types because of recursive endless loop
+                    continue;
+                }
                 objectStructureList.Add(Structure.DetermineStructure(prop.PropertyType, prop.Name, initialContext, false));
                 accessorList.Add(accessor);
 
@@ -168,7 +174,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                     // expose specialized sub interface type
                     this.isObject = true;
                     if (this.typeSerializerCache == null)
-                        this.typeSerializerCache = new Dictionary<Type, IJsonTypeStructure>();
+                        this.typeSerializerCache = new ConcurrentDictionary<Type, IJsonTypeStructure>();
                 }
             }
 

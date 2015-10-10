@@ -38,7 +38,7 @@ namespace BSAG.IOCTalk.Serialization.Json
 
         private JsonObjectSerializer serializer;
         private IGenericContainerHost containerHost;
-        private Dictionary<string, ParameterInfo[]> methodParameterCache = new Dictionary<string, ParameterInfo[]>();
+        private ConcurrentDictionary<string, ParameterInfo[]> methodParameterCache = new ConcurrentDictionary<string, ParameterInfo[]>();
         private ConcurrentDictionary<Type, Type> resolvedSpecialTypes = new ConcurrentDictionary<Type, Type>();
 
         // ----------------------------------------------------------------------------------------
@@ -276,6 +276,10 @@ namespace BSAG.IOCTalk.Serialization.Json
                                         parameters = mi.GetParameters();
 
                                         methodParameterCache[cacheKey] = parameters;
+                                    }
+                                    else
+                                    {
+                                        throw new TypeLoadException(string.Format("The interface \"{0}\" could not be found!", message.Target));
                                     }
                                 }
 

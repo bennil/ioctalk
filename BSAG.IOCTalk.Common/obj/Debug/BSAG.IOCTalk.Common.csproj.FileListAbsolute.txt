@@ -3,3 +3,9 @@ E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-p
 E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Debug\ResolveAssemblyReference.cache
 E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Debug\BSAG.IOCTalk.Common.dll
 E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Debug\BSAG.IOCTalk.Common.pdb
+C:\DocsPending\IOCTalkOpenSource-2015-10-09\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Debug\BSAG.IOCTalk.Common.XML
+C:\DocsPending\IOCTalkOpenSource-2015-10-09\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Debug\BSAG.IOCTalk.Common.dll
+C:\DocsPending\IOCTalkOpenSource-2015-10-09\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\bin\Debug\BSAG.IOCTalk.Common.pdb
+C:\DocsPending\IOCTalkOpenSource-2015-10-09\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Debug\ResolveAssemblyReference.cache
+C:\DocsPending\IOCTalkOpenSource-2015-10-09\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Debug\BSAG.IOCTalk.Common.dll
+C:\DocsPending\IOCTalkOpenSource-2015-10-09\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\obj\Debug\BSAG.IOCTalk.Common.pdb

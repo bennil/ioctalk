@@ -4,22 +4,13 @@
         <name>BSAG.IOCTalk.Serialization.Json</name>
     </assembly>
     <members>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureComplexObject">
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureDateTime">
             <summary>
-            Complex JSON object structure type
+            DateTime JSON type structure
             </summary>
             <remarks>
             Author(s): Benjamin Link
-            created on: 2014-03-14
-            </remarks>
-        </member>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.AbstractObjectStructure">
-            <summary>
-            Abstract JSON object structure
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 2014-04-02
+            created on: 2014-07-14
             </remarks>
         </member>
         <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.AbstractStructure">
@@ -105,6 +96,68 @@
             Gets the key.
             </summary>
         </member>
+        <member name="F:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureDateTime.TicksPerMicrosecond">
+            <summary>
+            Ticks in one microsecond
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureDateTime.#ctor(System.String,System.Boolean)">
+            <summary>
+            Creates a new instance of the <c>StructureDateTime</c> class.
+            </summary>
+            <param name="key"></param>
+            <param name="isArrayItem"></param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureDateTime.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Serializes the specified date time value.
+            </summary>
+            <param name="sb">The string builder.</param>
+            <param name="obj">The object to serialize.</param>
+            <param name="context">The context.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureDateTime.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Deserializes the specified json date time string.
+            </summary>
+            <param name="json">The json.</param>
+            <param name="currentReadIndex">Index of the current read.</param>
+            <param name="context">The context.</param>
+            <returns></returns>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureDateTime.DateTimeParseExactInvariantCulture(System.String,System.Int32)">
+            <summary>
+            Converts the given fixed format string representation of a date and time to its System.DateTime equivalent.
+            This is way faster than the default parse method.
+            
+            Supported formats:
+            yyyy-MM-dd HH:mm:ss
+            yyyy-MM-dd HH:mm:ss.f
+            to
+            yyyy-MM-dd HH:mm:ss.fffffff
+            </summary>
+            <param name="dateTimeStr">The date time STR.</param>
+            <param name="offset">The offset.</param>
+            <returns></returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureArray">
+            <summary>
+            JSON array structure
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2014-03-14
+            </remarks>
+        </member>
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.AbstractObjectStructure">
+            <summary>
+            Abstract JSON object structure
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2014-04-02
+            </remarks>
+        </member>
         <member name="F:BSAG.IOCTalk.Serialization.Json.TypeStructure.AbstractObjectStructure.type">
             <summary>
             The object type
@@ -154,6 +207,102 @@
             <param name="expectedSepIndex">Expected index of the sep.</param>
             <returns></returns>
         </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureArray.#ctor(System.String,System.Type,BSAG.IOCTalk.Serialization.Json.SerializationContext,System.Boolean)">
+            <summary>
+            Creates a new instance of the <c>StructureArray</c> class.
+            </summary>
+            <param name="key">The key.</param>
+            <param name="enumerableType">Type of the enumerable.</param>
+            <param name="context">The context.</param>
+            <param name="isArrayItem">if set to <c>true</c> [is array item].</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureArray.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Serializes the specified object.
+            </summary>
+            <param name="sb">The string builder.</param>
+            <param name="obj">The object to serialize.</param>
+            <param name="context">The context.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureArray.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Deserializes the specified json string.
+            </summary>
+            <param name="json">The json.</param>
+            <param name="currentReadIndex">Index of the current read.</param>
+            <param name="context">The context.</param>
+            <returns></returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureInt">
+            <summary>
+            Integer JSON type structure
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2014-03-14
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureInt.#ctor(System.String,System.Boolean)">
+            <summary>
+            Creates a new instance of the <c>StructureInt</c> class.
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureInt.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Serializes the specified object.
+            </summary>
+            <param name="sb">The sb.</param>
+            <param name="obj">The obj.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureInt.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Deserializes the specified json string.
+            </summary>
+            <param name="json">The json.</param>
+            <param name="currentReadIndex">Index of the current read.</param>
+            <returns></returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureChar">
+            <summary>
+            Character JSON structure
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2014-08-01
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureChar.#ctor(System.String,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureChar"/> class.
+            </summary>
+            <param name="key">The key.</param>
+            <param name="isArrayItem"></param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureChar.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Serializes the specified object.
+            </summary>
+            <param name="sb">The sb.</param>
+            <param name="obj">The obj.</param>
+            <param name="context">The context.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureChar.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Deserializes the specified json string.
+            </summary>
+            <param name="json">The json.</param>
+            <param name="currentReadIndex">Index of the current read.</param>
+            <returns></returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureComplexObject">
+            <summary>
+            Complex JSON object structure type
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2014-03-14
+            </remarks>
+        </member>
         <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureComplexObject.#ctor(System.Type,System.String,BSAG.IOCTalk.Serialization.Json.SerializationContext,System.Boolean)">
             <summary>
             Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureComplexObject"/> class.
@@ -187,33 +336,62 @@
             	<c>true</c> if this instance is specialized sub type; otherwise, <c>false</c>.
             </value>
         </member>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureChar">
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureEnum">
             <summary>
-            Character JSON structure
+            Enumeration JSON type structure
             </summary>
             <remarks>
             Author(s): Benjamin Link
-            created on: 2014-08-01
+            created on: 2014-03-14
             </remarks>
         </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureChar.#ctor(System.String,System.Boolean)">
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureEnum.#ctor(System.String,System.Type,System.Boolean)">
             <summary>
-            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureChar"/> class.
+            Creates a new instance of the <c>StructureEnum</c> class.
             </summary>
-            <param name="key">The key.</param>
-            <param name="isArrayItem"></param>
         </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureChar.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureEnum.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
             <summary>
             Serializes the specified object.
             </summary>
-            <param name="sb">The sb.</param>
-            <param name="obj">The obj.</param>
+            <param name="sb">The string builder.</param>
+            <param name="obj">The object to serialize.</param>
             <param name="context">The context.</param>
         </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureChar.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureEnum.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
             <summary>
-            Deserializes the specified json string.
+            Deserializes the specified json.
+            </summary>
+            <param name="json">The json.</param>
+            <param name="currentReadIndex">Index of the current read.</param>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureString">
+            <summary>
+            String JSON type structure
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2014-03-14
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureString.#ctor(System.String,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureString"/> class.
+            </summary>
+            <param name="key"></param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureString.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Serializes the specified sb.
+            </summary>
+            <param name="sb">The sb.</param>
+            <param name="obj">The obj.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureString.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Deserializes the specified json.
             </summary>
             <param name="json">The json.</param>
             <param name="currentReadIndex">Index of the current read.</param>
@@ -311,37 +489,6 @@
             <value>
             The special type resolver.
             </value>
-        </member>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureEnum">
-            <summary>
-            Enumeration JSON type structure
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 2014-03-14
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureEnum.#ctor(System.String,System.Type,System.Boolean)">
-            <summary>
-            Creates a new instance of the <c>StructureEnum</c> class.
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureEnum.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Serializes the specified object.
-            </summary>
-            <param name="sb">The string builder.</param>
-            <param name="obj">The object to serialize.</param>
-            <param name="context">The context.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureEnum.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Deserializes the specified json.
-            </summary>
-            <param name="json">The json.</param>
-            <param name="currentReadIndex">Index of the current read.</param>
-            <param name="context"></param>
-            <returns></returns>
         </member>
         <member name="T:BSAG.IOCTalk.Serialization.Json.UnknownTypeResolver">
             <summary>
@@ -474,211 +621,6 @@
             	<c>true</c> if this instance is missing fields in source data allowed; otherwise, <c>false</c>.
             </value>
         </member>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureString">
-            <summary>
-            String JSON type structure
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 2014-03-14
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureString.#ctor(System.String,System.Boolean)">
-            <summary>
-            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureString"/> class.
-            </summary>
-            <param name="key"></param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureString.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Serializes the specified sb.
-            </summary>
-            <param name="sb">The sb.</param>
-            <param name="obj">The obj.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureString.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Deserializes the specified json.
-            </summary>
-            <param name="json">The json.</param>
-            <param name="currentReadIndex">Index of the current read.</param>
-            <returns></returns>
-        </member>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureValueType">
-            <summary>
-            Value type JSON structure
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 2014-03-14
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureValueType.#ctor(System.String,System.Type,System.Boolean)">
-            <summary>
-            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureValueType"/> class.
-            </summary>
-            <param name="key">The key.</param>
-            <param name="type">The type.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureValueType.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Serializes the specified object.
-            </summary>
-            <param name="sb">The sb.</param>
-            <param name="obj">The obj.</param>
-            <param name="context">The context.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureValueType.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Deserializes the specified json string.
-            </summary>
-            <param name="json">The json.</param>
-            <param name="currentReadIndex">Index of the current read.</param>
-            <returns></returns>
-        </member>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureTimeSpan">
-            <summary>
-            TimeSpan JSON serialization
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 2014-03-17
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureTimeSpan.#ctor(System.String,System.Boolean)">
-            <summary>
-            Creates a new instance of the <c>StructureTimeSpan</c> class.
-            </summary>
-            <param name="key"></param>
-        </member>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureInt">
-            <summary>
-            Integer JSON type structure
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 2014-03-14
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureInt.#ctor(System.String,System.Boolean)">
-            <summary>
-            Creates a new instance of the <c>StructureInt</c> class.
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureInt.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Serializes the specified object.
-            </summary>
-            <param name="sb">The sb.</param>
-            <param name="obj">The obj.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureInt.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Deserializes the specified json string.
-            </summary>
-            <param name="json">The json.</param>
-            <param name="currentReadIndex">Index of the current read.</param>
-            <returns></returns>
-        </member>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureDateTime">
-            <summary>
-            DateTime JSON type structure
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 2014-07-14
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureDateTime.#ctor(System.String,System.Boolean)">
-            <summary>
-            Creates a new instance of the <c>StructureDateTime</c> class.
-            </summary>
-            <param name="key"></param>
-            <param name="isArrayItem"></param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureDateTime.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Serializes the specified date time value.
-            </summary>
-            <param name="sb">The string builder.</param>
-            <param name="obj">The object to serialize.</param>
-            <param name="context">The context.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureDateTime.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Deserializes the specified json date time string.
-            </summary>
-            <param name="json">The json.</param>
-            <param name="currentReadIndex">Index of the current read.</param>
-            <param name="context">The context.</param>
-            <returns></returns>
-        </member>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureBool">
-            <summary>
-            Boolean JSON structure
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 2014-03-14
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureBool.#ctor(System.String,System.Boolean)">
-            <summary>
-            Creates a new instance of the <c>StructureBool</c> class.
-            </summary>
-            <param name="key"></param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureBool.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Serializes the specified object.
-            </summary>
-            <param name="sb">The sb.</param>
-            <param name="obj">The obj.</param>
-            <param name="context">The context.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureBool.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Deserializes the specified json string.
-            </summary>
-            <param name="json">The json.</param>
-            <param name="currentReadIndex">Index of the current read.</param>
-            <returns></returns>
-        </member>
-        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureArray">
-            <summary>
-            JSON array structure
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 2014-03-14
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureArray.#ctor(System.String,System.Type,BSAG.IOCTalk.Serialization.Json.SerializationContext,System.Boolean)">
-            <summary>
-            Creates a new instance of the <c>StructureArray</c> class.
-            </summary>
-            <param name="key">The key.</param>
-            <param name="enumerableType">Type of the enumerable.</param>
-            <param name="context">The context.</param>
-            <param name="isArrayItem">if set to <c>true</c> [is array item].</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureArray.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Serializes the specified object.
-            </summary>
-            <param name="sb">The string builder.</param>
-            <param name="obj">The object to serialize.</param>
-            <param name="context">The context.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureArray.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
-            <summary>
-            Deserializes the specified json string.
-            </summary>
-            <param name="json">The json.</param>
-            <param name="currentReadIndex">Index of the current read.</param>
-            <param name="context">The context.</param>
-            <returns></returns>
-        </member>
         <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.Structure">
             <summary>
             JSON Structure helper methods
@@ -719,6 +661,67 @@
             <param name="key">The key.</param>
             <param name="sb">The sb.</param>
         </member>
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureTimeSpan">
+            <summary>
+            TimeSpan JSON serialization
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2014-03-17
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureTimeSpan.#ctor(System.String,System.Boolean)">
+            <summary>
+            Creates a new instance of the <c>StructureTimeSpan</c> class.
+            </summary>
+            <param name="key"></param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureTimeSpan.TimeParseExactInvariantCulture(System.String,System.Int32)">
+            <summary>
+            Converts the given fixed format string representation of a time to its System.TimeSpan equivalent.
+            This is way faster than the default parse method.
+            
+            Supported formats:
+            HH:mm:ss
+            HH:mm:ss.f
+            to
+            HH:mm:ss.fffffff
+            </summary>
+            <param name="timeStr">The time STR.</param>
+            <param name="offset">The offset.</param>
+            <returns></returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureBool">
+            <summary>
+            Boolean JSON structure
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2014-03-14
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureBool.#ctor(System.String,System.Boolean)">
+            <summary>
+            Creates a new instance of the <c>StructureBool</c> class.
+            </summary>
+            <param name="key"></param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureBool.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Serializes the specified object.
+            </summary>
+            <param name="sb">The sb.</param>
+            <param name="obj">The obj.</param>
+            <param name="context">The context.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureBool.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Deserializes the specified json string.
+            </summary>
+            <param name="json">The json.</param>
+            <param name="currentReadIndex">Index of the current read.</param>
+            <returns></returns>
+        </member>
         <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureGuid">
             <summary>
             Guid json serialization
@@ -748,6 +751,38 @@
             <param name="json">The json.</param>
             <param name="currentReadIndex">Index of the current read.</param>
             <param name="context"></param>
+            <returns></returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureValueType">
+            <summary>
+            Value type JSON structure
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2014-03-14
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureValueType.#ctor(System.String,System.Type,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureValueType"/> class.
+            </summary>
+            <param name="key">The key.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureValueType.Serialize(System.Text.StringBuilder,System.Object,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Serializes the specified object.
+            </summary>
+            <param name="sb">The sb.</param>
+            <param name="obj">The obj.</param>
+            <param name="context">The context.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Serialization.Json.TypeStructure.StructureValueType.Deserialize(System.String,System.Int32@,BSAG.IOCTalk.Serialization.Json.SerializationContext)">
+            <summary>
+            Deserializes the specified json string.
+            </summary>
+            <param name="json">The json.</param>
+            <param name="currentReadIndex">Index of the current read.</param>
             <returns></returns>
         </member>
     </members>

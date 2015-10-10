@@ -1003,6 +1003,12 @@ namespace BSAG.IOCTalk.Communication.Common
         {
             try
             {
+                if (ex is RemoteConnectionLostException)
+                {
+                    // do not preseve stack on remote connection lost exception
+                    return;
+                }
+
                 var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);
                 var mgr = new ObjectManager(null, ctx);
                 var si = new SerializationInfo(ex.GetType(), new FormatterConverter());
@@ -1013,7 +1019,7 @@ namespace BSAG.IOCTalk.Communication.Common
             }
             catch (Exception preserveEx)
             {
-                logger.Error("Preserve exception stack trace error: " + preserveEx.ToString());
+                logger.Warn("Can't preserve exception stack trace: " + preserveEx.ToString() + " \n\n Original Exception: " + ex.ToString());
             }
         }
 

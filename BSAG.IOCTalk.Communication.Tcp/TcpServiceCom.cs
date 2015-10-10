@@ -23,7 +23,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         // ----------------------------------------------------------------------------------------
         // TcpServiceCom fields
         // ----------------------------------------------------------------------------------------
-        private Dictionary<int, Client> clients = new Dictionary<int, Client>();
+        protected Dictionary<int, Client> clients = new Dictionary<int, Client>();
         private DateTime connectTime;
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -163,7 +163,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             return true;
         }
 
-        private void AcceptCallback(IAsyncResult asyncResult)
+        protected virtual void AcceptCallback(IAsyncResult asyncResult)
         {
             Socket listener = (Socket)asyncResult.AsyncState;
 
@@ -172,7 +172,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 Socket clientSocket = listener.EndAccept(asyncResult);
                 clientSocket.ReceiveBufferSize = this.ReceiveBufferSize;
                 
-                Client client = new Client(clientSocket, new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, clientSocket.RemoteEndPoint, Logger);
+                Client client = new Client(clientSocket, new NetworkStream(clientSocket), new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, clientSocket.RemoteEndPoint, Logger);
                 StartReceivingData(client);
                 clients.Add(client.SessionId, client);
 

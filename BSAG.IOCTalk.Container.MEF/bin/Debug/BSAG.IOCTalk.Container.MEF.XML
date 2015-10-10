@@ -4,73 +4,23 @@
         <name>BSAG.IOCTalk.Container.MEF</name>
     </assembly>
     <members>
-        <member name="T:BSAG.IOCTalk.Container.MEF.SessionInstanceManager">
+        <member name="T:BSAG.IOCTalk.Container.MEF.Metadata.IToRemoteCallDirection">
             <summary>
-            The SessionInstanceManager holds dependency injection instances for an active session.
+            Marks an export to only be used for outgoing remote service calls (proxy).
             </summary>
             <remarks>
-            Author(s): Benjamin Link
-            created on: 2013-07-12
+             <para>
+              Author: blink, created at 7/22/2014 9:43:26 AM.
+             </para>
             </remarks>
         </member>
-        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.#ctor(BSAG.IOCTalk.Common.Interface.Session.ISession,System.Object)">
+        <member name="P:BSAG.IOCTalk.Container.MEF.Metadata.IToRemoteCallDirection.IsToRemoteCallDirection">
             <summary>
-            Creates a new instance of the <c>SessionInstanceManager</c> class.
+            Gets a value indicating whether this instance is to remote call direction.
             </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.RegisterSessionExport(System.ComponentModel.Composition.Primitives.Export)">
-            <summary>
-            Registers the session export.
-            </summary>
-            <param name="export">The export.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.RegisterSessionExport(System.String,System.Object)">
-            <summary>
-            Registers the session export.
-            </summary>
-            <param name="contractName">Name of the contract.</param>
-            <param name="instance">The instance.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.GetInterfaceImplementationInstance(System.String)">
-            <summary>
-            Gets the interface implementation instance.
-            </summary>
-            <param name="interfaceType">Type of the interface.</param>
-            <returns></returns>
-        </member>
-        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.ReleaseSessionInstances">
-            <summary>
-            Releases the session instances.
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.CheckSessionStateCreatedCall(BSAG.IOCTalk.Common.Interface.Session.ISession,System.Object)">
-            <summary>
-            Checks the session state created call.
-            </summary>
-            <param name="session">The session.</param>
-            <param name="instance">The instance.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.CheckSessionStateTerminatedCall(BSAG.IOCTalk.Common.Interface.Session.ISession,System.Object)">
-            <summary>
-            Checks the session state terminated call.
-            </summary>
-            <param name="session">The session.</param>
-            <param name="instance">The instance.</param>
-        </member>
-        <member name="P:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.Session">
-            <summary>
-            Gets the session.
-            </summary>
-        </member>
-        <member name="P:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.ServiceContractSession">
-            <summary>
-            Gets the service contract session.
-            </summary>
-        </member>
-        <member name="P:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.ContractInstanceMapping">
-            <summary>
-            Gets the contract instance mapping.
-            </summary>
+            <value>
+            	<c>true</c> if this instance is to remote call direction; otherwise, <c>false</c>.
+            </value>
         </member>
         <member name="T:BSAG.IOCTalk.Container.MEF.TalkContainerHostMEF`1">
             <summary>
@@ -229,42 +179,6 @@
             Gets the export.
             </summary>
         </member>
-        <member name="T:BSAG.IOCTalk.Container.MEF.Metadata.IToRemoteCallDirection">
-            <summary>
-            Marks an export to only be used for outgoing remote service calls (proxy).
-            </summary>
-            <remarks>
-             <para>
-              Author: blink, created at 7/22/2014 9:43:26 AM.
-             </para>
-            </remarks>
-        </member>
-        <member name="P:BSAG.IOCTalk.Container.MEF.Metadata.IToRemoteCallDirection.IsToRemoteCallDirection">
-            <summary>
-            Gets a value indicating whether this instance is to remote call direction.
-            </summary>
-            <value>
-            	<c>true</c> if this instance is to remote call direction; otherwise, <c>false</c>.
-            </value>
-        </member>
-        <member name="T:BSAG.IOCTalk.Container.MEF.Metadata.IFromRemoteCallDirection">
-            <summary>
-            Marks an export to only be used for incoming remote calls.
-            </summary>
-            <remarks>
-             <para>
-              Author: blink, created at 7/22/2014 9:41:57 AM.
-             </para>
-            </remarks>
-        </member>
-        <member name="P:BSAG.IOCTalk.Container.MEF.Metadata.IFromRemoteCallDirection.IsFromRemoteCallDirection">
-            <summary>
-            Gets a value indicating whether this instance is from remote call direction.
-            </summary>
-            <value>
-            	<c>true</c> if this instance is from remote call direction; otherwise, <c>false</c>.
-            </value>
-        </member>
         <member name="T:BSAG.IOCTalk.Container.MEF.SessionCompositionContainer">
             <summary>
             The SessionCompositionContainer class extends the MEF CompositionContainer to manage the instance session assignments.
@@ -348,6 +262,24 @@
             The logger.
             </value>
         </member>
+        <member name="T:BSAG.IOCTalk.Container.MEF.Metadata.IFromRemoteCallDirection">
+            <summary>
+            Marks an export to only be used for incoming remote calls.
+            </summary>
+            <remarks>
+             <para>
+              Author: blink, created at 7/22/2014 9:41:57 AM.
+             </para>
+            </remarks>
+        </member>
+        <member name="P:BSAG.IOCTalk.Container.MEF.Metadata.IFromRemoteCallDirection.IsFromRemoteCallDirection">
+            <summary>
+            Gets a value indicating whether this instance is from remote call direction.
+            </summary>
+            <value>
+            	<c>true</c> if this instance is from remote call direction; otherwise, <c>false</c>.
+            </value>
+        </member>
         <member name="T:BSAG.IOCTalk.Container.MEF.Metadata.ExportConstants">
             <summary>
             Defines the MEF IOC-Talk export constants
@@ -361,6 +293,74 @@
         <member name="F:BSAG.IOCTalk.Container.MEF.Metadata.ExportConstants.IsToRemoteCallDirection">
             <summary>
             Property name for IToRemoteCallDirection metadata specification.
+            </summary>
+        </member>
+        <member name="T:BSAG.IOCTalk.Container.MEF.SessionInstanceManager">
+            <summary>
+            The SessionInstanceManager holds dependency injection instances for an active session.
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2013-07-12
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.#ctor(BSAG.IOCTalk.Common.Interface.Session.ISession,System.Object)">
+            <summary>
+            Creates a new instance of the <c>SessionInstanceManager</c> class.
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.RegisterSessionExport(System.ComponentModel.Composition.Primitives.Export)">
+            <summary>
+            Registers the session export.
+            </summary>
+            <param name="export">The export.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.RegisterSessionExport(System.String,System.Object)">
+            <summary>
+            Registers the session export.
+            </summary>
+            <param name="contractName">Name of the contract.</param>
+            <param name="instance">The instance.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.GetInterfaceImplementationInstance(System.String)">
+            <summary>
+            Gets the interface implementation instance.
+            </summary>
+            <param name="interfaceType">Type of the interface.</param>
+            <returns></returns>
+        </member>
+        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.ReleaseSessionInstances">
+            <summary>
+            Releases the session instances.
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.CheckSessionStateCreatedCall(BSAG.IOCTalk.Common.Interface.Session.ISession,System.Object)">
+            <summary>
+            Checks the session state created call.
+            </summary>
+            <param name="session">The session.</param>
+            <param name="instance">The instance.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.CheckSessionStateTerminatedCall(BSAG.IOCTalk.Common.Interface.Session.ISession,System.Object)">
+            <summary>
+            Checks the session state terminated call.
+            </summary>
+            <param name="session">The session.</param>
+            <param name="instance">The instance.</param>
+        </member>
+        <member name="P:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.Session">
+            <summary>
+            Gets the session.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.ServiceContractSession">
+            <summary>
+            Gets the service contract session.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Container.MEF.SessionInstanceManager.ContractInstanceMapping">
+            <summary>
+            Gets the contract instance mapping.
             </summary>
         </member>
     </members>

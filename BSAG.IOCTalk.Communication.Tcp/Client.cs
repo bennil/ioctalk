@@ -9,6 +9,7 @@ using System.Net;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Exceptions;
+using System.IO;
 
 namespace BSAG.IOCTalk.Communication.Tcp
 {
@@ -26,7 +27,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         // Client fields
         // ----------------------------------------------------------------------------------------
 
-        public Socket socket = null;
+        internal Socket socket = null;
+        internal Stream stream;
         public ConcurrentQueue<IGenericMessage> queueReceivedPackets;
 
         private DateTime connectTime;
@@ -50,14 +52,16 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// Initializes a new instance of the <see cref="Client"/> class.
         /// </summary>
         /// <param name="socket">The socket.</param>
+        /// <param name="stream">The stream.</param>
         /// <param name="queueReceivedPackets">The queue received packets.</param>
         /// <param name="localEndPoint">The local end point.</param>
         /// <param name="remoteEndPoint">The remote end point.</param>
         /// <param name="logger">The logger.</param>
-        public Client(Socket socket, ConcurrentQueue<IGenericMessage> queueReceivedPackets, EndPoint localEndPoint, EndPoint remoteEndPoint, ILogger logger)
+        public Client(Socket socket, Stream stream, ConcurrentQueue<IGenericMessage> queueReceivedPackets, EndPoint localEndPoint, EndPoint remoteEndPoint, ILogger logger)
         {
             this.logger = logger;
             this.socket = socket;
+            this.stream = stream;
             this.localEndPoint = localEndPoint;
             this.remoteEndPoint = remoteEndPoint;
             this.queueReceivedPackets = queueReceivedPackets;
@@ -168,7 +172,6 @@ namespace BSAG.IOCTalk.Communication.Tcp
             bool lockTaken = false;
             try
             {
-                //int sentCount = 0;
                 int length = dataBytes.Length;
 
                 // lock socket send
@@ -181,41 +184,35 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 } while (!lockTaken);
 
 
-                socket.Send(dataBytes);
-
-                // non blocking socket code:
-                //do
-                //{
-                //    SocketError errorCode;
-                //    sentCount += socket.Send(dataBytes, sentCount, length - sentCount, SocketFlags.None, out errorCode);
-
-                //    if (errorCode != SocketError.Success)
-                //    {
-                //        switch (errorCode)
-                //        {
-                //            case SocketError.NoBufferSpaceAvailable:
-                //            case SocketError.IOPending:
-                //            case SocketError.WouldBlock:
-                //                isSendBufferUnderPressure = true;
-
-                //                Thread.Sleep(50);   // wait 50 milliseconds before retry
-                //                break;
-
-                //            default:
-                //                logger.Error(string.Format("Socket.Send error code: {0}; Session: {1}", errorCode, SessionInfo));
-                //                return false;
-                //        }
-                //    }
-
-                //    if (sentCount < length)
-                //    {
-                //        isSendBufferUnderPressure = true;
-                //    }
-                //} while (sentCount < length);
+                stream.Write(dataBytes, 0, length);
             }
             catch (ObjectDisposedException)
             {
                 throw new RemoteConnectionLostException(null);
+            }
+            catch (IOException ioEx)
+            {
+                if (ioEx.InnerException is SocketException)
+                {
+                    SocketException sockEx = (SocketException)ioEx.InnerException;
+
+                    SocketError errorCode = (SocketError)sockEx.ErrorCode;
+                    switch (errorCode)
+                    {
+                        case SocketError.Shutdown:
+                        case SocketError.ConnectionAborted:
+                        case SocketError.ConnectionReset:
+                        case SocketError.Disconnecting:
+                            throw new RemoteConnectionLostException(null);
+
+                        default:
+                            throw sockEx;
+                    }
+                }
+                else
+                {
+                    throw ioEx;
+                }
             }
             catch (SocketException sockEx)
             {

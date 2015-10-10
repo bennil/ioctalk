@@ -54,6 +54,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RawMessage.cs" />
     <Compile Include="ConnectionStateChangedEventArgs.cs" />
+    <Compile Include="Security\SecureTcpClient.cs" />
+    <Compile Include="Security\SecureTcpServer.cs" />
     <Compile Include="SocketState.cs" />
     <Compile Include="TcpClientCom.cs" />
     <Compile Include="TcpCommunicationController.cs" />
