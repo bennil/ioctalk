@@ -20,11 +20,6 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         // StructureDateTime fields
         // ----------------------------------------------------------------------------------------
 
-        /// <summary>
-        /// Ticks in one microsecond
-        /// </summary>
-        public const long TicksPerMicrosecond = 10;
-
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -172,14 +167,15 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 && dateTimeStr[++offset] == '.')
             {
                 int milliseconds = 0;
-                bool parseMicroseconds = true;
-                for (int i = 0; i < 3; i++)
+                bool parseTicksPart = true;
+                int millisecondIndex = 0;
+                for (; millisecondIndex < 3; millisecondIndex++)
                 {
                     offset++;
 
                     if (offset >= dateTimeStr.Length)
                     {
-                        parseMicroseconds = false;
+                        parseTicksPart = false;
                         break;
                     }
 
@@ -191,22 +187,31 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                     }
                     else
                     {
-                        parseMicroseconds = false;
+                        parseTicksPart = false;
                         break;
                     }
                 }
-                DateTime result = new DateTime(year, month, day, hour, minute, second, milliseconds);
-                if (parseMicroseconds)
+                if (millisecondIndex == 1)
                 {
-                    int microSeconds = 0;
-                    bool parseTicks = true;
-                    for (int i = 0; i < 3; i++)
+                    milliseconds *= 100;
+                }
+                else if (millisecondIndex == 2)
+                {
+                    milliseconds *= 10;
+                }
+
+                DateTime result = new DateTime(year, month, day, hour, minute, second, milliseconds);
+
+                if (parseTicksPart)
+                {
+                    int ticksPart = 0;
+                    int ticksMultiplicator = 1000;
+                    for (int ticksPartIndex = 0; ticksPartIndex < 4; ticksPartIndex++)
                     {
                         offset++;
 
                         if (offset >= dateTimeStr.Length)
                         {
-                            parseTicks = false;
                             break;
                         }
 
@@ -214,36 +219,21 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
                         if (char.IsNumber(c))
                         {
-                            microSeconds = microSeconds * 10 + (c - '0');
+                            ticksPart = ticksPart * 10 + (c - '0');
+
+                            if (ticksPartIndex > 0)
+                            {
+                                ticksMultiplicator /= 10;
+                            }
                         }
                         else
                         {
-                            parseTicks = false;
                             break;
                         }
                     }
 
-                    long microSecondsTicks = microSeconds * TicksPerMicrosecond;
-
-                    result = result.AddTicks(microSecondsTicks);
-
-                    if (parseTicks)
-                    {
-                        if (offset < dateTimeStr.Length)
-                        {
-                            int ticks = 0;
-                            offset++;
-
-                            char c = dateTimeStr[offset];
-
-                            if (char.IsNumber(c))
-                            {
-                                ticks = ticks * 10 + (c - '0');
-                            }
-
-                            result = result.AddTicks(ticks);
-                        }
-                    }
+                    int ticks = ticksPart * ticksMultiplicator;
+                    result = result.AddTicks(ticks);
                 }
                 return result;
             }

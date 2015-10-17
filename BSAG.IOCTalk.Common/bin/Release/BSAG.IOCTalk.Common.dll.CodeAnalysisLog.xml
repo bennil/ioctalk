@@ -4,158 +4,158 @@
  <Namespaces>
   <Namespace Name="BSAG.IOCTalk.Common.Attributes">
    <Messages>
-    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Certainty="50" Level="Warning">Consider merging the types defined in 'BSAG.IOCTalk.Common.Attributes' with another namespace.</Issue>
     </Message>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Attributes' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Attributes' by changing it to 'Ioc'.</Issue>
     </Message>
    </Messages>
   </Namespace>
   <Namespace Name="BSAG.IOCTalk.Common.Exceptions">
    <Messages>
-    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Certainty="50" Level="Warning">Consider merging the types defined in 'BSAG.IOCTalk.Common.Exceptions' with another namespace.</Issue>
     </Message>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Exceptions' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Exceptions' by changing it to 'Ioc'.</Issue>
     </Message>
    </Messages>
   </Namespace>
   <Namespace Name="BSAG.IOCTalk.Common.Interface.Communication">
    <Messages>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Interface.Communication' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Interface.Communication' by changing it to 'Ioc'.</Issue>
     </Message>
-    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="95" Level="Error">Rename namespace BSAG.IOCTalk.Common.Interface.Communication so that it no longer conflicts with the reserved language keyword 'Interface'. Using a reserved keyword as the name of a namespace makes it harder for consumers in other languages to use the namespace.</Issue>
     </Message>
    </Messages>
   </Namespace>
   <Namespace Name="BSAG.IOCTalk.Common.Interface.Communication.Raw">
    <Messages>
-    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Certainty="50" Level="Warning">Consider merging the types defined in 'BSAG.IOCTalk.Common.Interface.Communication.Raw' with another namespace.</Issue>
     </Message>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Interface.Communication.Raw' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Interface.Communication.Raw' by changing it to 'Ioc'.</Issue>
     </Message>
-    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="95" Level="Error">Rename namespace BSAG.IOCTalk.Common.Interface.Communication.Raw so that it no longer conflicts with the reserved language keyword 'Interface'. Using a reserved keyword as the name of a namespace makes it harder for consumers in other languages to use the namespace.</Issue>
     </Message>
    </Messages>
   </Namespace>
   <Namespace Name="BSAG.IOCTalk.Common.Interface.Config">
    <Messages>
-    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Certainty="50" Level="Warning">Consider merging the types defined in 'BSAG.IOCTalk.Common.Interface.Config' with another namespace.</Issue>
     </Message>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Interface.Config' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Interface.Config' by changing it to 'Ioc'.</Issue>
     </Message>
-    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="95" Level="Error">Rename namespace BSAG.IOCTalk.Common.Interface.Config so that it no longer conflicts with the reserved language keyword 'Interface'. Using a reserved keyword as the name of a namespace makes it harder for consumers in other languages to use the namespace.</Issue>
     </Message>
    </Messages>
   </Namespace>
   <Namespace Name="BSAG.IOCTalk.Common.Interface.Container">
    <Messages>
-    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Certainty="50" Level="Warning">Consider merging the types defined in 'BSAG.IOCTalk.Common.Interface.Container' with another namespace.</Issue>
     </Message>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Interface.Container' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Interface.Container' by changing it to 'Ioc'.</Issue>
     </Message>
-    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="95" Level="Error">Rename namespace BSAG.IOCTalk.Common.Interface.Container so that it no longer conflicts with the reserved language keyword 'Interface'. Using a reserved keyword as the name of a namespace makes it harder for consumers in other languages to use the namespace.</Issue>
     </Message>
    </Messages>
   </Namespace>
   <Namespace Name="BSAG.IOCTalk.Common.Interface.Logging">
    <Messages>
-    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Certainty="50" Level="Warning">Consider merging the types defined in 'BSAG.IOCTalk.Common.Interface.Logging' with another namespace.</Issue>
     </Message>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Interface.Logging' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Interface.Logging' by changing it to 'Ioc'.</Issue>
     </Message>
-    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="95" Level="Error">Rename namespace BSAG.IOCTalk.Common.Interface.Logging so that it no longer conflicts with the reserved language keyword 'Interface'. Using a reserved keyword as the name of a namespace makes it harder for consumers in other languages to use the namespace.</Issue>
     </Message>
    </Messages>
   </Namespace>
   <Namespace Name="BSAG.IOCTalk.Common.Interface.Reflection">
    <Messages>
-    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Certainty="50" Level="Warning">Consider merging the types defined in 'BSAG.IOCTalk.Common.Interface.Reflection' with another namespace.</Issue>
     </Message>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Interface.Reflection' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Interface.Reflection' by changing it to 'Ioc'.</Issue>
     </Message>
-    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="95" Level="Error">Rename namespace BSAG.IOCTalk.Common.Interface.Reflection so that it no longer conflicts with the reserved language keyword 'Interface'. Using a reserved keyword as the name of a namespace makes it harder for consumers in other languages to use the namespace.</Issue>
     </Message>
    </Messages>
   </Namespace>
   <Namespace Name="BSAG.IOCTalk.Common.Interface.Session">
    <Messages>
-    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Certainty="50" Level="Warning">Consider merging the types defined in 'BSAG.IOCTalk.Common.Interface.Session' with another namespace.</Issue>
     </Message>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Interface.Session' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Interface.Session' by changing it to 'Ioc'.</Issue>
     </Message>
-    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="Interface" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="95" Level="Error">Rename namespace BSAG.IOCTalk.Common.Interface.Session so that it no longer conflicts with the reserved language keyword 'Interface'. Using a reserved keyword as the name of a namespace makes it harder for consumers in other languages to use the namespace.</Issue>
     </Message>
    </Messages>
   </Namespace>
   <Namespace Name="BSAG.IOCTalk.Common.Reflection">
    <Messages>
-    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message TypeName="AvoidNamespacesWithFewTypes" Category="Microsoft.Design" CheckId="CA1020" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Certainty="50" Level="Warning">Consider merging the types defined in 'BSAG.IOCTalk.Common.Reflection' with another namespace.</Issue>
     </Message>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Reflection' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Reflection' by changing it to 'Ioc'.</Issue>
     </Message>
    </Messages>
   </Namespace>
   <Namespace Name="BSAG.IOCTalk.Common.Session">
    <Messages>
-    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'BSAG' in namespace name 'BSAG.IOCTalk.Common.Session' by changing it to 'Bsag'.</Issue>
     </Message>
-    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+    <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
      <Issue Name="Namespace" Certainty="85" Level="Error">Correct the casing of 'IOC' in namespace name 'BSAG.IOCTalk.Common.Session' by changing it to 'Ioc'.</Issue>
     </Message>
    </Messages>
@@ -166,16 +166,16 @@
    <Modules>
     <Module Name="bsag.ioctalk.common.dll">
      <Messages>
-      <Message TypeName="AssembliesShouldHaveValidStrongNames" Category="Microsoft.Design" CheckId="CA2210" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+      <Message TypeName="AssembliesShouldHaveValidStrongNames" Category="Microsoft.Design" CheckId="CA2210" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
        <Issue Name="NoStrongName" Certainty="95" Level="CriticalError">Sign 'BSAG.IOCTalk.Common.dll' with a strong name key.</Issue>
       </Message>
-      <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+      <Message Id="BSAG" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
        <Issue Name="Assembly" Certainty="85" Level="Error">Correct the casing of 'BSAG' in assembly name 'BSAG.IOCTalk.Common.dll' by changing it to 'Bsag'.</Issue>
       </Message>
-      <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+      <Message Id="IOC" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
        <Issue Name="Assembly" Certainty="85" Level="Error">Correct the casing of 'IOC' in assembly name 'BSAG.IOCTalk.Common.dll' by changing it to 'Ioc'.</Issue>
       </Message>
-      <Message TypeName="MarkAssembliesWithClsCompliant" Category="Microsoft.Design" CheckId="CA1014" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+      <Message TypeName="MarkAssembliesWithClsCompliant" Category="Microsoft.Design" CheckId="CA1014" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
        <Issue Certainty="95" Level="Error">Mark 'BSAG.IOCTalk.Common.dll' with CLSCompliant(true) because it exposes externally visible types.</Issue>
       </Message>
      </Messages>
@@ -184,24 +184,24 @@
        <Types>
         <Type Name="ExposeSubTypeAttribute" Kind="Class" Accessibility="Public" ExternallyVisible="True">
          <Messages>
-          <Message TypeName="AvoidUnsealedAttributes" Category="Microsoft.Performance" CheckId="CA1813" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+          <Message TypeName="AvoidUnsealedAttributes" Category="Microsoft.Performance" CheckId="CA1813" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
            <Issue Certainty="75" Level="Warning">Seal 'ExposeSubTypeAttribute', if possible.</Issue>
           </Message>
-          <Message Id="SubType" TypeName="CompoundWordsShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1702" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+          <Message Id="SubType" TypeName="CompoundWordsShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1702" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
            <Issue Name="TypeShouldBeDiscreteTerm" Certainty="80" Level="Error">The compound word 'SubType' in type name 'ExposeSubTypeAttribute' exists as a discrete term. If your usage is intended to be single word, case it as 'Subtype'.</Issue>
           </Message>
          </Messages>
          <Members>
           <Member Name="#Type" Kind="Property" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="PropertyNamesShouldNotMatchGetMethods" Category="Microsoft.Naming" CheckId="CA1721" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="PropertyNamesShouldNotMatchGetMethods" Category="Microsoft.Naming" CheckId="CA1721" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="BaseType" Certainty="95" Level="Error" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Attributes" File="ExposeSubTypeAttribute.cs" Line="57">The property name 'ExposeSubTypeAttribute.Type' is confusing given the existence of inherited method 'object.GetType()'. Rename or remove this property.</Issue>
             </Message>
            </Messages>
            <Accessors>
             <Accessor Name="#set_Type(System.Type)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
              <Messages>
-              <Message Id="System.String.Format(System.String,System.Object)" TypeName="SpecifyIFormatProvider" Category="Microsoft.Globalization" CheckId="CA1305" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+              <Message Id="System.String.Format(System.String,System.Object)" TypeName="SpecifyIFormatProvider" Category="Microsoft.Globalization" CheckId="CA1305" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
                <Issue Name="IFormatProviderAlternateString" Certainty="95" Level="Error" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Attributes" File="ExposeSubTypeAttribute.cs" Line="65">Because the behavior of 'string.Format(string, object)' could vary based on the current user's locale settings, replace this call in 'ExposeSubTypeAttribute.Type.set(Type)' with a call to 'string.Format(IFormatProvider, string, params object[])'. If the result of 'string.Format(IFormatProvider, string, params object[])' will be displayed to the user, specify 'CultureInfo.CurrentCulture' as the 'IFormatProvider' parameter. Otherwise, if the result will be stored and accessed by software, such as when it is persisted to disk or to a database, specify 'CultureInfo.InvariantCulture'.</Issue>
               </Message>
              </Messages>
@@ -212,10 +212,10 @@
         </Type>
         <Type Name="RemoteInvokeBehaviourAttribute" Kind="Class" Accessibility="Public" ExternallyVisible="True">
          <Messages>
-          <Message TypeName="AvoidUnsealedAttributes" Category="Microsoft.Performance" CheckId="CA1813" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+          <Message TypeName="AvoidUnsealedAttributes" Category="Microsoft.Performance" CheckId="CA1813" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
            <Issue Certainty="75" Level="Warning">Seal 'RemoteInvokeBehaviourAttribute', if possible.</Issue>
           </Message>
-          <Message Id="Behaviour" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+          <Message Id="Behaviour" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
            <Issue Name="Type" Certainty="75" Level="CriticalWarning">Correct the spelling of 'Behaviour' in type name 'RemoteInvokeBehaviourAttribute'.</Issue>
           </Message>
          </Messages>
@@ -228,37 +228,37 @@
          <Members>
           <Member Name="#.ctor(System.Exception)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Exceptions" File="ExceptionWrapper.cs" Line="47">In externally visible method 'ExceptionWrapper.ExceptionWrapper(Exception)', validate parameter 'ex' before using it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#AddRemoteInvokeIdentification(System.Exception)" Kind="Method" Static="True" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Exceptions" File="ExceptionWrapper.cs" Line="190">In externally visible method 'ExceptionWrapper.AddRemoteInvokeIdentification(Exception)', validate parameter 'ex' before using it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#TryDeserializeException(System.Exception&amp;)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="Do not dispose objects multiple times" Category="Microsoft.Usage" CheckId="CA2202" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message TypeName="Do not dispose objects multiple times" Category="Microsoft.Usage" CheckId="CA2202" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Exceptions" File="ExceptionWrapper.cs" Line="165">Object 'mStream' can be disposed more than once in method 'ExceptionWrapper.TryDeserializeException(out Exception)'. To avoid generating a System.ObjectDisposedException you should not call Dispose more than one time on an object.: Lines: 165</Issue>
             </Message>
-            <Message TypeName="DoNotCatchGeneralExceptionTypes" Category="Microsoft.Design" CheckId="CA1031" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+            <Message TypeName="DoNotCatchGeneralExceptionTypes" Category="Microsoft.Design" CheckId="CA1031" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
              <Issue Certainty="95" Level="CriticalError" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Exceptions" File="ExceptionWrapper.cs" Line="158">Modify 'ExceptionWrapper.TryDeserializeException(out Exception)' to catch a more specific exception than 'object' or rethrow the exception.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#TrySerializeException(System.Exception)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="Do not dispose objects multiple times" Category="Microsoft.Usage" CheckId="CA2202" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message TypeName="Do not dispose objects multiple times" Category="Microsoft.Usage" CheckId="CA2202" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Exceptions" File="ExceptionWrapper.cs" Line="134">Object 'mStream' can be disposed more than once in method 'ExceptionWrapper.TrySerializeException(Exception)'. To avoid generating a System.ObjectDisposedException you should not call Dispose more than one time on an object.: Lines: 134</Issue>
             </Message>
-            <Message TypeName="DoNotCatchGeneralExceptionTypes" Category="Microsoft.Design" CheckId="CA1031" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+            <Message TypeName="DoNotCatchGeneralExceptionTypes" Category="Microsoft.Design" CheckId="CA1031" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
              <Issue Certainty="95" Level="CriticalError" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Exceptions" File="ExceptionWrapper.cs" Line="127">Modify 'ExceptionWrapper.TrySerializeException(Exception)' to catch a more specific exception than 'object' or rethrow the exception.</Issue>
             </Message>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Exceptions" File="ExceptionWrapper.cs" Line="112">In externally visible method 'ExceptionWrapper.TrySerializeException(Exception)', validate parameter 'ex' before using it.</Issue>
             </Message>
            </Messages>
@@ -269,7 +269,7 @@
          <Members>
           <Member Name="#BinaryData" Kind="Property" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="50" Level="Warning">Change 'IExceptionWrapper.BinaryData' to return a collection or make it a method.</Issue>
             </Message>
            </Messages>
@@ -278,26 +278,26 @@
         </Type>
         <Type Name="NonSerializableRemoteException" Kind="Class" Accessibility="Public" ExternallyVisible="True">
          <Messages>
-          <Message TypeName="ImplementStandardExceptionConstructors" Category="Microsoft.Design" CheckId="CA1032" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+          <Message TypeName="ImplementStandardExceptionConstructors" Category="Microsoft.Design" CheckId="CA1032" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
            <Issue Name="MissingConstructor" Certainty="95" Level="Error">Add the following constructor to 'NonSerializableRemoteException': protected NonSerializableRemoteException(SerializationInfo, StreamingContext).</Issue>
            <Issue Name="MissingConstructor" Certainty="95" Level="Error">Add the following constructor to 'NonSerializableRemoteException': public NonSerializableRemoteException().</Issue>
            <Issue Name="MissingConstructor" Certainty="95" Level="Error">Add the following constructor to 'NonSerializableRemoteException': public NonSerializableRemoteException(String).</Issue>
            <Issue Name="MissingConstructor" Certainty="95" Level="Error">Add the following constructor to 'NonSerializableRemoteException': public NonSerializableRemoteException(String, Exception).</Issue>
           </Message>
-          <Message TypeName="MarkISerializableTypesWithSerializable" Category="Microsoft.Usage" CheckId="CA2237" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+          <Message TypeName="MarkISerializableTypesWithSerializable" Category="Microsoft.Usage" CheckId="CA2237" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
            <Issue Certainty="95" Level="Error">Add [Serializable] to 'NonSerializableRemoteException' as this type implements ISerializable.</Issue>
           </Message>
          </Messages>
         </Type>
         <Type Name="RemoteConnectionLostException" Kind="Class" Accessibility="Public" ExternallyVisible="True">
          <Messages>
-          <Message TypeName="ImplementStandardExceptionConstructors" Category="Microsoft.Design" CheckId="CA1032" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+          <Message TypeName="ImplementStandardExceptionConstructors" Category="Microsoft.Design" CheckId="CA1032" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
            <Issue Name="MissingConstructor" Certainty="95" Level="Error">Add the following constructor to 'RemoteConnectionLostException': protected RemoteConnectionLostException(SerializationInfo, StreamingContext).</Issue>
            <Issue Name="MissingConstructor" Certainty="95" Level="Error">Add the following constructor to 'RemoteConnectionLostException': public RemoteConnectionLostException().</Issue>
            <Issue Name="MissingConstructor" Certainty="95" Level="Error">Add the following constructor to 'RemoteConnectionLostException': public RemoteConnectionLostException(String).</Issue>
            <Issue Name="MissingConstructor" Certainty="95" Level="Error">Add the following constructor to 'RemoteConnectionLostException': public RemoteConnectionLostException(String, Exception).</Issue>
           </Message>
-          <Message TypeName="MarkISerializableTypesWithSerializable" Category="Microsoft.Usage" CheckId="CA2237" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+          <Message TypeName="MarkISerializableTypesWithSerializable" Category="Microsoft.Usage" CheckId="CA2237" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
            <Issue Certainty="95" Level="Error">Add [Serializable] to 'RemoteConnectionLostException' as this type implements ISerializable.</Issue>
           </Message>
          </Messages>
@@ -310,14 +310,14 @@
          <Members>
           <Member Name="#ClientSessions" Kind="Property" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="50" Level="Warning">Change 'IGenericCommunicationService.ClientSessions' to return a collection or make it a method.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#InvokeMethod`1(System.Object,System.Linq.Expressions.Expression`1&lt;System.Action`1&lt;!!0&gt;&gt;)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="DoNotNestGenericTypesInMemberSignatures" Category="Microsoft.Design" CheckId="CA1006" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="DoNotNestGenericTypesInMemberSignatures" Category="Microsoft.Design" CheckId="CA1006" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="95" Level="CriticalError">Consider a design where 'IGenericCommunicationService.InvokeMethod&lt;T&gt;(object, Expression&lt;Action&lt;T&gt;&gt;)' doesn't nest generic type 'Expression&lt;Action&lt;T&gt;&gt;'.</Issue>
             </Message>
            </Messages>
@@ -328,34 +328,34 @@
          <Members>
           <Member Name="#DeserializeFromBytes(System.Byte[],System.Object)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="bytes" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="bytes" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="LanguageIndependentMemberParameter" Certainty="75" Level="Error">In member 'IGenericMessageSerializer.DeserializeFromBytes(byte[], object)', consider replacing the data type identifier 'Bytes' in parameter name 'messageBytes' with a more generic term, such as 'value'.</Issue>
             </Message>
-            <Message Id="object" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="object" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="LanguageIndependentMemberParameter" Certainty="75" Level="Error">In member 'IGenericMessageSerializer.DeserializeFromBytes(byte[], object)', consider replacing the data type identifier 'Object' in parameter name 'contextObject' with a more generic term, such as 'value'.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#DeserializeFromString(System.String,System.Object)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="object" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="object" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="LanguageIndependentMemberParameter" Certainty="75" Level="Error">In member 'IGenericMessageSerializer.DeserializeFromString(string, object)', consider replacing the data type identifier 'Object' in parameter name 'contextObject' with a more generic term, such as 'value'.</Issue>
             </Message>
-            <Message Id="string" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="string" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="LanguageIndependentMemberParameter" Certainty="75" Level="Error">In member 'IGenericMessageSerializer.DeserializeFromString(string, object)', consider replacing the data type identifier 'String' in parameter name 'messageString' with a more generic term, such as 'value'.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#SerializeToBytes(BSAG.IOCTalk.Common.Interface.Communication.IGenericMessage,System.Object)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="object" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="object" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="LanguageIndependentMemberParameter" Certainty="75" Level="Error">In member 'IGenericMessageSerializer.SerializeToBytes(IGenericMessage, object)', consider replacing the data type identifier 'Object' in parameter name 'contextObject' with a more generic term, such as 'value'.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#SerializeToString(BSAG.IOCTalk.Common.Interface.Communication.IGenericMessage,System.Object)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="object" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="object" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="LanguageIndependentMemberParameter" Certainty="75" Level="Error">In member 'IGenericMessageSerializer.SerializeToString(IGenericMessage, object)', consider replacing the data type identifier 'Object' in parameter name 'contextObject' with a more generic term, such as 'value'.</Issue>
             </Message>
            </Messages>
@@ -366,7 +366,7 @@
          <Members>
           <Member Name="#OutParameterValues" Kind="Property" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="50" Level="Warning">Change 'IInvokeState.OutParameterValues' to return a collection or make it a method.</Issue>
             </Message>
            </Messages>
@@ -381,7 +381,7 @@
          <Members>
           <Member Name="#Data" Kind="Property" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="50" Level="Warning">Change 'IRawMessage.Data' to return a collection or make it a method.</Issue>
             </Message>
            </Messages>
@@ -392,7 +392,7 @@
          <Members>
           <Member Name="#JSON" Kind="Field" Static="True" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="JSON" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="JSON" TypeName="IdentifiersShouldBeCasedCorrectly" Category="Microsoft.Naming" CheckId="CA1709" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="Member" Certainty="85" Level="Error">Correct the casing of 'JSON' in member name 'RawMessageFormat.JSON' by changing it to 'Json'.</Issue>
             </Message>
            </Messages>
@@ -401,7 +401,7 @@
         </Type>
         <Type Name="RawMessageReceivedDelegate" Kind="Delegate" Accessibility="Public" ExternallyVisible="True">
          <Messages>
-          <Message TypeName="IdentifiersShouldNotHaveIncorrectSuffix" Category="Microsoft.Naming" CheckId="CA1711" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+          <Message TypeName="IdentifiersShouldNotHaveIncorrectSuffix" Category="Microsoft.Naming" CheckId="CA1711" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
            <Issue Name="TypeNoAlternate" Certainty="95" Level="CriticalError">Rename type name 'RawMessageReceivedDelegate' so that it does not end in 'Delegate'.</Issue>
           </Message>
          </Messages>
@@ -414,7 +414,7 @@
          <Members>
           <Member Name="#GetSessionByServiceInstance(System.Object)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="object" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="object" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="LanguageIndependentMemberParameter" Certainty="75" Level="Error">In member 'IGenericContainerHost.GetSessionByServiceInstance(object)', consider replacing the data type identifier 'Object' in parameter name 'serviceObjectInstance' with a more generic term, such as 'value'.</Issue>
             </Message>
            </Messages>
@@ -425,14 +425,14 @@
          <Members>
           <Member Name="#SessionCreated" Kind="Event" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="DeclareEventHandlersCorrectly" Category="Microsoft.Design" CheckId="CA1009" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="DeclareEventHandlersCorrectly" Category="Microsoft.Design" CheckId="CA1009" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="First" Certainty="95" Level="Error">Declare the first parameter of 'SessionEventHandler&lt;TServiceContractSession&gt;' as an object named 'sender'.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#SessionTerminated" Kind="Event" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="DeclareEventHandlersCorrectly" Category="Microsoft.Design" CheckId="CA1009" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="DeclareEventHandlersCorrectly" Category="Microsoft.Design" CheckId="CA1009" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="First" Certainty="95" Level="Error">Declare the first parameter of 'SessionEventHandler&lt;TServiceContractSession&gt;' as an object named 'sender'.</Issue>
             </Message>
            </Messages>
@@ -443,7 +443,7 @@
          <Members>
           <Member Name="#ServiceContractSessions" Kind="Property" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="DoNotNestGenericTypesInMemberSignatures" Category="Microsoft.Design" CheckId="CA1006" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="DoNotNestGenericTypesInMemberSignatures" Category="Microsoft.Design" CheckId="CA1006" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="95" Level="CriticalError">Consider a design where 'IServiceContractSessionManager&lt;TServiceContractSession&gt;.ServiceContractSessions' doesn't nest generic type 'IList&lt;SessionServiceContractMapping&lt;TServiceContractSession&gt;&gt;'.</Issue>
             </Message>
            </Messages>
@@ -458,7 +458,7 @@
          <Members>
           <Member Name="#LogStreamMessage(System.Int32,System.Boolean,System.String)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="string" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="string" TypeName="IdentifiersShouldNotContainTypeNames" Category="Microsoft.Naming" CheckId="CA1720" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="LanguageIndependentMemberParameter" Certainty="75" Level="Error">In member 'IDataStreamLogger.LogStreamMessage(int, bool, string)', consider replacing the data type identifier 'String' in parameter name 'messageDataString' with a more generic term, such as 'value'.</Issue>
             </Message>
            </Messages>
@@ -469,7 +469,7 @@
          <Members>
           <Member Name="#Error(System.String)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="Error" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="Error" TypeName="IdentifiersShouldNotMatchKeywords" Category="Microsoft.Naming" CheckId="CA1716" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="Member" Certainty="95" Level="Error">Rename virtual/interface member 'ILogger.Error(string)' so that it no longer conflicts with the reserved language keyword 'Error'. Using a reserved keyword as the name of a virtual/interface member makes it harder for consumers in other languages to override/implement the member.</Issue>
             </Message>
            </Messages>
@@ -484,17 +484,17 @@
          <Members>
           <Member Name="#OutParameters" Kind="Property" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="50" Level="Warning">Change 'IInvokeMethodInfo.OutParameters' to return a collection or make it a method.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#ParameterInfos" Kind="Property" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="Infos" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="Infos" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="Member" Certainty="75" Level="CriticalWarning">Correct the spelling of 'Infos' in member name 'IInvokeMethodInfo.ParameterInfos' or remove it entirely if it represents any sort of Hungarian notation.</Issue>
             </Message>
-            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="PropertiesShouldNotReturnArrays" Category="Microsoft.Performance" CheckId="CA1819" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="50" Level="Warning">Change 'IInvokeMethodInfo.ParameterInfos' to return a collection or make it a method.</Issue>
             </Message>
            </Messages>
@@ -509,31 +509,31 @@
          <Members>
           <Member Name="#.ctor(System.Reflection.MethodInfo)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="InvokeMethodInfo.cs" Line="148">In externally visible method 'InvokeMethodInfo.InvokeMethodInfo(MethodInfo)', validate parameter 'interfaceMethodInfo' before using it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#.ctor(System.Type,System.String,System.Type[])" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="InvokeMethodInfo.cs" Line="52">In externally visible method 'InvokeMethodInfo.InvokeMethodInfo(Type, string, Type[])', validate parameter 'interfaceType' before using it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#.ctor(System.Type,System.String,System.Type[],System.Type)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="InvokeMethodInfo.cs" Line="123">In externally visible method 'InvokeMethodInfo.InvokeMethodInfo(Type, string, Type[], Type)', validate parameter 'interfaceType' before using it.</Issue>
             </Message>
-            <Message Id="3" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="3" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="InvokeMethodInfo.cs" Line="113">In externally visible method 'InvokeMethodInfo.InvokeMethodInfo(Type, string, Type[], Type)', validate parameter 'implementationType' before using it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#CreateKey(System.Type,System.String,System.Type)" Kind="Method" Static="True" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="InvokeMethodInfo.cs" Line="265">In externally visible method 'InvokeMethodInfo.CreateKey(Type, string, Type)', validate parameter 'interfaceType' before using it.</Issue>
             </Message>
            </Messages>
@@ -544,20 +544,20 @@
          <Members>
           <Member Name="#BuildInterfaceImplementationType(System.String,System.Boolean)" Kind="Method" Static="True" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="DoNotCatchGeneralExceptionTypes" Category="Microsoft.Design" CheckId="CA1031" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+            <Message TypeName="DoNotCatchGeneralExceptionTypes" Category="Microsoft.Design" CheckId="CA1031" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
              <Issue Certainty="95" Level="CriticalError" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="96">Modify 'TypeService.BuildInterfaceImplementationType(string, bool)' to catch a more specific exception than 'Exception' or rethrow the exception.</Issue>
             </Message>
-            <Message Id="Fullname" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="Fullname" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="MemberParameter" Certainty="75" Level="CriticalWarning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="39">In method 'TypeService.BuildInterfaceImplementationType(string, bool)', correct the spelling of 'Fullname' in parameter name 'interfaceTypeFullname' or remove it entirely if it represents any sort of Hungarian notation.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#BuildProxyImplementation(System.Type,System.Boolean,System.String)" Kind="Method" Static="True" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="Dispose objects before losing scope" Category="Microsoft.Reliability" CheckId="CA2000" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message TypeName="Dispose objects before losing scope" Category="Microsoft.Reliability" CheckId="CA2000" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Name="NonExceptionEdge" Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="403">In method 'TypeService.BuildProxyImplementation(Type, bool, string)', call System.IDisposable.Dispose on object 'provider' before all references to it are out of scope.</Issue>
             </Message>
-            <Message TypeName="DoNotIndirectlyExposeMethodsWithLinkDemands" Category="Microsoft.Security" CheckId="CA2122" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+            <Message TypeName="DoNotIndirectlyExposeMethodsWithLinkDemands" Category="Microsoft.Security" CheckId="CA2122" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
              <Issue Certainty="33" Level="CriticalError" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="366">'TypeService.BuildProxyImplementation(Type, bool, string)' calls into 'CodeDomProvider.CompileAssemblyFromSource(CompilerParameters, params string[])' which has a LinkDemand. By making this call, 'CodeDomProvider.CompileAssemblyFromSource(CompilerParameters, params string[])' is indirectly exposed to user code. Review the following call stack that might expose a way to circumvent security protection: &#xD;&#xA;   -&gt;'TypeService.BuildProxyImplementation(Type, bool, string)'&#xD;&#xA;   -&gt;'TypeService.BuildProxyImplementation(Type, bool, string)'</Issue>
              <Issue Certainty="33" Level="CriticalError" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="366">'TypeService.BuildProxyImplementation(Type, bool, string)' calls into 'CompilerParameters.GenerateExecutable.set(bool)' which has a LinkDemand. By making this call, 'CompilerParameters.GenerateExecutable.set(bool)' is indirectly exposed to user code. Review the following call stack that might expose a way to circumvent security protection: &#xD;&#xA;   -&gt;'TypeService.BuildProxyImplementation(Type, bool, string)'&#xD;&#xA;   -&gt;'TypeService.BuildProxyImplementation(Type, bool, string)'</Issue>
              <Issue Certainty="33" Level="CriticalError" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="366">'TypeService.BuildProxyImplementation(Type, bool, string)' calls into 'CompilerParameters.GenerateInMemory.set(bool)' which has a LinkDemand. By making this call, 'CompilerParameters.GenerateInMemory.set(bool)' is indirectly exposed to user code. Review the following call stack that might expose a way to circumvent security protection: &#xD;&#xA;   -&gt;'TypeService.BuildProxyImplementation(Type, bool, string)'&#xD;&#xA;   -&gt;'TypeService.BuildProxyImplementation(Type, bool, string)'</Issue>
@@ -565,72 +565,72 @@
              <Issue Certainty="33" Level="CriticalError" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="366">'TypeService.BuildProxyImplementation(Type, bool, string)' calls into 'CompilerParameters.ReferencedAssemblies.get()' which has a LinkDemand. By making this call, 'CompilerParameters.ReferencedAssemblies.get()' is indirectly exposed to user code. Review the following call stack that might expose a way to circumvent security protection: &#xD;&#xA;   -&gt;'TypeService.BuildProxyImplementation(Type, bool, string)'&#xD;&#xA;   -&gt;'TypeService.BuildProxyImplementation(Type, bool, string)'</Issue>
              <Issue Certainty="33" Level="CriticalError" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="366">'TypeService.BuildProxyImplementation(Type, bool, string)' calls into 'CompilerParameters.TempFiles.set(TempFileCollection)' which has a LinkDemand. By making this call, 'CompilerParameters.TempFiles.set(TempFileCollection)' is indirectly exposed to user code. Review the following call stack that might expose a way to circumvent security protection: &#xD;&#xA;   -&gt;'TypeService.BuildProxyImplementation(Type, bool, string)'&#xD;&#xA;   -&gt;'TypeService.BuildProxyImplementation(Type, bool, string)'</Issue>
             </Message>
-            <Message TypeName="DoNotRaiseReservedExceptionTypes" Category="Microsoft.Usage" CheckId="CA2201" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="DoNotRaiseReservedExceptionTypes" Category="Microsoft.Usage" CheckId="CA2201" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="TooGeneric" Certainty="95" Level="Error" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="367">'TypeService.BuildProxyImplementation(Type, bool, string)' creates an exception of type 'Exception', an exception type that is not sufficiently specific and should never be raised by user code. If this exception instance might be thrown, use a different exception type.</Issue>
              <Issue Name="TooGeneric" Certainty="95" Level="Error" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="439">'TypeService.BuildProxyImplementation(Type, bool, string)' creates an exception of type 'Exception', an exception type that is not sufficiently specific and should never be raised by user code. If this exception instance might be thrown, use a different exception type.</Issue>
             </Message>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="366">In externally visible method 'TypeService.BuildProxyImplementation(Type, bool, string)', validate parameter 'interfaceType' before using it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#CreateProxyInterfaceMethodSourceCode(System.Text.StringBuilder,System.Type,System.Collections.Generic.IList`1&lt;System.String&gt;)" Kind="Method" Static="True" Accessibility="Private" ExternallyVisible="False">
            <Messages>
-            <Message Id="System.String.Format(System.String,System.Object)" TypeName="SpecifyIFormatProvider" Category="Microsoft.Globalization" CheckId="CA1305" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+            <Message Id="System.String.Format(System.String,System.Object)" TypeName="SpecifyIFormatProvider" Category="Microsoft.Globalization" CheckId="CA1305" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
              <Issue Name="IFormatProviderAlternateString" Certainty="95" Level="Error" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="480">Because the behavior of 'string.Format(string, object)' could vary based on the current user's locale settings, replace this call in 'TypeService.CreateProxyInterfaceMethodSourceCode(StringBuilder, Type, IList&lt;string&gt;)' with a call to 'string.Format(IFormatProvider, string, params object[])'. If the result of 'string.Format(IFormatProvider, string, params object[])' will be displayed to the user, specify 'CultureInfo.CurrentCulture' as the 'IFormatProvider' parameter. Otherwise, if the result will be stored and accessed by software, such as when it is persisted to disk or to a database, specify 'CultureInfo.InvariantCulture'.</Issue>
             </Message>
-            <Message Id="System.Text.StringBuilder.AppendFormat(System.String,System.Object[])" TypeName="SpecifyIFormatProvider" Category="Microsoft.Globalization" CheckId="CA1305" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+            <Message Id="System.Text.StringBuilder.AppendFormat(System.String,System.Object[])" TypeName="SpecifyIFormatProvider" Category="Microsoft.Globalization" CheckId="CA1305" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
              <Issue Name="IFormatProviderAlternate" Certainty="95" Level="Error" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="573">Because the behavior of 'StringBuilder.AppendFormat(string, params object[])' could vary based on the current user's locale settings, replace this call in 'TypeService.CreateProxyInterfaceMethodSourceCode(StringBuilder, Type, IList&lt;string&gt;)' with a call to 'StringBuilder.AppendFormat(IFormatProvider, string, params object[])'. If the result of 'StringBuilder.AppendFormat(IFormatProvider, string, params object[])' will be based on input from the user, specify 'CultureInfo.CurrentCulture' as the 'IFormatProvider' parameter. Otherwise, if the result will based on input stored and accessed by software, such as when it is loaded from disk or from a database, specify 'CultureInfo.InvariantCulture'.</Issue>
              <Issue Name="IFormatProviderAlternate" Certainty="95" Level="Error" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="590">Because the behavior of 'StringBuilder.AppendFormat(string, params object[])' could vary based on the current user's locale settings, replace this call in 'TypeService.CreateProxyInterfaceMethodSourceCode(StringBuilder, Type, IList&lt;string&gt;)' with a call to 'StringBuilder.AppendFormat(IFormatProvider, string, params object[])'. If the result of 'StringBuilder.AppendFormat(IFormatProvider, string, params object[])' will be based on input from the user, specify 'CultureInfo.CurrentCulture' as the 'IFormatProvider' parameter. Otherwise, if the result will based on input stored and accessed by software, such as when it is loaded from disk or from a database, specify 'CultureInfo.InvariantCulture'.</Issue>
             </Message>
-            <Message Id="System.String.StartsWith(System.String)" TypeName="SpecifyStringComparison" Category="Microsoft.Globalization" CheckId="CA1307" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+            <Message Id="System.String.StartsWith(System.String)" TypeName="SpecifyStringComparison" Category="Microsoft.Globalization" CheckId="CA1307" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
              <Issue Certainty="95" Level="Error" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="545">Because the behavior of 'string.StartsWith(string)' could vary based on the current user's locale settings, replace this call in 'TypeService.CreateProxyInterfaceMethodSourceCode(StringBuilder, Type, IList&lt;string&gt;)' with a call to 'string.StartsWith(string, StringComparison)'. If the result of 'string.StartsWith(string, StringComparison)' will be displayed to the user, such as when sorting a list of items for display in a list box, specify 'StringComparison.CurrentCulture' or 'StringComparison.CurrentCultureIgnoreCase' as the 'StringComparison' parameter. If comparing case-insensitive identifiers, such as file paths, environment variables, or registry keys and values, specify 'StringComparison.OrdinalIgnoreCase'. Otherwise, if comparing case-sensitive identifiers, specify 'StringComparison.Ordinal'.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#GetMethodByName(System.Type,System.String)" Kind="Method" Static="True" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="684">In externally visible method 'TypeService.GetMethodByName(Type, string)', validate parameter 'type' before using it.</Issue>
             </Message>
-            <Message Id="1" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="1" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="655">In externally visible method 'TypeService.GetMethodByName(Type, string)', validate parameter 'name' before using it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#GetMethodsByType(System.Type)" Kind="Method" Static="True" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="643">In externally visible method 'TypeService.GetMethodsByType(Type)', validate parameter 'type' before using it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#GetQualifiedMethodName(System.Reflection.MethodInfo)" Kind="Method" Static="True" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="704">In externally visible method 'TypeService.GetQualifiedMethodName(MethodInfo)', validate parameter 'methodInfo' before using it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#GetSourceCodeTypeName(System.Type)" Kind="Method" Static="True" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="param" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="param" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Name="MemberParameter" Certainty="75" Level="CriticalWarning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="619">In method 'TypeService.GetSourceCodeTypeName(Type)', correct the spelling of 'param' in parameter name 'paramType' or remove it entirely if it represents any sort of Hungarian notation.</Issue>
             </Message>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="619">In externally visible method 'TypeService.GetSourceCodeTypeName(Type)', validate parameter 'paramType' before using it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#TryGetTypeByName(System.String,System.Type&amp;,System.Reflection.Assembly[])" Kind="Method" Static="True" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="1#" TypeName="AvoidOutParameters" Category="Microsoft.Design" CheckId="CA1021" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message Id="1#" TypeName="AvoidOutParameters" Category="Microsoft.Design" CheckId="CA1021" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="50" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="170">Consider a design that does not require that 'type' be an out parameter.</Issue>
             </Message>
-            <Message Id="System.Int32.Parse(System.String)" TypeName="SpecifyIFormatProvider" Category="Microsoft.Globalization" CheckId="CA1305" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+            <Message Id="System.Int32.Parse(System.String)" TypeName="SpecifyIFormatProvider" Category="Microsoft.Globalization" CheckId="CA1305" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
              <Issue Name="IFormatProviderAlternate" Certainty="95" Level="Error" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="193">Because the behavior of 'int.Parse(string)' could vary based on the current user's locale settings, replace this call in 'TypeService.TryGetTypeByName(string, out Type, params Assembly[])' with a call to 'int.Parse(string, IFormatProvider)'. If the result of 'int.Parse(string, IFormatProvider)' will be based on input from the user, specify 'CultureInfo.CurrentCulture' as the 'IFormatProvider' parameter. Otherwise, if the result will based on input stored and accessed by software, such as when it is loaded from disk or from a database, specify 'CultureInfo.InvariantCulture'.</Issue>
             </Message>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Reflection" File="TypeService.cs" Line="172">In externally visible method 'TypeService.TryGetTypeByName(string, out Type, params Assembly[])', validate parameter 'typeName' before using it.</Issue>
             </Message>
            </Messages>
@@ -643,10 +643,10 @@
        <Types>
         <Type Name="AbstractSession" Kind="Class" Accessibility="Public" ExternallyVisible="True">
          <Messages>
-          <Message TypeName="AbstractTypesShouldNotHaveConstructors" Category="Microsoft.Design" CheckId="CA1012" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="NonBreaking">
+          <Message TypeName="AbstractTypesShouldNotHaveConstructors" Category="Microsoft.Design" CheckId="CA1012" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="NonBreaking">
            <Issue Certainty="95" Level="CriticalWarning">Change the accessibility of all public constructors in 'AbstractSession' to protected.</Issue>
           </Message>
-          <Message TypeName="IdentifiersShouldDifferByMoreThanCase" Category="Microsoft.Naming" CheckId="CA1708" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+          <Message TypeName="IdentifiersShouldDifferByMoreThanCase" Category="Microsoft.Naming" CheckId="CA1708" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
            <Issue Name="Member" Certainty="95" Level="Error">Change member names 'CommunicationService' and 'communicationService' so that they differ by more than case.</Issue>
            <Issue Name="Member" Certainty="95" Level="Error">Change member names 'IsActive' and 'isActive' so that they differ by more than case.</Issue>
            <Issue Name="Member" Certainty="95" Level="Error">Change member names 'description' and 'Description' so that they differ by more than case.</Issue>
@@ -657,35 +657,35 @@
          <Members>
           <Member Name="#communicationService" Kind="Field" Static="False" Accessibility="Family" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="DoNotDeclareVisibleInstanceFields" Category="Microsoft.Design" CheckId="CA1051" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="DoNotDeclareVisibleInstanceFields" Category="Microsoft.Design" CheckId="CA1051" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="90" Level="Error">Because field 'AbstractSession.communicationService' is visible outside of its declaring type, change its accessibility to private and add a property, with the same accessibility as the field has currently, to provide access to it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#description" Kind="Field" Static="False" Accessibility="Family" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="DoNotDeclareVisibleInstanceFields" Category="Microsoft.Design" CheckId="CA1051" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="DoNotDeclareVisibleInstanceFields" Category="Microsoft.Design" CheckId="CA1051" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="90" Level="Error">Because field 'AbstractSession.description' is visible outside of its declaring type, change its accessibility to private and add a property, with the same accessibility as the field has currently, to provide access to it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#isActive" Kind="Field" Static="False" Accessibility="Family" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="DoNotDeclareVisibleInstanceFields" Category="Microsoft.Design" CheckId="CA1051" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="DoNotDeclareVisibleInstanceFields" Category="Microsoft.Design" CheckId="CA1051" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="90" Level="Error">Because field 'AbstractSession.isActive' is visible outside of its declaring type, change its accessibility to private and add a property, with the same accessibility as the field has currently, to provide access to it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#pendingRequests" Kind="Field" Static="False" Accessibility="Family" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="DoNotDeclareVisibleInstanceFields" Category="Microsoft.Design" CheckId="CA1051" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="DoNotDeclareVisibleInstanceFields" Category="Microsoft.Design" CheckId="CA1051" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="90" Level="Error">Because field 'AbstractSession.pendingRequests' is visible outside of its declaring type, change its accessibility to private and add a property, with the same accessibility as the field has currently, to provide access to it.</Issue>
             </Message>
            </Messages>
           </Member>
           <Member Name="#sessionId" Kind="Field" Static="False" Accessibility="Family" ExternallyVisible="True">
            <Messages>
-            <Message TypeName="DoNotDeclareVisibleInstanceFields" Category="Microsoft.Design" CheckId="CA1051" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+            <Message TypeName="DoNotDeclareVisibleInstanceFields" Category="Microsoft.Design" CheckId="CA1051" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
              <Issue Certainty="90" Level="Error">Because field 'AbstractSession.sessionId' is visible outside of its declaring type, change its accessibility to private and add a property, with the same accessibility as the field has currently, to provide access to it.</Issue>
             </Message>
            </Messages>
@@ -694,14 +694,14 @@
         </Type>
         <Type Name="CreateSessionHandler" Kind="Delegate" Accessibility="Public" ExternallyVisible="True">
          <Messages>
-          <Message Id="Serivce" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+          <Message Id="Serivce" TypeName="IdentifiersShouldBeSpelledCorrectly" Category="Microsoft.Naming" CheckId="CA1704" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
            <Issue Name="DelegateParameter" Certainty="75" Level="CriticalWarning">In delegate 'CreateSessionHandler', correct the spelling of 'Serivce' in parameter name 'communicationSerivce' or remove it entirely if it represents any sort of Hungarian notation.</Issue>
           </Message>
          </Messages>
         </Type>
         <Type Name="Session" Kind="Class" Accessibility="Public" ExternallyVisible="True">
          <Messages>
-          <Message TypeName="TypeNamesShouldNotMatchNamespaces" Category="Microsoft.Naming" CheckId="CA1724" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="Breaking">
+          <Message TypeName="TypeNamesShouldNotMatchNamespaces" Category="Microsoft.Naming" CheckId="CA1724" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="Breaking">
            <Issue Certainty="95" Level="Error">The type name 'Session' conflicts in whole or in part with the namespace name 'BSAG.IOCTalk.Common.Interface.Session'. Change either name to eliminate the conflict.</Issue>
           </Message>
          </Messages>
@@ -710,7 +710,7 @@
          <Members>
           <Member Name="#OnServiceContractSessionTerminated(BSAG.IOCTalk.Common.Interface.Session.ISession,!0)" Kind="Method" Static="False" Accessibility="Public" ExternallyVisible="True">
            <Messages>
-            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-09-25 08:45:11Z" FixCategory="DependsOnFix">
+            <Message Id="0" TypeName="Validate arguments of public methods" Category="Microsoft.Design" CheckId="CA1062" Status="Active" Created="2015-10-13 15:56:57Z" FixCategory="DependsOnFix">
              <Issue Certainty="75" Level="Warning" Path="E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Common\Session" File="SessionManager.cs" Line="97">In externally visible method 'SessionManager&lt;TServiceContractSession&gt;.OnServiceContractSessionTerminated(ISession, TServiceContractSession)', validate parameter 'session' before using it.</Issue>
             </Message>
            </Messages>

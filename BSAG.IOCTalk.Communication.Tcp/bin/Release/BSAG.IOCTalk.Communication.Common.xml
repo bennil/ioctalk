@@ -4,6 +4,253 @@
         <name>BSAG.IOCTalk.Communication.Common</name>
     </assembly>
     <members>
+        <member name="T:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport">
+            <summary>
+            Common communication interface
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.SendMessage(BSAG.IOCTalk.Common.Interface.Communication.IGenericMessage,System.Int32,System.Object)">
+            <summary>
+            Sends the generic message.
+            </summary>
+            <param name="message">The message.</param>
+            <param name="receiverSessionId">The receiver session id.</param>
+            <param name="context">The context.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.IsAsyncSendCurrentlyPossible(BSAG.IOCTalk.Common.Interface.Session.ISession)">
+            <summary>
+            Determines whether [is async send currently possible] depending on the current load situation.
+            </summary>
+            <param name="session">The session.</param>
+            <returns>
+              <c>true</c> if [is async send currently possible] [the specified session]; otherwise, <c>false</c>.
+            </returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Communication.Common.Factory.AppConfigSection">
+            <summary>
+            App config section parser
+            </summary>
+            <remarks>
+             <para>
+              Author: blink, created at 1/23/2015 4:04:26 PM.
+             </para>
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.Factory.AppConfigSection.#ctor">
+            <summary>
+            Creates and initializes an instance of the class <c>AppConfigSection</c>.
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.Factory.AppConfigSection.Create(System.Object,System.Object,System.Xml.XmlNode)">
+            <summary>
+            Creates a configuration section handler.
+            </summary>
+            <param name="parent">Parent object.</param>
+            <param name="configContext">Configuration context object.</param>
+            <param name="section">Section XML node.</param>
+            <returns>
+            Returns the configuration section XML as XDocument object.
+            </returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Communication.Common.Factory.IOCTalkLoader">
+            <summary>
+            IOC-Talk communication loader
+            </summary>
+            <remarks>
+             <para>
+              Author: blink, created at 1/23/2015 3:54:33 PM.
+             </para>
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.Factory.IOCTalkLoader.InitFromAppConfig">
+            <summary>
+            Initializes the IOC-Talk communication using the application configuration.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Communication.Common.ICustomResponseWaitHandler">
+            <summary>
+            Custom response wait handler
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.ICustomResponseWaitHandler.WaitForResponse(BSAG.IOCTalk.Communication.Common.InvokeState)">
+            <summary>
+            Waits for response.
+            </summary>
+            <param name="state">The state.</param>
+        </member>
+        <member name="T:BSAG.IOCTalk.Communication.Common.InvokeState">
+            <summary>
+            Default method invoke state implementation
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 09.07.2013
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.InvokeState.#ctor">
+            <summary>
+            Creates a new instance of the <c>InvokeState</c> class.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.RequestMessage">
+            <summary>
+            Gets or sets the request message.
+            </summary>
+            <value>
+            The request message.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.Method">
+            <summary>
+            Gets or sets the method.
+            </summary>
+            <value>
+            The method.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.WaitHandle">
+            <summary>
+            Gets or sets the wait handle.
+            </summary>
+            <value>
+            The wait handle.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.ReturnObject">
+            <summary>
+            Gets or sets the return object.
+            </summary>
+            <value>
+            The return object.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.OutParameterValues">
+            <summary>
+            Gets or sets the out parameter values.
+            </summary>
+            <value>
+            The out parameter values.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.Exception">
+            <summary>
+            Gets or sets the exception.
+            </summary>
+            <value>
+            The exception.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.MethodSource">
+            <summary>
+            Gets or sets the method source.
+            </summary>
+            <value>
+            The method source.
+            </value>
+        </member>
+        <member name="T:BSAG.IOCTalk.Communication.Common.GenericMessage">
+            <summary>
+            Default IGenericMessage message implementation
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 09.07.2013
+            </remarks>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor">
+            <summary>
+            Creates a new instance of the <c>GenericMessage</c> class.
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor(System.Int64,System.Reflection.MethodInfo,System.Object[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.GenericMessage"/> class.
+            </summary>
+            <param name="requestId">The request id.</param>
+            <param name="method">The method.</param>
+            <param name="parameters">The parameters.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor(System.Int64,System.Reflection.MethodInfo,System.Object[],System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.GenericMessage"/> class with the given invoke method request values.
+            </summary>
+            <param name="requestId">The request id.</param>
+            <param name="method">The method.</param>
+            <param name="parameters">The parameters.</param>
+            <param name="responseExptected">if set to <c>true</c> [response exptected].</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor(System.Int64,BSAG.IOCTalk.Common.Interface.Reflection.IInvokeMethodInfo,System.Object[],System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.GenericMessage"/> class.
+            </summary>
+            <param name="requestId">The request id.</param>
+            <param name="invokeMethodInfo">The invoke method info.</param>
+            <param name="parameters">The parameters.</param>
+            <param name="responseExptected">if set to <c>true</c> [response exptected].</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor(System.Int64,System.Object)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.GenericMessage"/> class with the given invoke method response values.
+            </summary>
+            <param name="requestId">The request id.</param>
+            <param name="returnObject">The return object.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor(System.Int64,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.GenericMessage"/> class with the given invoke method response values.
+            </summary>
+            <param name="requestId">The request id.</param>
+            <param name="exception">The exception.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.ToString">
+            <summary>
+            Returns a <see cref="T:System.String"/> that represents this instance.
+            </summary>
+            <returns>
+            A <see cref="T:System.String"/> that represents this instance.
+            </returns>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.Type">
+            <summary>
+            Gets or sets the message type.
+            </summary>
+            <value>
+            The type.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.RequestId">
+            <summary>
+            Gets or sets the request id.
+            </summary>
+            <value>
+            The request id.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.Target">
+            <summary>
+            Gets or sets the target interface.
+            </summary>
+            <value>
+            The interface.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.Name">
+            <summary>
+            Gets or sets the name of the request (method).
+            </summary>
+            <value>
+            The name of the request.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.Payload">
+            <summary>
+            Gets or sets the payload.
+            </summary>
+            <value>
+            The payload.
+            </value>
+        </member>
         <member name="T:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService">
             <summary>
             IGenericCommunicationService base implementation
@@ -256,253 +503,6 @@
             <summary>
             Occurs when a session is terminated.
             </summary>
-        </member>
-        <member name="T:BSAG.IOCTalk.Communication.Common.ICustomResponseWaitHandler">
-            <summary>
-            Custom response wait handler
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.ICustomResponseWaitHandler.WaitForResponse(BSAG.IOCTalk.Communication.Common.InvokeState)">
-            <summary>
-            Waits for response.
-            </summary>
-            <param name="state">The state.</param>
-        </member>
-        <member name="T:BSAG.IOCTalk.Communication.Common.Factory.IOCTalkLoader">
-            <summary>
-            IOC-Talk communication loader
-            </summary>
-            <remarks>
-             <para>
-              Author: blink, created at 1/23/2015 3:54:33 PM.
-             </para>
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.Factory.IOCTalkLoader.InitFromAppConfig">
-            <summary>
-            Initializes the IOC-Talk communication using the application configuration.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="T:BSAG.IOCTalk.Communication.Common.InvokeState">
-            <summary>
-            Default method invoke state implementation
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 09.07.2013
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.InvokeState.#ctor">
-            <summary>
-            Creates a new instance of the <c>InvokeState</c> class.
-            </summary>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.RequestMessage">
-            <summary>
-            Gets or sets the request message.
-            </summary>
-            <value>
-            The request message.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.Method">
-            <summary>
-            Gets or sets the method.
-            </summary>
-            <value>
-            The method.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.WaitHandle">
-            <summary>
-            Gets or sets the wait handle.
-            </summary>
-            <value>
-            The wait handle.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.ReturnObject">
-            <summary>
-            Gets or sets the return object.
-            </summary>
-            <value>
-            The return object.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.OutParameterValues">
-            <summary>
-            Gets or sets the out parameter values.
-            </summary>
-            <value>
-            The out parameter values.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.Exception">
-            <summary>
-            Gets or sets the exception.
-            </summary>
-            <value>
-            The exception.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.InvokeState.MethodSource">
-            <summary>
-            Gets or sets the method source.
-            </summary>
-            <value>
-            The method source.
-            </value>
-        </member>
-        <member name="T:BSAG.IOCTalk.Communication.Common.GenericMessage">
-            <summary>
-            Default IGenericMessage message implementation
-            </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 09.07.2013
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor">
-            <summary>
-            Creates a new instance of the <c>GenericMessage</c> class.
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor(System.Int64,System.Reflection.MethodInfo,System.Object[])">
-            <summary>
-            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.GenericMessage"/> class.
-            </summary>
-            <param name="requestId">The request id.</param>
-            <param name="method">The method.</param>
-            <param name="parameters">The parameters.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor(System.Int64,System.Reflection.MethodInfo,System.Object[],System.Boolean)">
-            <summary>
-            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.GenericMessage"/> class with the given invoke method request values.
-            </summary>
-            <param name="requestId">The request id.</param>
-            <param name="method">The method.</param>
-            <param name="parameters">The parameters.</param>
-            <param name="responseExptected">if set to <c>true</c> [response exptected].</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor(System.Int64,BSAG.IOCTalk.Common.Interface.Reflection.IInvokeMethodInfo,System.Object[],System.Boolean)">
-            <summary>
-            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.GenericMessage"/> class.
-            </summary>
-            <param name="requestId">The request id.</param>
-            <param name="invokeMethodInfo">The invoke method info.</param>
-            <param name="parameters">The parameters.</param>
-            <param name="responseExptected">if set to <c>true</c> [response exptected].</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor(System.Int64,System.Object)">
-            <summary>
-            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.GenericMessage"/> class with the given invoke method response values.
-            </summary>
-            <param name="requestId">The request id.</param>
-            <param name="returnObject">The return object.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.#ctor(System.Int64,System.Exception)">
-            <summary>
-            Initializes a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.GenericMessage"/> class with the given invoke method response values.
-            </summary>
-            <param name="requestId">The request id.</param>
-            <param name="exception">The exception.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.ToString">
-            <summary>
-            Returns a <see cref="T:System.String"/> that represents this instance.
-            </summary>
-            <returns>
-            A <see cref="T:System.String"/> that represents this instance.
-            </returns>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.Type">
-            <summary>
-            Gets or sets the message type.
-            </summary>
-            <value>
-            The type.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.RequestId">
-            <summary>
-            Gets or sets the request id.
-            </summary>
-            <value>
-            The request id.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.Target">
-            <summary>
-            Gets or sets the target interface.
-            </summary>
-            <value>
-            The interface.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.Name">
-            <summary>
-            Gets or sets the name of the request (method).
-            </summary>
-            <value>
-            The name of the request.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.Payload">
-            <summary>
-            Gets or sets the payload.
-            </summary>
-            <value>
-            The payload.
-            </value>
-        </member>
-        <member name="T:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport">
-            <summary>
-            Common communication interface
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.SendMessage(BSAG.IOCTalk.Common.Interface.Communication.IGenericMessage,System.Int32,System.Object)">
-            <summary>
-            Sends the generic message.
-            </summary>
-            <param name="message">The message.</param>
-            <param name="receiverSessionId">The receiver session id.</param>
-            <param name="context">The context.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.IsAsyncSendCurrentlyPossible(BSAG.IOCTalk.Common.Interface.Session.ISession)">
-            <summary>
-            Determines whether [is async send currently possible] depending on the current load situation.
-            </summary>
-            <param name="session">The session.</param>
-            <returns>
-              <c>true</c> if [is async send currently possible] [the specified session]; otherwise, <c>false</c>.
-            </returns>
-        </member>
-        <member name="T:BSAG.IOCTalk.Communication.Common.Factory.AppConfigSection">
-            <summary>
-            App config section parser
-            </summary>
-            <remarks>
-             <para>
-              Author: blink, created at 1/23/2015 4:04:26 PM.
-             </para>
-            </remarks>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.Factory.AppConfigSection.#ctor">
-            <summary>
-            Creates and initializes an instance of the class <c>AppConfigSection</c>.
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.Factory.AppConfigSection.Create(System.Object,System.Object,System.Xml.XmlNode)">
-            <summary>
-            Creates a configuration section handler.
-            </summary>
-            <param name="parent">Parent object.</param>
-            <param name="configContext">Configuration context object.</param>
-            <param name="section">Section XML node.</param>
-            <returns>
-            Returns the configuration section XML as XDocument object.
-            </returns>
         </member>
     </members>
 </doc>

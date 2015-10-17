@@ -12,6 +12,8 @@ using BSAG.IOCTalk.Test.TestObjects.MissingProperties;
 using BSAG.IOCTalk.Test.TestObjects.NoProperties;
 using BSAG.IOCTalk.Common.Attributes;
 using System.Globalization;
+using BSAG.IOCTalk.Serialization.Json.TypeStructure;
+using System.Threading;
 
 namespace BSAG.IOCTalk.Test
 {
@@ -601,5 +603,72 @@ namespace BSAG.IOCTalk.Test
                 Assert.AreEqual<string>(expectedValueStr, deserializedStr);
             }
         }
+
+        [TestMethod]
+        public void TestMethodDateTimieSerializationTest()
+        {
+            JsonObjectSerializer serializer = new JsonObjectSerializer(UnknownTypeResolver, SpecialTypeResolver);
+            
+            // 2015-10-12T17:24:33.221224
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.2512345"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.251234"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.25123"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.2512"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.251"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.25"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.2"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33"), serializer);
+
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.1000001"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.100001"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.10001"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.1001"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.101"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.11"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.1"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.0"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.000"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.00000"), serializer);
+
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.9999999"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.999999"), serializer);
+            CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.9"), serializer);
+            
+            ExplicitCheckTimeDeserialization("17:24:33.1234567");
+            ExplicitCheckTimeDeserialization("17:24:33.123456");
+            ExplicitCheckTimeDeserialization("17:24:33.12345");
+            ExplicitCheckTimeDeserialization("17:24:33.1234");
+            ExplicitCheckTimeDeserialization("17:24:33.123");
+            ExplicitCheckTimeDeserialization("17:24:33.12");
+            ExplicitCheckTimeDeserialization("17:24:33.1");
+            ExplicitCheckTimeDeserialization("17:24:33");
+        }
+
+        private static void ExplicitCheckTimeDeserialization(string timeStr)
+        {
+            StructureTimeSpan sTimeSpan = new StructureTimeSpan("test", false);
+            TimeSpan expectedTime = TimeSpan.Parse(timeStr);
+            string jsonPart = "\"test\":\"" + timeStr + "\"";
+            int readIndex = 0;
+            TimeSpan result = (TimeSpan)sTimeSpan.Deserialize(jsonPart, ref readIndex, null);
+
+            Assert.AreEqual<long>(expectedTime.Ticks, result.Ticks);
+        }
+
+        private void CheckDateTimeSerialisation(DateTime dateTime, JsonObjectSerializer serializer)
+        {
+            TestObject testObj = new TestObject();
+            testObj.TimeSpanValue = dateTime.TimeOfDay;            
+            testObj.DateTimeValue = dateTime;
+
+            string json = serializer.Serialize(testObj, null);
+
+            TestObject deserializedTestObj = (TestObject)serializer.Deserialize(json, typeof(TestObject), null);
+
+
+            Assert.AreEqual<long>(testObj.TimeSpanValue.Ticks, deserializedTestObj.TimeSpanValue.Ticks);
+            Assert.AreEqual<long>(testObj.DateTimeValue.Ticks, deserializedTestObj.DateTimeValue.Ticks);
+        }
+
     }
 }

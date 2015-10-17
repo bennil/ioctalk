@@ -151,15 +151,14 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
             if (timeStr.Length > offset + 2
                 && timeStr[++offset] == '.')
             {
-                int milliseconds = 0;
-                bool parseMicroseconds = true;
-                for (int i = 0; i < 3; i++)
+                int secondPart = 0;
+                int ticksMultiplicator = 1000000;
+                for (int secondPartIndex = 0; secondPartIndex < 7; secondPartIndex++)
                 {
                     offset++;
 
                     if (offset >= timeStr.Length)
                     {
-                        parseMicroseconds = false;
                         break;
                     }
 
@@ -167,64 +166,20 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
                     if (char.IsNumber(c))
                     {
-                        milliseconds = milliseconds * 10 + (c - '0');
+                        secondPart = secondPart * 10 + (c - '0');
+
+                        if (secondPartIndex > 0)
+                        {
+                            ticksMultiplicator /= 10;
+                        }
                     }
                     else
                     {
-                        parseMicroseconds = false;
                         break;
                     }
                 }
 
-                ticks += milliseconds * TimeSpan.TicksPerMillisecond;
-
-                if (parseMicroseconds)
-                {
-                    int microSeconds = 0;
-                    bool parseTicks = true;
-                    for (int i = 0; i < 3; i++)
-                    {
-                        offset++;
-
-                        if (offset >= timeStr.Length)
-                        {
-                            parseTicks = false;
-                            break;
-                        }
-
-                        char c = timeStr[offset];
-
-                        if (char.IsNumber(c))
-                        {
-                            microSeconds = microSeconds * 10 + (c - '0');
-                        }
-                        else
-                        {
-                            parseTicks = false;
-                            break;
-                        }
-                    }
-
-                    ticks += microSeconds * StructureDateTime.TicksPerMicrosecond;
-
-                    if (parseTicks)
-                    {
-                        if (offset < timeStr.Length)
-                        {
-                            int ticksPart = 0;
-                            offset++;
-
-                            char c = timeStr[offset];
-
-                            if (char.IsNumber(c))
-                            {
-                                ticksPart = ticksPart * 10 + (c - '0');
-                            }
-
-                            ticks += ticksPart;
-                        }
-                    }
-                }
+                ticks += (secondPart * ticksMultiplicator);
             }
 
             return new TimeSpan(ticks);
