@@ -116,6 +116,14 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// </value>
         CreateSessionHandler CustomCreateSessionHandler { get; set; }
 
+        /// <summary>
+        /// Gets or sets the invoke thread model.
+        /// </summary>
+        /// <value>
+        /// The invoke thread model.
+        /// </value>
+        InvokeThreadModel InvokeThreadModel { get; set; }
+
         // ----------------------------------------------------------------------------------------
         #endregion
 

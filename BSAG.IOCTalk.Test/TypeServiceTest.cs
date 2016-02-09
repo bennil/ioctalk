@@ -72,21 +72,6 @@ namespace BSAG.IOCTalk.Test
             Assert.IsNotNull(type);
         }
 
-        [TestMethod]
-        public void TestMethodGetGenericTypeWithAssemblyLoad()
-        {
-            string typeName = "System.Collections.Generic.IEnumerable`1[[BSAG.IOCTalk.Test.LoadTest.ILoadTestInterface, BSAG.IOCTalk.Test.LoadTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]";
-            
-            string rootPath = System.IO.Path.GetFullPath(Environment.CurrentDirectory + @"..\..\..\..\");
-            string dllPath =  Path.Combine(rootPath, @"BSAG.IOCTalk.Test.LoadTest\bin\Debug\BSAG.IOCTalk.Test.LoadTest.dll");
-
-            System.Reflection.Assembly.LoadFrom(dllPath);
-
-            Type type;
-            TypeService.TryGetTypeByName(typeName, out type);
-            Assert.IsNotNull(type);
-        }
-
 
 
         [TestMethod]

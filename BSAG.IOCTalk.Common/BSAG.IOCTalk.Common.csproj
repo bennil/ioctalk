@@ -74,6 +74,7 @@
     <Compile Include="Exceptions\NonSerializableRemoteException.cs" />
     <Compile Include="Exceptions\RemoteConnectionLostException.cs" />
     <Compile Include="Interface\Communication\IInvokeState.cs" />
+    <Compile Include="Interface\Communication\InvokeThreadModel.cs" />
     <Compile Include="Interface\Communication\MessageType.cs" />
     <Compile Include="Interface\Communication\Raw\IRawMessage.cs" />
     <Compile Include="Interface\Communication\Raw\RawMessageFormat.cs" />

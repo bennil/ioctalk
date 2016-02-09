@@ -1,21 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using BSAG.IOCTalk.Common.Interface.Session;
+﻿using BSAG.IOCTalk.Common.Exceptions;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Container;
+using BSAG.IOCTalk.Common.Interface.Logging;
+using BSAG.IOCTalk.Common.Interface.Reflection;
+using BSAG.IOCTalk.Common.Interface.Session;
+using BSAG.IOCTalk.Common.Reflection;
+using BSAG.IOCTalk.Common.Session;
+using BSAG.IOCTalk.Communication.Common.Collections;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading;
-using BSAG.IOCTalk.Common.Session;
-using System.Xml.Serialization;
-using System.Collections.Concurrent;
-using BSAG.IOCTalk.Common.Exceptions;
-using BSAG.IOCTalk.Common.Interface.Reflection;
-using BSAG.IOCTalk.Common.Reflection;
-using BSAG.IOCTalk.Common.Interface.Logging;
 using System.Runtime.Serialization;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace BSAG.IOCTalk.Communication.Common
 {
@@ -53,7 +55,7 @@ namespace BSAG.IOCTalk.Communication.Common
         /// <summary>
         /// Method info reflection cache
         /// </summary>
-        protected Dictionary<string, IInvokeMethodInfo> methodInfoCache = new Dictionary<string, IInvokeMethodInfo>();
+        protected IDictionary<string, IInvokeMethodInfo> methodInfoCache;
 
         /// <summary>
         /// Custom response wait handler
@@ -93,6 +95,10 @@ namespace BSAG.IOCTalk.Communication.Common
         private SpinWait spinWait = new SpinWait();
         private long pendingSessionCreationCount = 0;
         private string serializerTypeName = "BSAG.IOCTalk.Serialization.Json.JsonMessageSerializer, BSAG.IOCTalk.Serialization.Json";
+        private InvokeThreadModel invokeThreadModel = InvokeThreadModel.CallerThread;
+        private Thread callerThread;
+        private LightBlockConcurrentQueue<Tuple<ISession, IGenericMessage>> callerQueue;
+        private bool isActive = true;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -313,6 +319,33 @@ namespace BSAG.IOCTalk.Communication.Common
         /// Occurs when a session is terminated.
         /// </summary>
         public event EventHandler<SessionEventArgs> SessionTerminated;
+
+        /// <summary>
+        /// Gets or sets the invoke thread model.
+        /// </summary>
+        /// <value>
+        /// The invoke thread model.
+        /// </value>
+        public InvokeThreadModel InvokeThreadModel
+        {
+            get
+            {
+                return invokeThreadModel;
+            }
+            set
+            {
+                if (invokeThreadModel != value)
+                {
+                    if (this.containerHost != null)
+                    {
+                        throw new InvalidOperationException("The InvokeThreadModel can't be changed after container registration!");
+                    }
+
+                    invokeThreadModel = value;
+                }
+            }
+        }
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -326,13 +359,28 @@ namespace BSAG.IOCTalk.Communication.Common
         /// </summary>
         public virtual void Init()
         {
+            isActive = true;
         }
-        
+
         /// <summary>
         /// Communication service shutdown
         /// </summary>
         public virtual void Shutdown()
         {
+            if (isActive)
+            {
+                isActive = false;
+
+                if (callerQueue != null)
+                {
+                    callerQueue.Cancel();   // release caller queue thread
+                }
+
+                if (DataStreamLogger != null)
+                {
+                    DataStreamLogger.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -403,10 +451,17 @@ namespace BSAG.IOCTalk.Communication.Common
 
         private void OnSessionCreatedInternal(object newSessionObj)
         {
-            SessionEventArgs newSessionArgs = (SessionEventArgs)newSessionObj;
-            if (SessionCreated != null)
+            try
             {
-                SessionCreated(this, newSessionArgs);
+                SessionEventArgs newSessionArgs = (SessionEventArgs)newSessionObj;
+                if (SessionCreated != null)
+                {
+                    SessionCreated(this, newSessionArgs);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex.ToString());
             }
         }
 
@@ -525,6 +580,23 @@ namespace BSAG.IOCTalk.Communication.Common
                 }
 
                 this.dataStreamLogger = (IDataStreamLogger)Activator.CreateInstance(dataStreamLoggerType);
+            }
+
+            if (InvokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.CallerThread)
+            {
+                callerQueue = new LightBlockConcurrentQueue<Tuple<ISession, IGenericMessage>>();
+                callerThread = new Thread(new ThreadStart(CallerThreadProcess));
+                callerThread.Name = "IOCTalkCallerThread";
+                callerThread.Start();
+            }
+
+            if (InvokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.IndividualTask)
+            {
+                methodInfoCache = new ConcurrentDictionary<string, IInvokeMethodInfo>();
+            }
+            else
+            {
+                methodInfoCache = new Dictionary<string, IInvokeMethodInfo>();
             }
 
             this.serializer.RegisterContainerHost(containerHost);
@@ -690,15 +762,23 @@ namespace BSAG.IOCTalk.Communication.Common
             if (responseExpected)
             {
                 // block thread and wait for return object response
-                if (customResponseWaitHandler != null)
+                if (invokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.CallerThread)
                 {
-                    customResponseWaitHandler.WaitForResponse(invokeState);
+                    // Use caller thread wait function (custom response handler is in CallerThread mode not supported)
+                    WaitForResponseAndProcessOtherCalls(invokeState);
                 }
                 else
                 {
-                    if (!invokeState.WaitHandle.WaitOne(requestTimeout))
+                    if (customResponseWaitHandler != null)
                     {
-                        throw new TimeoutException(string.Format("Request timeout occured! Request: {0}; timeout time: {1}", invokeState.Method.Name, requestTimeout));
+                        customResponseWaitHandler.WaitForResponse(invokeState);
+                    }
+                    else
+                    {
+                        if (!invokeState.WaitHandle.WaitOne(requestTimeout))
+                        {
+                            throw new TimeoutException(string.Format("Request timeout occured! Request: {0}; timeout time: {1}", invokeState.Method.Name, requestTimeout));
+                        }
                     }
                 }
 
@@ -731,6 +811,7 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
+
         /// <summary>
         /// Processes the received message string.
         /// </summary>
@@ -738,52 +819,71 @@ namespace BSAG.IOCTalk.Communication.Common
         /// <param name="messageString">The message string.</param>
         public void ProcessReceivedMessageString(int sessionId, string messageString)
         {
-            WaitForPendingSessions();
-
-            ISession session;
-            if (!sessionDictionary.TryGetValue(sessionId, out session))
+            try
             {
-                // session terminated -> ignore packets
+                WaitForPendingSessions();
+
+                ISession session;
+                if (!sessionDictionary.TryGetValue(sessionId, out session))
+                {
+                    // session terminated -> ignore packets
+                    if (logDataStream)
+                    {
+                        dataStreamLogger.LogStreamMessage(sessionId, true, DismissInvalidSessionMessageLogTag + messageString);
+                    }
+                    return;
+                }
+
                 if (logDataStream)
                 {
-                    dataStreamLogger.LogStreamMessage(sessionId, true, DismissInvalidSessionMessageLogTag + messageString);
+                    dataStreamLogger.LogStreamMessage(sessionId, true, messageString);
                 }
-                return;
-            }
 
-            if (logDataStream)
+                IGenericMessage message = serializer.DeserializeFromString(messageString, session);
+
+                ProcessReceivedMessage(session, message);
+            }
+            catch (Exception ex)
             {
-                dataStreamLogger.LogStreamMessage(sessionId, true, messageString);
+                logger.Error(string.Format("Unexpected error during message processing! Message: \"{0}\" \n Exception: {1}", messageString, ex.ToString()));
             }
-
-            IGenericMessage message = serializer.DeserializeFromString(messageString, session);
-
-            ProcessReceivedMessage(session, message);
         }
 
+        /// <summary>
+        /// Processes the received message bytes.
+        /// </summary>
+        /// <param name="sessionId">The session id.</param>
+        /// <param name="messageBytes">The message bytes.</param>
         public void ProcessReceivedMessageBytes(int sessionId, byte[] messageBytes)
         {
-            WaitForPendingSessions();
-
-            ISession session;
-            if (!sessionDictionary.TryGetValue(sessionId, out session))
+            try
             {
-                // session terminated -> ignore packets
+                WaitForPendingSessions();
+
+                ISession session;
+                if (!sessionDictionary.TryGetValue(sessionId, out session))
+                {
+                    // session terminated -> ignore packets
+                    if (logDataStream)
+                    {
+                        dataStreamLogger.LogStreamMessage(sessionId, true, DismissInvalidSessionMessageLogTag + Encoding.UTF8.GetString(messageBytes));
+                    }
+                    return;
+                }
+
                 if (logDataStream)
                 {
-                    dataStreamLogger.LogStreamMessage(sessionId, true, DismissInvalidSessionMessageLogTag + Encoding.UTF8.GetString(messageBytes));
+                    dataStreamLogger.LogStreamMessage(sessionId, true, messageBytes);
                 }
-                return;
-            }
 
-            if (logDataStream)
+                IGenericMessage message = serializer.DeserializeFromBytes(messageBytes, session);
+
+                ProcessReceivedMessage(session, message);
+            }
+            catch (Exception ex)
             {
-                dataStreamLogger.LogStreamMessage(sessionId, true, messageBytes);
+                logger.Error(string.Format("Unexpected error during message processing! Message: \"{0}\" \n Exception: {1}", Encoding.UTF8.GetString(messageBytes), ex.ToString()));
             }
-
-            IGenericMessage message = serializer.DeserializeFromBytes(messageBytes, session);
-
-            ProcessReceivedMessage(session, message);
         }
 
         private void WaitForPendingSessions()
@@ -811,97 +911,26 @@ namespace BSAG.IOCTalk.Communication.Common
                 case MessageType.MethodInvokeRequest:
                 case MessageType.AsyncMethodInvokeRequest:
 
-                    try
+                    switch (invokeThreadModel)
                     {
-                        // call remote invoke request
-                        object implementationInstance = containerHost.GetInterfaceImplementationInstance(session, message.Target);
+                        case InvokeThreadModel.CallerThread:
+                            // enqueue caller thread invoke
+                            callerQueue.Enqueue(new Tuple<ISession, IGenericMessage>(session, message));
+                            break;
 
-                        if (implementationInstance == null)
-                        {
-                            throw new Exception("No implementation for the interface \"" + message.Target + "\" found!");
-                        }
-                        else if (implementationInstance.GetType().Namespace == TypeService.AutoGeneratedProxiesNamespace)
-                        {
-                            throw new Exception("No implementation for the interface \"" + message.Target + "\" found! The auto generated proxy \"" + implementationInstance.GetType().FullName + "\" is not valid for remote invoke requests.");
-                        }
+                        case InvokeThreadModel.ReceiverThread:
+                            // call method directly in this receiver thread
+                            CallMethod(session, message);
+                            break;
 
-                        Type serviceType = implementationInstance.GetType();
-
-                        // Get method
-                        IInvokeMethodInfo methodInfo;
-                        string invokeInfoCacheKey = InvokeMethodInfo.CreateKey(message.Target, message.Name, serviceType);
-                        if (!methodInfoCache.TryGetValue(invokeInfoCacheKey, out methodInfo))
-                        {
-                            Type interfaceType = serviceType.GetInterface(message.Target);
-                            methodInfo = new InvokeMethodInfo(interfaceType, message.Name, null, serviceType);
-                            methodInfoCache.Add(invokeInfoCacheKey, methodInfo);
-                        }
-
-                        // Get method params
-                        object[] parameters = null;
-                        if (message.Payload != null)
-                        {
-                            parameters = (object[])message.Payload;
-
-                            // check parameter types and convert is necesarry
-                            var parameterInfos = methodInfo.ParameterInfos;
-                            if (parameters.Length != parameters.Length)
+                        case InvokeThreadModel.IndividualTask:
+                            // invoke in new task
+                            Task.Factory.StartNew(() =>
                             {
-                                throw new MethodAccessException("Parameter count mismatch! Method name: " + message.Name + "; Interface: " + message.Target);
-                            }
-                        }
-
-                        // Invoke method
-                        object returnObject = methodInfo.InterfaceMethod.Invoke(implementationInstance, parameters);
-
-                        bool responseExpected = message.Type != MessageType.AsyncMethodInvokeRequest;
-                        if (responseExpected)
-                        {
-                            object responseObject;
-                            if (methodInfo.OutParameters != null)
-                            {
-                                // method contains out parameters
-                                // create a list of return values
-                                // Index 0: method return object
-                                // Index 1 - x: out parameter values
-                                object[] responseArray = new object[methodInfo.OutParameters.Length + 1];
-                                responseArray[0] = returnObject;
-
-                                for (int i = 0; i < methodInfo.OutParameters.Length; i++)
-                                {
-                                    responseArray[i + 1] = parameters[methodInfo.OutParameters[i].Position];
-                                }
-
-                                responseObject = responseArray;
-                            }
-                            else
-                            {
-                                responseObject = returnObject;
-                            }
-
-                            // Send response message
-                            GenericMessage responseMessage = new GenericMessage(message.RequestId, responseObject);
-                            baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, methodInfo);
-                        }
-
+                                CallMethod(session, message);
+                            });
+                            break;
                     }
-                    catch (Exception ex)
-                    {
-                        logger.Debug(string.Format("Error during remote call processing from session ID {0}. The exception will be send to the caller. Details: {1}", session.SessionId, ex.ToString()));
-
-                        if (ex is TargetInvocationException)
-                        {
-                            TargetInvocationException targetInvokeEx = (TargetInvocationException)ex;
-
-                            // unwrap reflection (invoke) exception container
-                            ex = targetInvokeEx.InnerException;
-                        }
-
-                        // Send exception message
-                        GenericMessage responseMessage = new GenericMessage(message.RequestId, ex);
-                        baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, null);
-                    }
-
                     break;
 
 
@@ -943,7 +972,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
 
                 case MessageType.Exception:
-                    
+
                     IInvokeState invokeExceptionParam;
                     if (session.PendingRequests.TryGetValue(message.RequestId, out invokeExceptionParam))
                     {
@@ -995,6 +1024,101 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
+        private void CallMethod(ISession session, IGenericMessage message)
+        {
+
+            try
+            {
+                // call remote invoke request
+                object implementationInstance = containerHost.GetInterfaceImplementationInstance(session, message.Target);
+
+                if (implementationInstance == null)
+                {
+                    throw new Exception("No implementation for the interface \"" + message.Target + "\" found!");
+                }
+                else if (implementationInstance.GetType().Namespace == TypeService.AutoGeneratedProxiesNamespace)
+                {
+                    throw new Exception("No implementation for the interface \"" + message.Target + "\" found! The auto generated proxy \"" + implementationInstance.GetType().FullName + "\" is not valid for remote invoke requests.");
+                }
+
+                Type serviceType = implementationInstance.GetType();
+
+                // Get method
+                IInvokeMethodInfo methodInfo;
+                string invokeInfoCacheKey = InvokeMethodInfo.CreateKey(message.Target, message.Name, serviceType);
+                if (!methodInfoCache.TryGetValue(invokeInfoCacheKey, out methodInfo))
+                {
+                    Type interfaceType = serviceType.GetInterface(message.Target);
+                    methodInfo = new InvokeMethodInfo(interfaceType, message.Name, null, serviceType);
+                    methodInfoCache[invokeInfoCacheKey] = methodInfo;
+                }
+
+                // Get method params
+                object[] parameters = null;
+                if (message.Payload != null)
+                {
+                    parameters = (object[])message.Payload;
+
+                    // check parameter types and convert is necesarry
+                    var parameterInfos = methodInfo.ParameterInfos;
+                    if (parameters.Length != parameters.Length)
+                    {
+                        throw new MethodAccessException("Parameter count mismatch! Method name: " + message.Name + "; Interface: " + message.Target);
+                    }
+                }
+
+                // Invoke method
+                object returnObject = methodInfo.InterfaceMethod.Invoke(implementationInstance, parameters);
+
+                bool responseExpected = message.Type != MessageType.AsyncMethodInvokeRequest;
+                if (responseExpected)
+                {
+                    object responseObject;
+                    if (methodInfo.OutParameters != null)
+                    {
+                        // method contains out parameters
+                        // create a list of return values
+                        // Index 0: method return object
+                        // Index 1 - x: out parameter values
+                        object[] responseArray = new object[methodInfo.OutParameters.Length + 1];
+                        responseArray[0] = returnObject;
+
+                        for (int i = 0; i < methodInfo.OutParameters.Length; i++)
+                        {
+                            responseArray[i + 1] = parameters[methodInfo.OutParameters[i].Position];
+                        }
+
+                        responseObject = responseArray;
+                    }
+                    else
+                    {
+                        responseObject = returnObject;
+                    }
+
+                    // Send response message
+                    GenericMessage responseMessage = new GenericMessage(message.RequestId, responseObject);
+                    baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, methodInfo);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                logger.Debug(string.Format("Error during remote call processing from session ID {0}. The exception will be send to the caller. Details: {1}", session.SessionId, ex.ToString()));
+
+                if (ex is TargetInvocationException)
+                {
+                    TargetInvocationException targetInvokeEx = (TargetInvocationException)ex;
+
+                    // unwrap reflection (invoke) exception container
+                    ex = targetInvokeEx.InnerException;
+                }
+
+                // Send exception message
+                GenericMessage responseMessage = new GenericMessage(message.RequestId, ex);
+                baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, null);
+            }
+        }
+
         /// <summary>
         /// Preserves the exception stack trace on rethrow.
         /// </summary>
@@ -1023,8 +1147,101 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
+        private void CallerThreadProcess()
+        {
+            try
+            {
+                logger.Info("Caller thread started");
+
+                foreach (var invokeItem in callerQueue.GetConsumingEnumerable())
+                {
+                    CallMethod(invokeItem.Item1, invokeItem.Item2);
+                }                
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Unexpected error! Caller thread will exit! Details: " + ex.ToString());
+            }
+            finally
+            {
+                logger.Info("Caller Thread stopped");
+            }
+        }
+
+
+        /// <summary>
+        /// Waits for response and process other calls.
+        /// This method can only by invoked by the caller thread (InvokeThreadModel = CallerThread).
+        /// </summary>
+        /// <param name="invokeState">State of the invoke.</param>
+        private void WaitForResponseAndProcessOtherCalls(InvokeState invokeState)
+        {
+            // process other invoke requests in meantime
+            bool waitForResponse = true;
+            bool otherCallsProcessed = false;
+            DateTime waitStartUtcTime = DateTime.UtcNow;
+            do
+            {
+                if (otherCallsProcessed)
+                {
+                    // only wait one milisecond max if other invokes are pending
+                    if (invokeState.WaitHandle.WaitOne(1, false))
+                    {
+                        waitForResponse = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (invokeState.WaitHandle.WaitOne(10, false))
+                    {
+                        waitForResponse = false;
+                        break;
+                    }
+                }
+
+                if (waitForResponse
+                    && DateTime.UtcNow.Subtract(waitStartUtcTime) > RequestTimeout)
+                {
+                    throw new TimeoutException(string.Format("Request timeout occured! Request: {0}; timeout time: {1}", invokeState.Method.Name, RequestTimeout));
+                }
+
+                if (!isActive)
+                {
+                    // process shutdown pending
+                    break;
+                }
+
+                // check if other invoke requests are received during waiting phase
+                otherCallsProcessed = ProcessPendingCallerThreadInvokesOnce();
+
+            } while (waitForResponse);
+        }
+
+        /// <summary>
+        /// Processes the pending caller thread invokes once.
+        /// This method can only by invoked by the caller thread waiting for responses!
+        /// </summary>
+        private bool ProcessPendingCallerThreadInvokesOnce()
+        {
+            if (callerQueue.Count > 0)
+            {
+                Tuple<ISession, IGenericMessage> invokeItem;
+                if (callerQueue.TryDequeue(out invokeItem))
+                {
+                    CallMethod(invokeItem.Item1, invokeItem.Item2);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         // ----------------------------------------------------------------------------------------
         #endregion
+
+
+
 
     }
 }

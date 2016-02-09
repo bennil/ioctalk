@@ -67,6 +67,7 @@
     <Compile Include="..\Common\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
+    <Compile Include="Collections\LightBlockConcurrentQueue.cs" />
     <Compile Include="Factory\AppConfigSection.cs" />
     <Compile Include="Factory\IOCTalkLoader.cs" />
     <Compile Include="GenericCommunicationBaseService.cs" />

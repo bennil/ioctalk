@@ -69,6 +69,7 @@
   <ItemGroup>
     <Compile Include="GenericMessageTests.cs" />
     <Compile Include="JsonSerializerTest.cs" />
+    <Compile Include="LightBlockConcurrentQueueTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestObjects\BaseTestObject.cs" />
     <Compile Include="TestObjects\EnumTestObject.cs" />

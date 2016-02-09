@@ -42,10 +42,14 @@ namespace BSAG.IOCTalk.Test.Common.Service.MEF
             //throw new InvalidOperationException("Test exception!!");
             //throw new CustomTestException("Test message", 433452, "hello world!");
 
+
             test = "Hallo";
 
             if (timer != null)
                 return new PerfSubscribeResponse() { SubscsrbeId = 0, Time = DateTime.Now }; // already subscribed
+
+            // provoke lock
+            PerformanceMonitorClientNotification.OnPerformancedDataSubscribed();
 
             this.timer = new Timer(interval.TotalMilliseconds);
             this.timer.Elapsed += new ElapsedEventHandler(OnTimer_Elapsed);
@@ -105,6 +109,7 @@ namespace BSAG.IOCTalk.Test.Common.Service.MEF
 
         public MeasureType TestWithEnumReturn()
         {
+            PerformanceMonitorClientNotification.NestedTestCall();
             return MeasureType.Cpu;
         }
 

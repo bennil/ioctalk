@@ -13,5 +13,8 @@ namespace BSAG.IOCTalk.Test.Common
 
         void OnPerformanceData(IPerformanceData perfData, string computerName);
 
+        void OnPerformancedDataSubscribed();
+
+        bool NestedTestCall();
     }
 }

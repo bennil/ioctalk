@@ -169,7 +169,7 @@ namespace BSAG.IOCTalk.Serialization.Json
                 // check out of order json keys -> load manually
                 if (message.Type == MessageType.Undefined)
                 {
-                    message.Type = (MessageType)Enum.Parse(typeof(MessageType), GetJsonStringValue(context.JsonString, "Type"));
+                    message.Type = (MessageType)short.Parse(GetJsonSimpleStringValue(context.JsonString, "Type"));
                 }
                 if (message.Type == MessageType.Exception)
                 {
@@ -251,11 +251,11 @@ namespace BSAG.IOCTalk.Serialization.Json
                                 // check out of order json keys -> load manually
                                 if (message.Name == null)
                                 {
-                                    message.Name = GetJsonStringValue(context.JsonString, "Name");
+                                    message.Name = GetJsonSimpleStringValue(context.JsonString, "Name");
                                 }
                                 if (message.Target == null) 
                                 {                                    
-                                    message.Target = GetJsonStringValue(context.JsonString, "Target");
+                                    message.Target = GetJsonSimpleStringValue(context.JsonString, "Target");
                                 }
                                 
 
@@ -369,13 +369,40 @@ namespace BSAG.IOCTalk.Serialization.Json
 
 
 
-        private static string GetJsonStringValue(string json, string key)
+
+        private static string GetJsonSimpleStringValue(string json, string key)
         {
-            string keyTag = key + "\":\"";
+            string keyTag = "\"" + key + "\":";
             int startIndex = json.IndexOf(keyTag);
+            int endIndex;
+
             startIndex += keyTag.Length;
 
-            int endIndex = json.IndexOf(Structure.CharQuotationMark, startIndex + keyTag.Length);
+            if (json[startIndex] == 'n'
+                && json[startIndex + 1] == 'u'
+                && json[startIndex + 2] == 'l'
+                && json[startIndex + 3] == 'l')
+            {
+                return null;
+            }
+
+            if (json[startIndex] == Structure.CharQuotationMark)
+            {
+                startIndex++;
+
+                // value ends with quotation mark
+                endIndex = json.IndexOf(Structure.CharQuotationMark, startIndex);
+            }
+            else
+            {
+                // value ends with comma
+                endIndex = json.IndexOf(Structure.Comma, startIndex);
+
+                if (endIndex == -1)
+                {
+                    endIndex = json.IndexOf(Structure.CharRightBrace, startIndex);
+                }
+            }
 
             return json.Substring(startIndex, endIndex - startIndex);
         }
