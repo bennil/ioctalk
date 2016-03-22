@@ -69,6 +69,11 @@ namespace BSAG.IOCTalk.Communication.Common
         protected TimeSpan requestTimeout = new TimeSpan(0, 5, 0);
 
         /// <summary>
+        /// Defines the maximum time a session created client event is allowed to block the invoke processing.
+        /// </summary>
+        protected TimeSpan sessionCreatedEventTimeout = new TimeSpan(0, 0, 15);
+
+        /// <summary>
         /// Technical logger
         /// </summary>
         protected ILogger logger;
@@ -299,6 +304,27 @@ namespace BSAG.IOCTalk.Communication.Common
             set { requestTimeout = value; }
         }
 
+
+        /// <summary>
+        /// Gets or sets the maximum time a session created client event is allowed to block the invoke processing in seconds.
+        /// </summary>
+        public int SessionCreatedEventTimeoutSeconds
+        {
+            get { return (int)sessionCreatedEventTimeout.TotalSeconds; }
+            set { sessionCreatedEventTimeout = TimeSpan.FromSeconds(value); }
+        }
+
+        /// <summary>
+        /// Gets or sets the maximum time a session created client event is allowed to block the invoke processing.
+        /// Default: 15 seconds
+        /// </summary>
+        [XmlIgnore]
+        public TimeSpan SessionCreatedEventTimeout
+        {
+            get { return sessionCreatedEventTimeout; }
+            set { sessionCreatedEventTimeout = value; }
+        }
+
         /// <summary>
         /// Gets or sets a value indicating whether [use simple method description].
         /// false (default) = method names are full qualified including the invoke parameters signiture
@@ -435,11 +461,29 @@ namespace BSAG.IOCTalk.Communication.Common
                     // call session created event
                     if (SessionCreated != null)
                     {
-                        // start event in a new thread to avoid EndHandle blocking
-                        ThreadPool.QueueUserWorkItem(OnSessionCreatedInternal, new SessionEventArgs(newSession, sessionContractObject));
+                        // start session created events and wait for completion
+                        Task sessionCreatedEventTask = Task.Factory.StartNew(new Action<object>(OnSessionCreatedInternal), new SessionEventArgs(newSession, sessionContractObject));
 
-                        // provoke thread context switch
-                        Thread.Sleep(0);
+                        if (sessionCreatedEventTask.Wait(sessionCreatedEventTimeout))
+                        {
+                            logger.Debug("Session created events executed");
+                        }
+                        else
+                        {
+                            if (newSession.IsActive)
+                            {
+                                logger.Error(string.Format("Session created event timeout occured! The session created event did not complete after {0:N0} seconds! Please check the client initialization implementation.", sessionCreatedEventTimeout.TotalSeconds));
+
+                                // continue blocking: do not start processing without complete initialization
+                                sessionCreatedEventTask.Wait();
+
+                                logger.Info("Session created events executed");
+                            }
+                            else
+                            {
+                                logger.Warn(string.Format("Session \"{0}\" terminated during session creation.", newSession.Description));
+                            }
+                        }
                     }
                 }
             }
@@ -1156,7 +1200,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 foreach (var invokeItem in callerQueue.GetConsumingEnumerable())
                 {
                     CallMethod(invokeItem.Item1, invokeItem.Item2);
-                }                
+                }
             }
             catch (Exception ex)
             {
@@ -1245,3 +1289,4 @@ namespace BSAG.IOCTalk.Communication.Common
 
     }
 }
+
