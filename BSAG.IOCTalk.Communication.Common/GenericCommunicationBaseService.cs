@@ -68,10 +68,6 @@ namespace BSAG.IOCTalk.Communication.Common
         /// </summary>
         protected TimeSpan requestTimeout = new TimeSpan(0, 5, 0);
 
-        /// <summary>
-        /// Defines the maximum time a session created client event is allowed to block the invoke processing.
-        /// </summary>
-        protected TimeSpan sessionCreatedEventTimeout = new TimeSpan(0, 0, 15);
 
         /// <summary>
         /// Technical logger
@@ -102,7 +98,7 @@ namespace BSAG.IOCTalk.Communication.Common
         private string serializerTypeName = "BSAG.IOCTalk.Serialization.Json.JsonMessageSerializer, BSAG.IOCTalk.Serialization.Json";
         private InvokeThreadModel invokeThreadModel = InvokeThreadModel.CallerThread;
         private Thread callerThread;
-        private LightBlockConcurrentQueue<Tuple<ISession, IGenericMessage>> callerQueue;
+        private LightBlockConcurrentQueue<object> callerQueue;
         private bool isActive = true;
 
         // ----------------------------------------------------------------------------------------
@@ -306,26 +302,6 @@ namespace BSAG.IOCTalk.Communication.Common
 
 
         /// <summary>
-        /// Gets or sets the maximum time a session created client event is allowed to block the invoke processing in seconds.
-        /// </summary>
-        public int SessionCreatedEventTimeoutSeconds
-        {
-            get { return (int)sessionCreatedEventTimeout.TotalSeconds; }
-            set { sessionCreatedEventTimeout = TimeSpan.FromSeconds(value); }
-        }
-
-        /// <summary>
-        /// Gets or sets the maximum time a session created client event is allowed to block the invoke processing.
-        /// Default: 15 seconds
-        /// </summary>
-        [XmlIgnore]
-        public TimeSpan SessionCreatedEventTimeout
-        {
-            get { return sessionCreatedEventTimeout; }
-            set { sessionCreatedEventTimeout = value; }
-        }
-
-        /// <summary>
         /// Gets or sets a value indicating whether [use simple method description].
         /// false (default) = method names are full qualified including the invoke parameters signiture
         /// true            = only the plain method name will be transferred (no method overrides in interface classes possible)
@@ -417,6 +393,7 @@ namespace BSAG.IOCTalk.Communication.Common
         public void CreateSession(int sessionId, string description)
         {
             Interlocked.Increment(ref pendingSessionCreationCount);
+            bool decrementPendingSessions = true;
             ISession newSession = null;
             object sessionContractObject = null;
             try
@@ -461,35 +438,34 @@ namespace BSAG.IOCTalk.Communication.Common
                     // call session created event
                     if (SessionCreated != null)
                     {
-                        // start session created events and wait for completion
-                        Task sessionCreatedEventTask = Task.Factory.StartNew(new Action<object>(OnSessionCreatedInternal), new SessionEventArgs(newSession, sessionContractObject));
-
-                        if (sessionCreatedEventTask.Wait(sessionCreatedEventTimeout))
+                        // start session created events
+                        switch (invokeThreadModel)
                         {
-                            logger.Debug("Session created events executed");
-                        }
-                        else
-                        {
-                            if (newSession.IsActive)
-                            {
-                                logger.Error(string.Format("Session created event timeout occured! The session created event did not complete after {0:N0} seconds! Please check the client initialization implementation.", sessionCreatedEventTimeout.TotalSeconds));
+                            case InvokeThreadModel.CallerThread:
+                                callerQueue.Enqueue(new SessionEventArgs(newSession, sessionContractObject));
+                                break;
 
-                                // continue blocking: do not start processing without complete initialization
-                                sessionCreatedEventTask.Wait();
+                            case InvokeThreadModel.IndividualTask:
+                                Task.Factory.StartNew(new Action<object>(OnSessionCreatedInternal), new SessionEventArgs(newSession, sessionContractObject));
+                                break;
 
-                                logger.Info("Session created events executed");
-                            }
-                            else
-                            {
-                                logger.Warn(string.Format("Session \"{0}\" terminated during session creation.", newSession.Description));
-                            }
+                            case InvokeThreadModel.ReceiverThread:
+                                Interlocked.Decrement(ref pendingSessionCreationCount); // release lock to avoid deadlocks if session created is calling synchron remote methods
+                                decrementPendingSessions = false;
+                                OnSessionCreatedInternal(new SessionEventArgs(newSession, sessionContractObject));
+                                break;
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                logger.Error(ex.ToString());
+            }
             finally
             {
-                Interlocked.Decrement(ref pendingSessionCreationCount);
+                if (decrementPendingSessions)
+                    Interlocked.Decrement(ref pendingSessionCreationCount);
             }
         }
 
@@ -502,6 +478,8 @@ namespace BSAG.IOCTalk.Communication.Common
                 {
                     SessionCreated(this, newSessionArgs);
                 }
+
+                logger.Debug("Session created events executed");
             }
             catch (Exception ex)
             {
@@ -628,7 +606,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
             if (InvokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.CallerThread)
             {
-                callerQueue = new LightBlockConcurrentQueue<Tuple<ISession, IGenericMessage>>();
+                callerQueue = new LightBlockConcurrentQueue<object>();
                 callerThread = new Thread(new ThreadStart(CallerThreadProcess));
                 callerThread.Name = "IOCTalkCallerThread";
                 callerThread.Start();
@@ -1197,9 +1175,9 @@ namespace BSAG.IOCTalk.Communication.Common
             {
                 logger.Info("Caller thread started");
 
-                foreach (var invokeItem in callerQueue.GetConsumingEnumerable())
+                foreach (var item in callerQueue.GetConsumingEnumerable())
                 {
-                    CallMethod(invokeItem.Item1, invokeItem.Item2);
+                    ProcessCallerThreadItem(item);
                 }
             }
             catch (Exception ex)
@@ -1209,6 +1187,24 @@ namespace BSAG.IOCTalk.Communication.Common
             finally
             {
                 logger.Info("Caller Thread stopped");
+            }
+        }
+
+        private void ProcessCallerThreadItem(object item)
+        {
+            if (item is Tuple<ISession, IGenericMessage>)
+            {
+                Tuple<ISession, IGenericMessage> invokeItem = (Tuple<ISession, IGenericMessage>)item;
+                CallMethod(invokeItem.Item1, invokeItem.Item2);
+            }
+            else if (item is SessionEventArgs)
+            {
+                // create session queue delegate
+                OnSessionCreatedInternal(item);
+            }
+            else
+            {
+                logger.Error("Unexpected caller thread object: " + (item != null ? item.GetType().FullName : "NULL"));
             }
         }
 
@@ -1270,10 +1266,10 @@ namespace BSAG.IOCTalk.Communication.Common
         {
             if (callerQueue.Count > 0)
             {
-                Tuple<ISession, IGenericMessage> invokeItem;
-                if (callerQueue.TryDequeue(out invokeItem))
+                object item;
+                if (callerQueue.TryDequeue(out item))
                 {
-                    CallMethod(invokeItem.Item1, invokeItem.Item2);
+                    ProcessCallerThreadItem(item);
                     return true;
                 }
             }
