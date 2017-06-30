@@ -36,7 +36,7 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <value>
         /// The wait handle.
         /// </value>
-        ManualResetEvent WaitHandle { get; set; }
+        ManualResetEventSlim WaitHandle { get; set; }
 
         /// <summary>
         /// Gets or sets the return object.

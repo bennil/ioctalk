@@ -35,7 +35,7 @@ namespace BSAG.IOCTalk.Communication.Common
         // CommunicationHelper fields
         // ----------------------------------------------------------------------------------------
 
-        private const string DismissInvalidSessionMessageLogTag = "[Dismiss invalid session message]";
+        protected const string DismissInvalidSessionMessageLogTag = "[Dismiss invalid session message]";
 
         /// <summary>
         /// Common communication service (can be implemented in sub class)
@@ -55,7 +55,7 @@ namespace BSAG.IOCTalk.Communication.Common
         /// <summary>
         /// Method info reflection cache
         /// </summary>
-        protected IDictionary<string, IInvokeMethodInfo> methodInfoCache;
+        protected IDictionary<int, IInvokeMethodInfo> methodInfoCache;
 
         /// <summary>
         /// Custom response wait handler
@@ -66,8 +66,12 @@ namespace BSAG.IOCTalk.Communication.Common
         /// Request timeout
         /// Default: 5 min
         /// </summary>
-        protected TimeSpan requestTimeout = new TimeSpan(0, 5, 0);
+        protected TimeSpan requestTimeout = new TimeSpan(0, 3, 0);
 
+        /// <summary>
+        /// Defines the maximum time a session created client event is allowed to block the invoke processing.
+        /// </summary>
+        protected TimeSpan sessionCreatedEventTimeout = new TimeSpan(0, 0, 15);
 
         /// <summary>
         /// Technical logger
@@ -91,14 +95,14 @@ namespace BSAG.IOCTalk.Communication.Common
 
         private ISession[] sessions = new ISession[0];
         private CreateSessionHandler customCreateSessionHandler = null;
-        private Dictionary<int, ISession> sessionDictionary = new Dictionary<int, ISession>();
+        protected Dictionary<int, ISession> sessionDictionary = new Dictionary<int, ISession>();
         private object sessionLockSyncObj = new object();
         private SpinWait spinWait = new SpinWait();
         private long pendingSessionCreationCount = 0;
         private string serializerTypeName = "BSAG.IOCTalk.Serialization.Json.JsonMessageSerializer, BSAG.IOCTalk.Serialization.Json";
         private InvokeThreadModel invokeThreadModel = InvokeThreadModel.CallerThread;
         private Thread callerThread;
-        private LightBlockConcurrentQueue<object> callerQueue;
+        private LightBlockConcurrentQueue<Tuple<ISession, IGenericMessage>> callerQueue;
         private bool isActive = true;
 
         // ----------------------------------------------------------------------------------------
@@ -302,6 +306,26 @@ namespace BSAG.IOCTalk.Communication.Common
 
 
         /// <summary>
+        /// Gets or sets the maximum time a session created client event is allowed to block the invoke processing in seconds.
+        /// </summary>
+        public int SessionCreatedEventTimeoutSeconds
+        {
+            get { return (int)sessionCreatedEventTimeout.TotalSeconds; }
+            set { sessionCreatedEventTimeout = TimeSpan.FromSeconds(value); }
+        }
+
+        /// <summary>
+        /// Gets or sets the maximum time a session created client event is allowed to block the invoke processing.
+        /// Default: 15 seconds
+        /// </summary>
+        [XmlIgnore]
+        public TimeSpan SessionCreatedEventTimeout
+        {
+            get { return sessionCreatedEventTimeout; }
+            set { sessionCreatedEventTimeout = value; }
+        }
+
+        /// <summary>
         /// Gets or sets a value indicating whether [use simple method description].
         /// false (default) = method names are full qualified including the invoke parameters signiture
         /// true            = only the plain method name will be transferred (no method overrides in interface classes possible)
@@ -393,7 +417,6 @@ namespace BSAG.IOCTalk.Communication.Common
         public void CreateSession(int sessionId, string description)
         {
             Interlocked.Increment(ref pendingSessionCreationCount);
-            bool decrementPendingSessions = true;
             ISession newSession = null;
             object sessionContractObject = null;
             try
@@ -438,34 +461,13 @@ namespace BSAG.IOCTalk.Communication.Common
                     // call session created event
                     if (SessionCreated != null)
                     {
-                        // start session created events
-                        switch (invokeThreadModel)
-                        {
-                            case InvokeThreadModel.CallerThread:
-                                callerQueue.Enqueue(new SessionEventArgs(newSession, sessionContractObject));
-                                break;
-
-                            case InvokeThreadModel.IndividualTask:
-                                Task.Factory.StartNew(new Action<object>(OnSessionCreatedInternal), new SessionEventArgs(newSession, sessionContractObject));
-                                break;
-
-                            case InvokeThreadModel.ReceiverThread:
-                                Interlocked.Decrement(ref pendingSessionCreationCount); // release lock to avoid deadlocks if session created is calling synchron remote methods
-                                decrementPendingSessions = false;
-                                OnSessionCreatedInternal(new SessionEventArgs(newSession, sessionContractObject));
-                                break;
-                        }
+                        OnSessionCreatedInternal(new SessionEventArgs(newSession, sessionContractObject));
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                logger.Error(ex.ToString());
-            }
             finally
             {
-                if (decrementPendingSessions)
-                    Interlocked.Decrement(ref pendingSessionCreationCount);
+                Interlocked.Decrement(ref pendingSessionCreationCount);
             }
         }
 
@@ -478,8 +480,6 @@ namespace BSAG.IOCTalk.Communication.Common
                 {
                     SessionCreated(this, newSessionArgs);
                 }
-
-                logger.Debug("Session created events executed");
             }
             catch (Exception ex)
             {
@@ -530,7 +530,7 @@ namespace BSAG.IOCTalk.Communication.Common
         /// Registers the container host.
         /// </summary>
         /// <param name="containerHost">The container host.</param>
-        public void RegisterContainerHost(IGenericContainerHost containerHost)
+        public virtual void RegisterContainerHost(IGenericContainerHost containerHost)
         {
             if (this.containerHost != null)
             {
@@ -566,7 +566,7 @@ namespace BSAG.IOCTalk.Communication.Common
                     throw new TypeLoadException("Cant find the serializer type \"" + SerializerTypeName + "\"!");
                 }
 
-                this.serializer = (IGenericMessageSerializer)Activator.CreateInstance(serializerType);
+                this.serializer = (IGenericMessageSerializer)TypeService.CreateInstance(serializerType);
             }
 
             if (this.logger == null)
@@ -583,7 +583,7 @@ namespace BSAG.IOCTalk.Communication.Common
                     throw new TypeLoadException("Cant find the logger type \"" + LoggerTypeName + "\"!");
                 }
 
-                this.logger = (ILogger)Activator.CreateInstance(loggerType);
+                this.logger = (ILogger)TypeService.CreateInstance(loggerType);
             }
 
             if (logDataStream
@@ -601,12 +601,12 @@ namespace BSAG.IOCTalk.Communication.Common
                     throw new TypeLoadException("Cant find the data stream logger type \"" + DataStreamLoggerTypeName + "\"!");
                 }
 
-                this.dataStreamLogger = (IDataStreamLogger)Activator.CreateInstance(dataStreamLoggerType);
+                this.dataStreamLogger = (IDataStreamLogger)TypeService.CreateInstance(dataStreamLoggerType);
             }
 
             if (InvokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.CallerThread)
             {
-                callerQueue = new LightBlockConcurrentQueue<object>();
+                callerQueue = new LightBlockConcurrentQueue<Tuple<ISession, IGenericMessage>>();
                 callerThread = new Thread(new ThreadStart(CallerThreadProcess));
                 callerThread.Name = "IOCTalkCallerThread";
                 callerThread.Start();
@@ -614,11 +614,11 @@ namespace BSAG.IOCTalk.Communication.Common
 
             if (InvokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.IndividualTask)
             {
-                methodInfoCache = new ConcurrentDictionary<string, IInvokeMethodInfo>();
+                methodInfoCache = new ConcurrentDictionary<int, IInvokeMethodInfo>();
             }
             else
             {
-                methodInfoCache = new Dictionary<string, IInvokeMethodInfo>();
+                methodInfoCache = new Dictionary<int, IInvokeMethodInfo>();
             }
 
             this.serializer.RegisterContainerHost(containerHost);
@@ -753,7 +753,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 invokeState = new InvokeState();
                 invokeState.RequestMessage = requestMsg;
 
-                invokeState.WaitHandle = new ManualResetEvent(false);
+                invokeState.WaitHandle = new ManualResetEventSlim(false);
                 invokeState.Method = invokeInfo.InterfaceMethod;
                 invokeState.MethodSource = invokeInfo;
 
@@ -797,7 +797,7 @@ namespace BSAG.IOCTalk.Communication.Common
                     }
                     else
                     {
-                        if (!invokeState.WaitHandle.WaitOne(requestTimeout))
+                        if (!invokeState.WaitHandle.Wait(requestTimeout))
                         {
                             throw new TimeoutException(string.Format("Request timeout occured! Request: {0}; timeout time: {1}", invokeState.Method.Name, requestTimeout));
                         }
@@ -843,8 +843,6 @@ namespace BSAG.IOCTalk.Communication.Common
         {
             try
             {
-                WaitForPendingSessions();
-
                 ISession session;
                 if (!sessionDictionary.TryGetValue(sessionId, out session))
                 {
@@ -880,8 +878,6 @@ namespace BSAG.IOCTalk.Communication.Common
         {
             try
             {
-                WaitForPendingSessions();
-
                 ISession session;
                 if (!sessionDictionary.TryGetValue(sessionId, out session))
                 {
@@ -1067,7 +1063,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
                 // Get method
                 IInvokeMethodInfo methodInfo;
-                string invokeInfoCacheKey = InvokeMethodInfo.CreateKey(message.Target, message.Name, serviceType);
+                int invokeInfoCacheKey = InvokeMethodInfo.CreateKey(message.Target, message.Name, serviceType);
                 if (!methodInfoCache.TryGetValue(invokeInfoCacheKey, out methodInfo))
                 {
                     Type interfaceType = serviceType.GetInterface(message.Target);
@@ -1090,7 +1086,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 }
 
                 // Invoke method
-                object returnObject = methodInfo.InterfaceMethod.Invoke(implementationInstance, parameters);
+                object returnObject = methodInfo.Invoke(implementationInstance, parameters);
 
                 bool responseExpected = message.Type != MessageType.AsyncMethodInvokeRequest;
                 if (responseExpected)
@@ -1175,9 +1171,9 @@ namespace BSAG.IOCTalk.Communication.Common
             {
                 logger.Info("Caller thread started");
 
-                foreach (var item in callerQueue.GetConsumingEnumerable())
+                foreach (var invokeItem in callerQueue.GetConsumingEnumerable())
                 {
-                    ProcessCallerThreadItem(item);
+                    CallMethod(invokeItem.Item1, invokeItem.Item2);
                 }
             }
             catch (Exception ex)
@@ -1187,24 +1183,6 @@ namespace BSAG.IOCTalk.Communication.Common
             finally
             {
                 logger.Info("Caller Thread stopped");
-            }
-        }
-
-        private void ProcessCallerThreadItem(object item)
-        {
-            if (item is Tuple<ISession, IGenericMessage>)
-            {
-                Tuple<ISession, IGenericMessage> invokeItem = (Tuple<ISession, IGenericMessage>)item;
-                CallMethod(invokeItem.Item1, invokeItem.Item2);
-            }
-            else if (item is SessionEventArgs)
-            {
-                // create session queue delegate
-                OnSessionCreatedInternal(item);
-            }
-            else
-            {
-                logger.Error("Unexpected caller thread object: " + (item != null ? item.GetType().FullName : "NULL"));
             }
         }
 
@@ -1225,7 +1203,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 if (otherCallsProcessed)
                 {
                     // only wait one milisecond max if other invokes are pending
-                    if (invokeState.WaitHandle.WaitOne(1, false))
+                    if (invokeState.WaitHandle.Wait(1))
                     {
                         waitForResponse = false;
                         break;
@@ -1233,7 +1211,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 }
                 else
                 {
-                    if (invokeState.WaitHandle.WaitOne(10, false))
+                    if (invokeState.WaitHandle.Wait(10))
                     {
                         waitForResponse = false;
                         break;
@@ -1266,10 +1244,10 @@ namespace BSAG.IOCTalk.Communication.Common
         {
             if (callerQueue.Count > 0)
             {
-                object item;
-                if (callerQueue.TryDequeue(out item))
+                Tuple<ISession, IGenericMessage> invokeItem;
+                if (callerQueue.TryDequeue(out invokeItem))
                 {
-                    ProcessCallerThreadItem(item);
+                    CallMethod(invokeItem.Item1, invokeItem.Item2);
                     return true;
                 }
             }
@@ -1285,4 +1263,3 @@ namespace BSAG.IOCTalk.Communication.Common
 
     }
 }
-

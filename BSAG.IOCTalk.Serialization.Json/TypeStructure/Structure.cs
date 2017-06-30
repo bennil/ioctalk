@@ -112,16 +112,16 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         {
             switch (json[valueStartIndex])
             {
+                case Structure.CharQuotationMark:
+                    // string value
+                    return typeof(string);
+
                 case Structure.CharLeftBrace:
                     // Unable to determine complex object default type
                     return null;
 
                 case Structure.CharLeftSquareBrace:
                     return typeof(List<object>);
-
-                case Structure.CharQuotationMark:
-                    // string value
-                    return typeof(string);
 
                 default:
                     // value type resolution

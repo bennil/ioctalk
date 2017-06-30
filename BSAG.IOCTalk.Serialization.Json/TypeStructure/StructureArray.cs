@@ -7,6 +7,7 @@ using System.Globalization;
 using BSAG.IOCTalk.Common.Attributes;
 using System.Reflection;
 using System.Collections.Concurrent;
+using BSAG.IOCTalk.Common.Reflection;
 
 namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 {
@@ -310,7 +311,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 }
                 else
                 {
-                    object targetCollectionObj = Activator.CreateInstance(targetCollectionType);
+                    object targetCollectionObj = TypeService.CreateInstance(targetCollectionType);
 
                     if (targetCollectionObj is IList)
                     {

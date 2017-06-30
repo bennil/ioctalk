@@ -13,6 +13,7 @@ using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Interface.Config;
 using System.Xml.Linq;
+using BSAG.IOCTalk.Common.Reflection;
 
 namespace BSAG.IOCTalk.Container.MEF
 {
@@ -26,7 +27,7 @@ namespace BSAG.IOCTalk.Container.MEF
     /// </remarks>
     [Export(typeof(IGenericContainerHost))]
     public class TalkContainerHostMEF<TServiceContractSession> : TalkContainerHostMEF<TServiceContractSession, SessionManager<TServiceContractSession>>, IGenericContractContainerHost<TServiceContractSession>
-        where TServiceContractSession : class, new()
+        where TServiceContractSession : class
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="TalkContainerHostMEF&lt;TServiceContractSession&gt;"/> class.
@@ -47,7 +48,7 @@ namespace BSAG.IOCTalk.Container.MEF
     /// </remarks>
     [Export(typeof(IGenericContainerHost))]
     public class TalkContainerHostMEF<TServiceContractSession, TServiceContractSessionManager> : IGenericContractContainerHost<TServiceContractSession, TServiceContractSessionManager>, IXmlConfig
-        where TServiceContractSession : class, new()
+        where TServiceContractSession : class
         where TServiceContractSessionManager : class, IServiceContractSessionManager<TServiceContractSession>, new()
     {
         #region TalkContainerHostMEF fields
@@ -121,7 +122,7 @@ namespace BSAG.IOCTalk.Container.MEF
         /// Gets or sets the xml configuration.
         /// </summary>
         public XDocument Config { get; set; }
-        
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -247,12 +248,16 @@ namespace BSAG.IOCTalk.Container.MEF
             {
                 sessionManager.OnServiceContractSessionCreated(e.Session, contractSession);
 
-                if (SessionCreated != null)
+                // in case of an interface the SessionCreated contract call is performed by the container registration
+                if (!typeof(TServiceContractSession).IsInterface)
                 {
-                    SessionCreated(contractSession, e);
-                }
+                    if (SessionCreated != null)
+                    {
+                        SessionCreated(contractSession, e);
+                    }
 
-                SessionInstanceManager.CheckSessionStateCreatedCall(e.Session, contractSession);
+                    SessionInstanceManager.CheckSessionStateCreatedCall(e.Session, contractSession);
+                }
             }
         }
 
@@ -298,13 +303,55 @@ namespace BSAG.IOCTalk.Container.MEF
         /// <returns></returns>
         public virtual object CreateSessionContractInstance(ISession session)
         {
-            TServiceContractSession sessionContract = (TServiceContractSession)Activator.CreateInstance(serviceContractSessionType);
+            container.RegisterSession(session);
+
+            bool isContractManualCreated;
+            TServiceContractSession sessionContract;
+            if (serviceContractSessionType.IsInterface)
+            {
+                // get interface export from container
+                var metadata = new Dictionary<string, Type>();
+                metadata.Add(CompositionConstants.ExportTypeIdentityMetadataName, serviceContractSessionType);
+
+                var importDefinition = new ContractBasedImportDefinition(
+                                   serviceContractSessionType.FullName,
+                                   serviceContractSessionType.FullName,
+                                   null,
+                                   ImportCardinality.ZeroOrOne,
+                                   true,
+                                   false,
+                                   CreationPolicy.NonShared);
+
+                var exportResult = container.GetExports(importDefinition).FirstOrDefault();
+                
+                if (exportResult != null)
+                {
+                    sessionContract = (TServiceContractSession)exportResult.Value;
+                }
+                else
+                {
+                    //todo: auto create contract implementation
+                    throw new TypeLoadException($"Can't find export for session contract interface: {serviceContractSessionType.FullName}");
+                }
+
+                isContractManualCreated = false;
+            }
+            else
+            {
+                // create new instance from concrete type
+                sessionContract = (TServiceContractSession)TypeService.CreateInstance(serviceContractSessionType);
+
+                isContractManualCreated = true;
+            }
 
             // set container session context
-            container.SetContainerSessionContext(session, sessionContract);
+            container.SetContainerSessionContext(sessionContract);
 
-            // compose parts
-            container.ComposeParts(sessionContract);
+            if (isContractManualCreated)
+            {
+                // compose parts
+                container.ComposeParts(sessionContract);
+            }
 
             // reset container session context
             container.ResetContainerSessionContext();
@@ -385,7 +432,7 @@ namespace BSAG.IOCTalk.Container.MEF
                 throw new InvalidOperationException(string.Format("The exposed sub type \"{0}\" must be an interface!", interfaceType.FullName));
             }
 
-            exposedSubInterfaceTypeMapping[sourceType] = interfaceType;            
+            exposedSubInterfaceTypeMapping[sourceType] = interfaceType;
         }
 
         private void LoadXmlConfig(List<ComposablePartCatalog> catalogs, out bool createDebugEnabledAssembly)
@@ -438,7 +485,7 @@ namespace BSAG.IOCTalk.Container.MEF
         #endregion
 
 
-       
+
     }
 
 }

@@ -378,7 +378,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 object target;
                 try
                 {
-                    target = Activator.CreateInstance(this.concreteTargetType);
+                    target = TypeService.CreateInstance(this.concreteTargetType);
                 }
                 catch (Exception ex)
                 {

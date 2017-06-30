@@ -8,3 +8,13 @@ E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-p
 E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\obj\Debug\ResolveAssemblyReference.cache
 E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\obj\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.dll
 E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Test.Common.Client\obj\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.pdb
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.dll
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.pdb
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Common.dll
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Test.Common.dll
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Common.pdb
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Common.xml
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test.Common.Client\bin\Debug\BSAG.IOCTalk.Test.Common.pdb
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test.Common.Client\obj\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.csprojResolveAssemblyReference.cache
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test.Common.Client\obj\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.dll
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test.Common.Client\obj\Debug\BSAG.IOCTalk.Test.Common.Client.MEF.pdb

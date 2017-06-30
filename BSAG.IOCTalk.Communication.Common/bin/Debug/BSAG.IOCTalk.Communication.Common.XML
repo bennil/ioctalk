@@ -4,27 +4,53 @@
         <name>BSAG.IOCTalk.Communication.Common</name>
     </assembly>
     <members>
-        <member name="T:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport">
+        <member name="T:BSAG.IOCTalk.Communication.Common.Collections.LightBlockConcurrentQueue`1">
             <summary>
-            Common communication interface
+            The <see cref="T:BSAG.IOCTalk.Communication.Common.Collections.LightBlockConcurrentQueue`1"/> class extends the <see cref="T:System.Collections.Concurrent.ConcurrentQueue`1"/> implementation with lightweight block capabilities.
+            This implementation uses about 4 times less cpu resources than <see cref="T:System.Collections.Concurrent.BlockingCollection`1"/>.Take method (depending on the scenario).
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2015-12-16
+            </remarks>
+            <typeparam name="T">The queue object type</typeparam>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.Collections.LightBlockConcurrentQueue`1.#ctor">
+            <summary>
+            Creates a new instance of the <see cref="T:BSAG.IOCTalk.Communication.Common.Collections.LightBlockConcurrentQueue`1"/> class.
             </summary>
         </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.SendMessage(BSAG.IOCTalk.Common.Interface.Communication.IGenericMessage,System.Int32,System.Object)">
+        <member name="M:BSAG.IOCTalk.Communication.Common.Collections.LightBlockConcurrentQueue`1.Finalize">
             <summary>
-            Sends the generic message.
+            Cleanup wait handle resources
             </summary>
-            <param name="message">The message.</param>
-            <param name="receiverSessionId">The receiver session id.</param>
-            <param name="context">The context.</param>
         </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.IsAsyncSendCurrentlyPossible(BSAG.IOCTalk.Common.Interface.Session.ISession)">
+        <member name="M:BSAG.IOCTalk.Communication.Common.Collections.LightBlockConcurrentQueue`1.Enqueue(`0)">
             <summary>
-            Determines whether [is async send currently possible] depending on the current load situation.
+            Enqueues the given object to the end of the queue.
             </summary>
-            <param name="session">The session.</param>
-            <returns>
-              <c>true</c> if [is async send currently possible] [the specified session]; otherwise, <c>false</c>.
-            </returns>
+            <exception cref="T:System.OperationCanceledException">Occurs when the queue is already cancelled.</exception>
+            <param name="item">Add object</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.Collections.LightBlockConcurrentQueue`1.TryDequeueOrWaitForItem(`0@)">
+            <summary>
+            Attempts to remove and return the object at the beginning of the queue. If the queue is empty the method will block until an item is available.
+            The method uses a combination of lightweight spin blocking (pull) and if no item is received within a certain period the method will block using a resource friendly wait handle mechanism (push).
+            </summary>
+            <returns>Returns <c>false</c> if the queue is cancelled; otherwise <c>true</c>.</returns>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.Collections.LightBlockConcurrentQueue`1.GetConsumingEnumerable">
+            <summary>
+            Provides a consuming blocking iteration for new queue items.
+            The iteration will be released only when the queue is canceled.
+            </summary>
+            <returns>An <see cref="T:System.Collections.Generics.IEnumerable{T}"/> that removes and returns items from the queue.</returns>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.Collections.LightBlockConcurrentQueue`1.Cancel">
+            <summary>
+            Aborts waiting queue processes and stops enqueue.
+            </summary>
+            <exception cref="T:System.TimeoutException">Cancel timeout occured</exception>
         </member>
         <member name="T:BSAG.IOCTalk.Communication.Common.Factory.AppConfigSection">
             <summary>
@@ -67,6 +93,325 @@
             Initializes the IOC-Talk communication using the application configuration.
             </summary>
             <returns></returns>
+        </member>
+        <member name="T:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService">
+            <summary>
+            IGenericCommunicationService base implementation
+            </summary>
+            <remarks>
+            Author(s): Benjamin Link
+            created on: 2013-08-21
+            </remarks>
+        </member>
+        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.baseCommunicationServiceSupport">
+            <summary>
+            Common communication service (can be implemented in sub class)
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.containerHost">
+            <summary>
+            IOC container host
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.serializer">
+            <summary>
+            Message serializer
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.methodInfoCache">
+            <summary>
+            Method info reflection cache
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.customResponseWaitHandler">
+            <summary>
+            Custom response wait handler
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.requestTimeout">
+            <summary>
+            Request timeout
+            Default: 5 min
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.sessionCreatedEventTimeout">
+            <summary>
+            Defines the maximum time a session created client event is allowed to block the invoke processing.
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.logger">
+            <summary>
+            Technical logger
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.dataStreamLogger">
+            <summary>
+            Data stream logger
+            </summary>
+        </member>
+        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.logDataStream">
+            <summary>
+            Log data stream switch
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.BaseCommunicationServiceSupport">
+            <summary>
+            Gets or sets the base communication service support.
+            </summary>
+            <value>
+            The base communication service support.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.CustomResponseWaitHandler">
+            <summary>
+            Gets or sets the custom response wait handler.
+            </summary>
+            <value>
+            The custom response wait handler.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ContainerHost">
+            <summary>
+            Gets the container host.
+            </summary>
+            <value>
+            The container host.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.Serializer">
+            <summary>
+            Gets or sets once the message serializer.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.SerializerTypeName">
+            <summary>
+            Gets or sets the default name of the serializer type.
+            </summary>
+            <value>
+            The default name of the serializer type.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.LoggerTypeName">
+            <summary>
+            Gets or sets the name of the logger type.
+            </summary>
+            <value>
+            The name of the logger type.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.Logger">
+            <summary>
+            Gets the logger.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.DataStreamLoggerTypeName">
+            <summary>
+            Gets or sets the name of the data stream logger type.
+            </summary>
+            <value>
+            The name of the data stream logger type.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.LogDataStream">
+            <summary>
+            Gets or sets a value indicating whether [log data stream].
+            </summary>
+            <value>
+              <c>true</c> if [log data stream]; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.DataStreamLogger">
+            <summary>
+            Gets the data stream logger.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ClientSessions">
+            <summary>
+            Gets the sessions.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.CustomCreateSessionHandler">
+            <summary>
+            Gets or sets the custom create session handler.
+            </summary>
+            <value>
+            The custom create session handler.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.RequestTimeoutSeconds">
+            <summary>
+            Gets or sets the request timeout seconds.
+            Default: 300
+            </summary>
+            <value>
+            The request timeout seconds.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.RequestTimeout">
+            <summary>
+            Gets or sets the request timeout.
+            </summary>
+            <value>
+            The request timeout.
+            </value>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.SessionCreatedEventTimeoutSeconds">
+            <summary>
+            Gets or sets the maximum time a session created client event is allowed to block the invoke processing in seconds.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.SessionCreatedEventTimeout">
+            <summary>
+            Gets or sets the maximum time a session created client event is allowed to block the invoke processing.
+            Default: 15 seconds
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.UseSimpleMethodDescription">
+            <summary>
+            Gets or sets a value indicating whether [use simple method description].
+            false (default) = method names are full qualified including the invoke parameters signiture
+            true            = only the plain method name will be transferred (no method overrides in interface classes possible)
+            </summary>
+            <value>
+            	<c>true</c> if [use simple method description]; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="E:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.SessionCreated">
+            <summary>
+            Occurs when a session is created.
+            </summary>
+        </member>
+        <member name="E:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.SessionTerminated">
+            <summary>
+            Occurs when a session is terminated.
+            </summary>
+        </member>
+        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.InvokeThreadModel">
+            <summary>
+            Gets or sets the invoke thread model.
+            </summary>
+            <value>
+            The invoke thread model.
+            </value>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.Init">
+            <summary>
+            Inits the communication service.
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.Shutdown">
+            <summary>
+            Communication service shutdown
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.CreateSession(System.Int32,System.String)">
+            <summary>
+            Creates the session.
+            </summary>
+            <param name="sessionId">The session id.</param>
+            <param name="description">The description.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ProcessSessionTerminated(System.Int32)">
+            <summary>
+            Processes the session terminated.
+            </summary>
+            <param name="sessionId">The session id.</param>
+            <returns>Returns <c>true</c> if the session was found and terminated; otherwise <c>false</c>.</returns>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.RegisterContainerHost(BSAG.IOCTalk.Common.Interface.Container.IGenericContainerHost)">
+            <summary>
+            Registers the container host.
+            </summary>
+            <param name="containerHost">The container host.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.InvokeMethod``1(System.Object,System.Linq.Expressions.Expression{System.Action{``0}})">
+            <summary>
+            Invokes a remote interface method by a given lambda method expression.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="source">The source.</param>
+            <param name="expression">The expression.</param>
+            <returns></returns>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.InvokeMethod(System.Object,System.Reflection.MethodInfo,System.Object[])">
+            <summary>
+            Invokes a remote interface method.
+            </summary>
+            <param name="source">The source.</param>
+            <param name="method">The method.</param>
+            <param name="parameters">The parameters.</param>
+            <returns></returns>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.InvokeMethod(System.Object,BSAG.IOCTalk.Common.Interface.Reflection.IInvokeMethodInfo,System.Object[])">
+            <summary>
+            Invokes a remote interface method.
+            </summary>
+            <param name="source">The source.</param>
+            <param name="invokeInfo">The invoke info (cached reflection infos).</param>
+            <param name="parameters">The parameters.</param>
+            <returns></returns>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ProcessReceivedMessageString(System.Int32,System.String)">
+            <summary>
+            Processes the received message string.
+            </summary>
+            <param name="sessionId">The session id.</param>
+            <param name="messageString">The message string.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ProcessReceivedMessageBytes(System.Int32,System.Byte[])">
+            <summary>
+            Processes the received message bytes.
+            </summary>
+            <param name="sessionId">The session id.</param>
+            <param name="messageBytes">The message bytes.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ProcessReceivedMessage(BSAG.IOCTalk.Common.Interface.Session.ISession,BSAG.IOCTalk.Common.Interface.Communication.IGenericMessage)">
+            <summary>
+            Processes the received message.
+            </summary>
+            <param name="session">The session.</param>
+            <param name="message">The message.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.PreserveStackTrace(System.Exception)">
+            <summary>
+            Preserves the exception stack trace on rethrow.
+            </summary>
+            <param name="ex">The ex.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.WaitForResponseAndProcessOtherCalls(BSAG.IOCTalk.Communication.Common.InvokeState)">
+            <summary>
+            Waits for response and process other calls.
+            This method can only by invoked by the caller thread (InvokeThreadModel = CallerThread).
+            </summary>
+            <param name="invokeState">State of the invoke.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ProcessPendingCallerThreadInvokesOnce">
+            <summary>
+            Processes the pending caller thread invokes once.
+            This method can only by invoked by the caller thread waiting for responses!
+            </summary>
+        </member>
+        <member name="T:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport">
+            <summary>
+            Common communication interface
+            </summary>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.SendMessage(BSAG.IOCTalk.Common.Interface.Communication.IGenericMessage,System.Int32,System.Object)">
+            <summary>
+            Sends the generic message.
+            </summary>
+            <param name="message">The message.</param>
+            <param name="receiverSessionId">The receiver session id.</param>
+            <param name="context">The context.</param>
+        </member>
+        <member name="M:BSAG.IOCTalk.Communication.Common.ICommunicationBaseServiceSupport.IsAsyncSendCurrentlyPossible(BSAG.IOCTalk.Common.Interface.Session.ISession)">
+            <summary>
+            Determines whether [is async send currently possible] depending on the current load situation.
+            </summary>
+            <param name="session">The session.</param>
+            <returns>
+              <c>true</c> if [is async send currently possible] [the specified session]; otherwise, <c>false</c>.
+            </returns>
         </member>
         <member name="T:BSAG.IOCTalk.Communication.Common.ICustomResponseWaitHandler">
             <summary>
@@ -203,14 +548,6 @@
             <param name="requestId">The request id.</param>
             <param name="exception">The exception.</param>
         </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.ToString">
-            <summary>
-            Returns a <see cref="T:System.String"/> that represents this instance.
-            </summary>
-            <returns>
-            A <see cref="T:System.String"/> that represents this instance.
-            </returns>
-        </member>
         <member name="P:BSAG.IOCTalk.Communication.Common.GenericMessage.Type">
             <summary>
             Gets or sets the message type.
@@ -251,252 +588,13 @@
             The payload.
             </value>
         </member>
-        <member name="T:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService">
+        <member name="M:BSAG.IOCTalk.Communication.Common.GenericMessage.ToString">
             <summary>
-            IGenericCommunicationService base implementation
+            Returns a <see cref="T:System.String"/> that represents this instance.
             </summary>
-            <remarks>
-            Author(s): Benjamin Link
-            created on: 2013-08-21
-            </remarks>
-        </member>
-        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.baseCommunicationServiceSupport">
-            <summary>
-            Common communication service (can be implemented in sub class)
-            </summary>
-        </member>
-        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.containerHost">
-            <summary>
-            IOC container host
-            </summary>
-        </member>
-        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.serializer">
-            <summary>
-            Message serializer
-            </summary>
-        </member>
-        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.methodInfoCache">
-            <summary>
-            Method info reflection cache
-            </summary>
-        </member>
-        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.customResponseWaitHandler">
-            <summary>
-            Custom response wait handler
-            </summary>
-        </member>
-        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.requestTimeout">
-            <summary>
-            Request timeout
-            Default: 5 min
-            </summary>
-        </member>
-        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.logger">
-            <summary>
-            Technical logger
-            </summary>
-        </member>
-        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.dataStreamLogger">
-            <summary>
-            Data stream logger
-            </summary>
-        </member>
-        <member name="F:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.logDataStream">
-            <summary>
-            Log data stream switch
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.Init">
-            <summary>
-            Inits the communication service.
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.Shutdown">
-            <summary>
-            Communication service shutdown
-            </summary>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.CreateSession(System.Int32,System.String)">
-            <summary>
-            Creates the session.
-            </summary>
-            <param name="sessionId">The session id.</param>
-            <param name="description">The description.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ProcessSessionTerminated(System.Int32)">
-            <summary>
-            Processes the session terminated.
-            </summary>
-            <param name="sessionId">The session id.</param>
-            <returns>Returns <c>true</c> if the session was found and terminated; otherwise <c>false</c>.</returns>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.RegisterContainerHost(BSAG.IOCTalk.Common.Interface.Container.IGenericContainerHost)">
-            <summary>
-            Registers the container host.
-            </summary>
-            <param name="containerHost">The container host.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.InvokeMethod``1(System.Object,System.Linq.Expressions.Expression{System.Action{``0}})">
-            <summary>
-            Invokes a remote interface method by a given lambda method expression.
-            </summary>
-            <typeparam name="T"></typeparam>
-            <param name="source">The source.</param>
-            <param name="expression">The expression.</param>
-            <returns></returns>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.InvokeMethod(System.Object,System.Reflection.MethodInfo,System.Object[])">
-            <summary>
-            Invokes a remote interface method.
-            </summary>
-            <param name="source">The source.</param>
-            <param name="method">The method.</param>
-            <param name="parameters">The parameters.</param>
-            <returns></returns>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.InvokeMethod(System.Object,BSAG.IOCTalk.Common.Interface.Reflection.IInvokeMethodInfo,System.Object[])">
-            <summary>
-            Invokes a remote interface method.
-            </summary>
-            <param name="source">The source.</param>
-            <param name="invokeInfo">The invoke info (cached reflection infos).</param>
-            <param name="parameters">The parameters.</param>
-            <returns></returns>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ProcessReceivedMessageString(System.Int32,System.String)">
-            <summary>
-            Processes the received message string.
-            </summary>
-            <param name="sessionId">The session id.</param>
-            <param name="messageString">The message string.</param>
-        </member>
-        <member name="M:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ProcessReceivedMessage(BSAG.IOCTalk.Common.Interface.Session.ISession,BSAG.IOCTalk.Common.Interface.Communication.IGenericMessage)">
-            <summary>
-            Processes the received message.
-            </summary>
-            <param name="session">The session.</param>
-            <param name="message">The message.</param>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.BaseCommunicationServiceSupport">
-            <summary>
-            Gets or sets the base communication service support.
-            </summary>
-            <value>
-            The base communication service support.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.CustomResponseWaitHandler">
-            <summary>
-            Gets or sets the custom response wait handler.
-            </summary>
-            <value>
-            The custom response wait handler.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ContainerHost">
-            <summary>
-            Gets the container host.
-            </summary>
-            <value>
-            The container host.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.Serializer">
-            <summary>
-            Gets or sets once the message serializer.
-            </summary>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.SerializerTypeName">
-            <summary>
-            Gets or sets the default name of the serializer type.
-            </summary>
-            <value>
-            The default name of the serializer type.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.LoggerTypeName">
-            <summary>
-            Gets or sets the name of the logger type.
-            </summary>
-            <value>
-            The name of the logger type.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.Logger">
-            <summary>
-            Gets the logger.
-            </summary>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.DataStreamLoggerTypeName">
-            <summary>
-            Gets or sets the name of the data stream logger type.
-            </summary>
-            <value>
-            The name of the data stream logger type.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.LogDataStream">
-            <summary>
-            Gets or sets a value indicating whether [log data stream].
-            </summary>
-            <value>
-              <c>true</c> if [log data stream]; otherwise, <c>false</c>.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.DataStreamLogger">
-            <summary>
-            Gets the data stream logger.
-            </summary>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.ClientSessions">
-            <summary>
-            Gets the sessions.
-            </summary>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.CustomCreateSessionHandler">
-            <summary>
-            Gets or sets the custom create session handler.
-            </summary>
-            <value>
-            The custom create session handler.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.RequestTimeoutSeconds">
-            <summary>
-            Gets or sets the request timeout seconds.
-            Default: 300
-            </summary>
-            <value>
-            The request timeout seconds.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.RequestTimeout">
-            <summary>
-            Gets or sets the request timeout.
-            </summary>
-            <value>
-            The request timeout.
-            </value>
-        </member>
-        <member name="P:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.UseSimpleMethodDescription">
-            <summary>
-            Gets or sets a value indicating whether [use simple method description].
-            false (default) = method names are full qualified including the invoke parameters signiture
-            true            = only the plain method name will be transferred (no method overrides in interface classes possible)
-            </summary>
-            <value>
-            	<c>true</c> if [use simple method description]; otherwise, <c>false</c>.
-            </value>
-        </member>
-        <member name="E:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.SessionCreated">
-            <summary>
-            Occurs when a session is created.
-            </summary>
-        </member>
-        <member name="E:BSAG.IOCTalk.Communication.Common.GenericCommunicationBaseService.SessionTerminated">
-            <summary>
-            Occurs when a session is terminated.
-            </summary>
+            <returns>
+            A <see cref="T:System.String"/> that represents this instance.
+            </returns>
         </member>
     </members>
 </doc>

@@ -17,6 +17,7 @@ using BSAG.IOCTalk.Common.Interface.Reflection;
 using System.Collections.Concurrent;
 using BSAG.IOCTalk.Common.Attributes;
 using BSAG.IOCTalk.Common.Exceptions;
+using BSAG.IOCTalk.Common.Interface.Communication.Raw;
 
 namespace BSAG.IOCTalk.Serialization.Json
 {
@@ -38,7 +39,7 @@ namespace BSAG.IOCTalk.Serialization.Json
 
         private JsonObjectSerializer serializer;
         private IGenericContainerHost containerHost;
-        private ConcurrentDictionary<string, ParameterInfo[]> methodParameterCache = new ConcurrentDictionary<string, ParameterInfo[]>();
+        private ConcurrentDictionary<int, ParameterInfo[]> methodParameterCache = new ConcurrentDictionary<int, ParameterInfo[]>();
         private ConcurrentDictionary<Type, Type> resolvedSpecialTypes = new ConcurrentDictionary<Type, Type>();
 
         // ----------------------------------------------------------------------------------------
@@ -88,6 +89,19 @@ namespace BSAG.IOCTalk.Serialization.Json
                 serializer.IsMissingFieldDataAllowed = value;
             }
         }
+
+        /// <summary>
+        /// Gets the serializer raw message format.
+        /// </summary>
+        /// <value>The message format.</value>
+        public RawMessageFormat MessageFormat
+        {
+            get
+            {
+                return RawMessageFormat.JSON;
+            }
+        }
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -161,8 +175,8 @@ namespace BSAG.IOCTalk.Serialization.Json
             {
                 return containerHost.GetInterfaceImplementationType(context.InterfaceType.FullName);
             }
-            else if (context.Key == GenericMessagePayloadPropertyName
-                && context.ParentObject is GenericMessage)
+            else if (context.ParentObject is GenericMessage
+                && context.Key == GenericMessagePayloadPropertyName)
             {
                 GenericMessage message = (GenericMessage)context.ParentObject;
 
@@ -257,9 +271,10 @@ namespace BSAG.IOCTalk.Serialization.Json
                                 {                                    
                                     message.Target = GetJsonSimpleStringValue(context.JsonString, "Target");
                                 }
-                                
 
-                                string cacheKey = string.Join(Structure.Comma, message.Target, message.Name);
+
+                                int cacheKey = message.Target.GetHashCode();
+                                cacheKey = cacheKey * 23 + message.Name.GetHashCode();
 
                                 ParameterInfo[] parameters;
                                 if (!methodParameterCache.TryGetValue(cacheKey, out parameters))

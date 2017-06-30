@@ -100,6 +100,24 @@ namespace BSAG.IOCTalk.Container.MEF
         /// </returns>
         protected override IEnumerable<Export> GetExportsCore(ImportDefinition definition, AtomicComposition atomicComposition)
         {
+            SessionInstanceManager sInstanceManager = null;
+            if (currentSessionContext != null)
+            {
+                // get session manager
+                if (!sessionIdServiceInstanceMapping.TryGetValue(currentSessionContext.SessionId, out sInstanceManager))
+                {
+                    sInstanceManager = new SessionInstanceManager(currentSessionContext, currentSessionContract);
+                    sessionIdServiceInstanceMapping.Add(currentSessionContext.SessionId, sInstanceManager);
+                }
+
+                object existingSessionInstance = null;
+                if (sInstanceManager.ContractInstanceMapping.TryGetValue(definition.ContractName, out existingSessionInstance))
+                {
+                    // replace with existing session instance
+                    return new Export[] { new Export(definition.ContractName, delegate () { return existingSessionInstance; }) };
+                }
+            }
+
             var exportEnumerable = base.GetExportsCore(definition, atomicComposition);
 
             IList<Export> exports;
@@ -114,14 +132,6 @@ namespace BSAG.IOCTalk.Container.MEF
 
             if (currentSessionContext != null)
             {
-                // get session manager
-                SessionInstanceManager sInstanceManager;
-                if (!sessionIdServiceInstanceMapping.TryGetValue(currentSessionContext.SessionId, out sInstanceManager))
-                {
-                    sInstanceManager = new SessionInstanceManager(currentSessionContext, currentSessionContract);
-                    sessionIdServiceInstanceMapping.Add(currentSessionContext.SessionId, sInstanceManager);
-                }
-
                 if (exports.Count == 0
                     && definition.ContractName != typeof(IGenericCommunicationService).FullName)
                 {
@@ -142,7 +152,7 @@ namespace BSAG.IOCTalk.Container.MEF
                             }
 
                             // create session proxy instance
-                            proxyImplementationInstance = Activator.CreateInstance(proxyImplementationType);
+                            proxyImplementationInstance = TypeService.CreateInstance(proxyImplementationType);
 
                             // satisfy imports
                             this.SatisfyImportsOnce(proxyImplementationInstance);
@@ -164,44 +174,44 @@ namespace BSAG.IOCTalk.Container.MEF
                 {
                     var export = exports[i];
 
-                    if (export.Definition.ContractName == typeof(ISession).FullName)
+                    //if (export.Definition.ContractName == typeof(ISession).FullName)
+                    //{
+                    //    // replace with current session instance
+                    //    exports[i] = new Export(export.Definition, delegate() { return sInstanceManager.Session; });
+                    //}
+                    //else
+                    //{
+                    if (export.Metadata.Count > 1
+                        && export.Metadata.Contains(new KeyValuePair<string, object>(ExportConstants.IsToRemoteCallDirection, true)))
                     {
-                        // replace with current session instance
-                        exports[i] = new Export(export.Definition, delegate() { return sInstanceManager.Session; });
+                        // do not register remote only proxy services in contract mapping
+                        // only add to session instance mapping
+                        if (!serviceInstanceSessionMapping.ContainsKey(export.Value))
+                        {
+                            serviceInstanceSessionMapping.Add(export.Value, currentSessionContext);
+                        }
                     }
                     else
                     {
-                        if (export.Metadata.Count > 1
-                            && export.Metadata.Contains(new KeyValuePair<string, object>(ExportConstants.IsToRemoteCallDirection, true)))
+                        // check if contract is already registered in this session
+                        object existingSessionInstance = null;
+                        if (sInstanceManager.ContractInstanceMapping.TryGetValue(export.Definition.ContractName, out existingSessionInstance))
                         {
-                            // do not register remote only proxy services in contract mapping
-                            // only add to session instance mapping
+                            // replace with existing session instance
+                            exports[i] = new Export(export.Definition, delegate () { return existingSessionInstance; });
+                        }
+                        else
+                        {
+                            // register session instance mappings
+                            sInstanceManager.RegisterSessionExport(export);
+
                             if (!serviceInstanceSessionMapping.ContainsKey(export.Value))
                             {
                                 serviceInstanceSessionMapping.Add(export.Value, currentSessionContext);
                             }
                         }
-                        else
-                        {
-                            // check if contract is already registered in this session
-                            object existingSessionInstance = null;
-                            if (sInstanceManager.ContractInstanceMapping.TryGetValue(export.Definition.ContractName, out existingSessionInstance))
-                            {
-                                // replace with existing session instance
-                                exports[i] = new Export(export.Definition, delegate() { return existingSessionInstance; });
-                            }
-                            else
-                            {
-                                // register session instance mappings
-                                sInstanceManager.RegisterSessionExport(export);
-
-                                if (!serviceInstanceSessionMapping.ContainsKey(export.Value))
-                                {
-                                    serviceInstanceSessionMapping.Add(export.Value, currentSessionContext);
-                                }
-                            }
-                        }
                     }
+                    //}
                 }
             }
 
@@ -234,7 +244,7 @@ namespace BSAG.IOCTalk.Container.MEF
                         if (implementationType != null)
                         {
                             // create not known service implementation instance
-                            object newServiceImplInstance = Activator.CreateInstance(implementationType);
+                            object newServiceImplInstance = TypeService.CreateInstance(implementationType);
                             sInstanceMgr.RegisterSessionExport(interfaceType, newServiceImplInstance);
                             result = newServiceImplInstance;
                         }
@@ -348,14 +358,12 @@ namespace BSAG.IOCTalk.Container.MEF
         }
 
         /// <summary>
-        /// Sets the container session context.
+        /// Registers the session.
         /// </summary>
         /// <param name="session">The session.</param>
-        /// <param name="sessionContract">The session contract.</param>
-        internal void SetContainerSessionContext(ISession session, object sessionContract)
+        internal void RegisterSession(ISession session)
         {
             this.currentSessionContext = session;
-            this.currentSessionContract = sessionContract;
 
             if (sessionExportHelper == null)
             {
@@ -365,9 +373,39 @@ namespace BSAG.IOCTalk.Container.MEF
                 this.ComposeExportedValue<ISession>(session);
             }
 
-            // add session manager
-            SessionInstanceManager sInstanceManager = new SessionInstanceManager(currentSessionContext, currentSessionContract);
-            sessionIdServiceInstanceMapping.Add(currentSessionContext.SessionId, sInstanceManager);
+            SessionInstanceManager sInstanceManager;
+            if (!sessionIdServiceInstanceMapping.TryGetValue(currentSessionContext.SessionId, out sInstanceManager))
+            {
+                sInstanceManager = new SessionInstanceManager(currentSessionContext, currentSessionContract);
+                sessionIdServiceInstanceMapping.Add(currentSessionContext.SessionId, sInstanceManager);
+            }
+
+            sInstanceManager.RegisterSessionExport(typeof(ISession).FullName, session);
+            sInstanceManager.RegisterSessionExport(typeof(IGenericCommunicationService).FullName, session.CommunicationService);
+        }
+
+        /// <summary>
+        /// Sets the container session context.
+        /// </summary>
+        /// <param name="sessionContract">The session contract.</param>
+        internal void SetContainerSessionContext(object sessionContract)
+        {
+            this.currentSessionContract = sessionContract;
+
+            SessionInstanceManager sInstanceManager;
+            if (sessionIdServiceInstanceMapping.TryGetValue(currentSessionContext.SessionId, out sInstanceManager))
+            {
+                if (sInstanceManager.ServiceContractSession == null)
+                {
+                    sInstanceManager.ServiceContractSession = sessionContract;
+                }
+            }
+            else
+            {
+                // add session manager
+                sInstanceManager = new SessionInstanceManager(currentSessionContext, currentSessionContract);
+                sessionIdServiceInstanceMapping.Add(currentSessionContext.SessionId, sInstanceManager);
+            }
         }
 
         /// <summary>
@@ -391,7 +429,8 @@ namespace BSAG.IOCTalk.Container.MEF
                     // remove object session mappings
                     serviceInstanceSessionMapping.Remove(item);
 
-                    SessionInstanceManager.CheckSessionStateTerminatedCall(session, item);
+                    if (instanceManager.ServiceContractSession != item)
+                        SessionInstanceManager.CheckSessionStateTerminatedCall(session, item);
                 }
 
                 instanceManager.ReleaseSessionInstances();

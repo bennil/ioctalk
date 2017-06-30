@@ -20,6 +20,10 @@ namespace BSAG.IOCTalk.Common.Interface.Communication.Raw
         /// </summary>
         JSON = 1,
 
+        /// <summary>
+        /// Binary format (similar to Microsoft Bond)
+        /// </summary>
+        Binary = 2,
 
         /// <summary>
         /// Incomplete encapsulation control data slice

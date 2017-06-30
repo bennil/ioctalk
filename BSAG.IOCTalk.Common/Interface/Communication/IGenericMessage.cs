@@ -13,7 +13,7 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <summary>
         /// Gets the message type.
         /// </summary>
-        MessageType Type { get; }
+        MessageType Type { get; set; }
 
         
         /// <summary>
@@ -22,7 +22,7 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <value>
         /// The request id.
         /// </value>
-        long RequestId { get; }
+        long RequestId { get; set; }
 
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <value>
         /// The interface.
         /// </value>
-        string Target { get; }
+        string Target { get; set; }
 
         /// <summary>
         /// Gets the name of the request (method).
@@ -39,7 +39,7 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <value>
         /// The name of the request.
         /// </value>
-        string Name { get; }
+        string Name { get; set; }
 
         /// <summary>
         /// Gets the payload.
@@ -47,6 +47,6 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <value>
         /// The payload.
         /// </value>
-        object Payload { get; }
+        object Payload { get; set; }
     }
 }

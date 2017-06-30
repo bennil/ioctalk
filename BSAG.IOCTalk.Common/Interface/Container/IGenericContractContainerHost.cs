@@ -11,7 +11,7 @@ namespace BSAG.IOCTalk.Common.Interface.Container
     /// </summary>
     /// <typeparam name="TServiceContractSession">The type of the service contract session. This class must inlcude all required imports for the communication. IOCTalk will create a single instance for every session (connection).</typeparam>
     public interface IGenericContractContainerHost<TServiceContractSession> : IGenericContractContainerHost<TServiceContractSession, SessionManager<TServiceContractSession>>
-        where TServiceContractSession : class, new()
+        where TServiceContractSession : class
     {
     }
 
@@ -21,7 +21,7 @@ namespace BSAG.IOCTalk.Common.Interface.Container
     /// <typeparam name="TServiceContractSession">The type of the service contract session. This class must inlcude all required imports for the communication. IOCTalk will create a single instance for every session (connection).</typeparam>
     /// <typeparam name="TServiceContractSessionManager">The type of the service contract session manager. The session manager must implement the <see cref="IServiceContractSessionManager"/> interface who holds a list of all active sessions including callbacks for session created/terminated.</typeparam>
     public interface IGenericContractContainerHost<TServiceContractSession, TServiceContractSessionManager> : IGenericContainerHost
-        where TServiceContractSession : class, new()
+        where TServiceContractSession : class
         where TServiceContractSessionManager : class, IServiceContractSessionManager<TServiceContractSession>, new()
     {
         /// <summary>

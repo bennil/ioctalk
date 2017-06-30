@@ -19,6 +19,12 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         // StructureInt fields
         // ----------------------------------------------------------------------------------------
 
+        private const char MinusChar = '-';
+        private const char PlusChar = '+';
+        private const char BlankChar = ' ';
+        private const char MinNumChar = '0';
+        private const char MaxNumChar = '9';
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -81,7 +87,69 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
             string stringValue = json.Substring(startValueIndex, endValueIndex - startValueIndex);
 
-            return int.Parse(stringValue);
+            int result = 0;
+            int startIndex = 0;
+            if (stringValue.Length > 0)
+            {
+                if (stringValue[0] == BlankChar)
+                {
+                    // remove start blanks
+                    startIndex++;
+
+                    for (int i = 1; i < stringValue.Length; i++)
+                    {
+                        if (stringValue[i] == BlankChar)
+                        {
+                            startIndex++;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+                if (stringValue[startIndex] == MinusChar)
+                {
+                    for (int i = startIndex + 1; i < stringValue.Length; i++)
+                    {
+                        char c = stringValue[i];
+
+                        if (c == BlankChar)
+                            continue;   // ignore trailing blanks
+
+                        if (c < MinNumChar || c > MaxNumChar)
+                            throw new FormatException($"Unable to cast the value \"{stringValue}\" to Int32!");
+
+                        result = result * 10 - (stringValue[i] - '0');
+                    }
+                }
+                else
+                {
+                    int i = startIndex;
+                    if (stringValue[startIndex] == PlusChar)
+                    {
+                        i = startIndex + 1;
+                    }
+
+                    for (; i < stringValue.Length; i++)
+                    {
+                        char c = stringValue[i];
+
+                        if (c == BlankChar)
+                            continue;   // ignore trailing blanks
+
+                        if (c < MinNumChar || c > MaxNumChar)
+                            throw new FormatException($"Unable to convert the string \"{stringValue}\" to Int32!");
+
+                        result = result * 10 + (c - '0');
+                    }
+                }
+            }
+            else
+            {
+                throw new FormatException($"Unable to convert an empty string to Int32!");
+            }
+            return result;
         }
         // ----------------------------------------------------------------------------------------
         #endregion

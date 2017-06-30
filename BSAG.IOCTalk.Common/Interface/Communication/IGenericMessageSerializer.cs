@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using BSAG.IOCTalk.Common.Interface.Container;
 using BSAG.IOCTalk.Common.Interface.Session;
+using BSAG.IOCTalk.Common.Interface.Communication.Raw;
 
 namespace BSAG.IOCTalk.Common.Interface.Communication
 {
@@ -59,5 +60,11 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// 	<c>true</c> if this instance is missing fields in source data allowed; otherwise, <c>false</c>.
         /// </value>
         bool IsMissingFieldsInSourceDataAllowed { get; set; }
+
+
+        /// <summary>
+        /// Gets the serializer raw message format.
+        /// </summary>
+        RawMessageFormat MessageFormat { get; }
     }
 }

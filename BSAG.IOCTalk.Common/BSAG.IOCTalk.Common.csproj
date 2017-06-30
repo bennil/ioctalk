@@ -95,6 +95,7 @@
     <Compile Include="Interface\Session\ISession.cs" />
     <Compile Include="Interface\Session\ISessionStateChanged.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Reflection\FastMethodInfo.cs" />
     <Compile Include="Reflection\InvokeMethodInfo.cs" />
     <Compile Include="Session\AbstractSession.cs" />
     <Compile Include="Session\CreateSessionHandler.cs" />

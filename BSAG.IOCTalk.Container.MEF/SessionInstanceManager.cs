@@ -57,7 +57,7 @@ namespace BSAG.IOCTalk.Container.MEF
         /// <summary>
         /// Gets the service contract session.
         /// </summary>
-        public object ServiceContractSession { get; private set; }
+        public object ServiceContractSession { get; internal set; }
 
 
         /// <summary>

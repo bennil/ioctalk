@@ -27,6 +27,7 @@ namespace BSAG.IOCTalk.Communication.Common.Factory
         public const string SessionContractXmlName = "SessionContract";
         public const string CommunicationXmlName = "Communication";
         public const string ContainerXmlName = "Container";
+        public const string SerializerXmlName = "Serializer";
 
         public const string TypeAttributeName = "type";
         #endregion
@@ -55,6 +56,8 @@ namespace BSAG.IOCTalk.Communication.Common.Factory
                 {
                     Type sessionContractType = GetTypeAttribute(sessionContract);
 
+
+
                     var communicationConfig = sessionContract.Element("Communication");
                     if (communicationConfig == null)
                         throw new KeyNotFoundException(string.Format("The XML element \"{0}\" attribute was not found in AppConfig section \"{1}\"!", CommunicationXmlName, sessionContract));
@@ -66,10 +69,19 @@ namespace BSAG.IOCTalk.Communication.Common.Factory
                         throw new InvalidCastException(string.Format("The communication type \"{0}\" must implement the \"{1}\" interface!", communicationControllerType.FullName, typeof(IGenericCommunicationService).FullName));
                     }
 
-                    IGenericCommunicationService communicationService = (IGenericCommunicationService)Activator.CreateInstance(communicationControllerType);
-
-                    SetXmlConfig(communicationConfig, communicationService);
+                    IGenericCommunicationService communicationService = (IGenericCommunicationService)TypeService.CreateInstance(communicationControllerType);
                     
+                    SetXmlConfig(communicationConfig, communicationService);
+
+                    // set serializer
+                    var serializerElement = sessionContract.Element(SerializerXmlName);
+                    if (serializerElement != null)
+                    {
+                        var serializerTypeAttr = serializerElement.Attribute(TypeAttributeName);
+
+                        communicationService.SerializerTypeName = serializerTypeAttr.Value;
+                    }
+
                     // load container
                     var containerConfig = sessionContract.Element("Container");
                     if (containerConfig == null)
@@ -86,7 +98,7 @@ namespace BSAG.IOCTalk.Communication.Common.Factory
                     {
                         Type sessionContractContainerHostType = containerHostType.MakeGenericType(sessionContractType);
 
-                        IGenericContainerHost containerHost = (IGenericContainerHost)Activator.CreateInstance(sessionContractContainerHostType);
+                        IGenericContainerHost containerHost = (IGenericContainerHost)TypeService.CreateInstance(sessionContractContainerHostType);
 
                         SetXmlConfig(containerConfig, containerHost);
 

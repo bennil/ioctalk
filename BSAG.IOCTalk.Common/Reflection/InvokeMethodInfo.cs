@@ -23,6 +23,7 @@ namespace BSAG.IOCTalk.Common.Reflection
         // ----------------------------------------------------------------------------------------
 
         private MethodInfo interfaceMethod;
+        private FastMethodInfo interfaceMethodInvoker;
         private ParameterInfo[] parameterInfos;
         private ParameterInfo[] outParameters;
         private bool isAsyncRemoteInvoke = false;
@@ -60,6 +61,8 @@ namespace BSAG.IOCTalk.Common.Reflection
             {
                 throw new MissingMethodException(interfaceType.FullName, methodName);
             }
+
+            this.interfaceMethodInvoker = new FastMethodInfo(this.interfaceMethod);
 
             // collect out parameter infos
             List<ParameterInfo> outParameterInfos = null;            
@@ -240,30 +243,30 @@ namespace BSAG.IOCTalk.Common.Reflection
             }
         }
 
-        /// <summary>
-        /// Creates a unique key for caching.
-        /// </summary>
-        /// <param name="interfaceType">Type of the interface.</param>
-        /// <param name="methodName">Name of the method.</param>
-        /// <param name="parameterTypes">The parameter types.</param>
-        /// <returns></returns>
-        public static string CreateKey(Type interfaceType, string methodName)
-        {
-            return CreateKey(interfaceType, methodName, null);
-        }
+        ///// <summary>
+        ///// Creates a unique key for caching.
+        ///// </summary>
+        ///// <param name="interfaceType">Type of the interface.</param>
+        ///// <param name="methodName">Name of the method.</param>
+        ///// <param name="parameterTypes">The parameter types.</param>
+        ///// <returns></returns>
+        //public static string CreateKey(Type interfaceType, string methodName)
+        //{
+        //    return CreateKey(interfaceType, methodName, null);
+        //}
 
-        /// <summary>
-        /// Creates a unique key for caching.
-        /// </summary>
-        /// <param name="interfaceType">Type of the interface.</param>
-        /// <param name="methodName">Name of the method.</param>
-        /// <param name="parameterTypes">The parameter types.</param>
-        /// <param name="implementationType">Type of the implementation.</param>
-        /// <returns></returns>
-        public static string CreateKey(Type interfaceType, string methodName, Type implementationType)
-        {
-            return CreateKey(interfaceType.FullName, methodName, implementationType);
-        }
+        ///// <summary>
+        ///// Creates a unique key for caching.
+        ///// </summary>
+        ///// <param name="interfaceType">Type of the interface.</param>
+        ///// <param name="methodName">Name of the method.</param>
+        ///// <param name="parameterTypes">The parameter types.</param>
+        ///// <param name="implementationType">Type of the implementation.</param>
+        ///// <returns></returns>
+        //public static string CreateKey(Type interfaceType, string methodName, Type implementationType)
+        //{
+        //    return CreateKey(interfaceType.FullName, methodName, implementationType);
+        //}
 
         /// <summary>
         ///Creates a unique key for caching.
@@ -273,17 +276,23 @@ namespace BSAG.IOCTalk.Common.Reflection
         /// <param name="parameterTypes">The parameter types.</param>
         /// <param name="implementationType">Type of the implementation.</param>
         /// <returns></returns>
-        public static string CreateKey(string interfaceTypeName, string methodName, Type implementationType)
+        public static int CreateKey(string interfaceTypeName, string methodName, Type implementationType)
         {
-            StringBuilder sb = new StringBuilder();
+            int keyResult = interfaceTypeName.GetHashCode();
+            keyResult = keyResult * 23 + methodName.GetHashCode();
+            keyResult = keyResult * 23 + implementationType.GetHashCode();
+            return keyResult;
+        }
 
-            sb.Append(interfaceTypeName);
-            sb.Append(methodName);
-
-            if (implementationType != null)
-                sb.Append(implementationType.FullName);
-
-            return sb.ToString();
+        /// <summary>
+        /// Invokes the instance method.
+        /// </summary>
+        /// <param name="instance">The instance.</param>
+        /// <param name="parameters">The parameters.</param>
+        /// <returns>System.Object.</returns>
+        public object Invoke(object instance, object[] parameters)
+        {
+            return interfaceMethodInvoker.Invoke(instance, parameters);
         }
 
         // ----------------------------------------------------------------------------------------

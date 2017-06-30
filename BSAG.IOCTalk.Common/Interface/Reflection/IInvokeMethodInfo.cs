@@ -48,5 +48,13 @@ namespace BSAG.IOCTalk.Common.Interface.Reflection
         /// 	<c>true</c> if this instance is async remote invoke; otherwise, <c>false</c>.
         /// </value>
         bool IsAsyncRemoteInvoke { get; }
+
+        /// <summary>
+        /// Invokes the instance method.
+        /// </summary>
+        /// <param name="instance">The instance.</param>
+        /// <param name="parameters">The parameters.</param>
+        /// <returns>System.Object.</returns>
+        object Invoke(object instance, object[] parameters);
     }
 }

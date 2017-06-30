@@ -28,7 +28,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         private string name;
         private bool isProcessingStoreLogData = false;
         private ConcurrentQueue<StreamLogItem> dataStreamQueue = null;
-        private int keepOldFilesDaysPeriod = 30;
+        private int keepStreamLogsDays = 10;
         private TimeSpan storeWaitInterval = new TimeSpan(0, 0, 10);
 
         private Thread storeLogItemsThread = null;
@@ -63,7 +63,17 @@ namespace BSAG.IOCTalk.Logging.DataStream
             get { return targetDir; }
             set { targetDir = value; }
         }
-        
+
+        /// <summary>
+        /// Gets or sets the old files days period
+        /// </summary>
+        public int KeepStreamLogsDays
+        {
+            get { return keepStreamLogsDays; }
+            set { keepStreamLogsDays = value; }
+        }
+
+
         #endregion
 
         #region methods
@@ -107,7 +117,15 @@ namespace BSAG.IOCTalk.Logging.DataStream
                     this.TargetDir = Environment.CurrentDirectory;
                 }
             }
-            
+
+            XElement keepStreamLogsDaysElement;
+            if (configXml != null
+                && (keepStreamLogsDaysElement = configXml.Element("KeepStreamLogsDays")) != null)
+            {
+                keepStreamLogsDays = int.Parse(keepStreamLogsDaysElement.Value);
+            }
+
+
             // start logging
             stopSignal = new ManualResetEvent(false);
             isProcessingStoreLogData = true;
@@ -246,28 +264,21 @@ namespace BSAG.IOCTalk.Logging.DataStream
         {
             try
             {
-                DateTime deleteTimeLimit = DateTime.Now.AddDays(-keepOldFilesDaysPeriod);
+                DateTime deleteTimeLimit = DateTime.Now.AddDays(-keepStreamLogsDays);
 
                 string[] files = Directory.GetFiles(directory, "*.dlog");
-
-                Array.Sort<string>(files);
 
                 for (int i = 0; i < files.Length; i++)
                 {
                     string file = files[i];
 
-                    DateTime creationTime = File.GetCreationTime(file);
+                    DateTime lastWriteTime = File.GetLastWriteTime(file);
 
-                    if (creationTime < deleteTimeLimit)
+                    if (lastWriteTime < deleteTimeLimit)
                     {
                         File.Delete(file);
 
-                        log.Info(string.Format("Old file \"{0}\" from {1} deleted", file, creationTime));
-                    }
-                    else
-                    {
-                        // no old files left
-                        break;
+                        log.Info(string.Format("Old data stream file \"{0}\" from {1} deleted", file, lastWriteTime));
                     }
                 }
             }
