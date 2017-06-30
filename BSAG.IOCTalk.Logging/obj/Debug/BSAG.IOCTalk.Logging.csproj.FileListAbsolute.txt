@@ -6,3 +6,11 @@ E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-p
 E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Logging\obj\Debug\ResolveAssemblyReference.cache
 E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Logging\obj\Debug\BSAG.IOCTalk.Logging.dll
 E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Logging\obj\Debug\BSAG.IOCTalk.Logging.pdb
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Logging\bin\Debug\BSAG.IOCTalk.Logging.dll
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Logging\bin\Debug\BSAG.IOCTalk.Logging.pdb
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Logging\bin\Debug\BSAG.IOCTalk.Common.dll
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Logging\bin\Debug\BSAG.IOCTalk.Common.pdb
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Logging\bin\Debug\BSAG.IOCTalk.Common.xml
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Logging\obj\Debug\BSAG.IOCTalk.Logging.csprojResolveAssemblyReference.cache
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Logging\obj\Debug\BSAG.IOCTalk.Logging.dll
+C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Logging\obj\Debug\BSAG.IOCTalk.Logging.pdb
