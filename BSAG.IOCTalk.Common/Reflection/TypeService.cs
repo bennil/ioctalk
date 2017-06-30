@@ -414,8 +414,9 @@ namespace BSAG.IOCTalk.Common.Reflection
                 compilerParams.TempFiles = new TempFileCollection(Environment.GetEnvironmentVariable("TEMP"), true);
             }
 
-            compilerParams.ReferencedAssemblies.Add("System.dll");
-            compilerParams.ReferencedAssemblies.Add("System.ComponentModel.Composition.dll");
+            // direct location reference because of mono discovery problem
+            compilerParams.ReferencedAssemblies.Add(typeof(Int32).Assembly.Location);
+            compilerParams.ReferencedAssemblies.Add(typeof(System.ComponentModel.Composition.Hosting.CompositionContainer).Assembly.Location);
             compilerParams.ReferencedAssemblies.Add(GetAssemblyPath(typeof(TypeService)));
             compilerParams.ReferencedAssemblies.Add(GetAssemblyPath(interfaceType));
 

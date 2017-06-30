@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.10
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BSAG.IOCTalk.Common", "BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj", "{FB931430-65AC-4C3D-AF49-31E47CE9140A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BSAG.IOCTalk.Container.MEF", "BSAG.IOCTalk.Container.MEF\BSAG.IOCTalk.Container.MEF.csproj", "{FADC6A2F-31E4-4D03-B26B-7B0264D9FC9C}"
@@ -42,9 +44,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BSAG.IOCTalk.Test.Common.Service.MEF", "BSAG.IOCTalk.Test.Common.Service\BSAG.IOCTalk.Test.Common.Service.MEF.csproj", "{01AB96B2-6BD5-421D-AE53-39EF5892EED8}"
 EndProject
 Global
-	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = BSAG.IOCTalk.vsmdi
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -173,5 +172,8 @@ Global
 		{BB2BA544-8168-45BE-8A61-82500BD833AB} = {DFD42D58-E91F-4F73-ACEE-E839002A3207}
 		{B5B547ED-20ED-4355-A271-9A5ACE886D83} = {0764B010-234C-4493-A433-72D987F33D5C}
 		{01AB96B2-6BD5-421D-AE53-39EF5892EED8} = {0764B010-234C-4493-A433-72D987F33D5C}
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = BSAG.IOCTalk.vsmdi
 	EndGlobalSection
 EndGlobal
