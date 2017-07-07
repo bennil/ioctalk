@@ -34,7 +34,6 @@ C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\BSAG.IOCTal
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\BSAG.IOCTalk.Test.Common.dll
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\BSAG.IOCTalk.Test.Common.Service.MEF.dll
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
-C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\FastMember.dll
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\BSAG.IOCTalk.Common.pdb
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\BSAG.IOCTalk.Common.xml
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\BSAG.IOCTalk.Communication.Common.pdb
@@ -45,5 +44,3 @@ C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\BSAG.IOCTal
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\BSAG.IOCTalk.Serialization.Json.xml
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\BSAG.IOCTalk.Test.Common.Service.MEF.pdb
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\BSAG.IOCTalk.Test.Common.pdb
-C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\FastMember.pdb
-C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Test\bin\Debug\FastMember.xml

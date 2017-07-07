@@ -1186,6 +1186,22 @@
             <param name="type">The type.</param>
             <returns>System.Object.</returns>
         </member>
+        <member name="M:BSAG.IOCTalk.Common.Reflection.TypeService.GenerateGetterFunc(System.Reflection.PropertyInfo)">
+            <summary>
+            Generates the getter function.
+            Code snippet source: https://stackoverflow.com/questions/27943121/get-accessors-from-propertyinfo-as-funcobject-and-actionobject-delegates
+            </summary>
+            <param name="pi">The property info.</param>
+            <returns>Func&lt;System.Object, System.Object&gt;.</returns>
+        </member>
+        <member name="M:BSAG.IOCTalk.Common.Reflection.TypeService.GenerateSetterAction(System.Reflection.PropertyInfo)">
+            <summary>
+            Generates the setter action.
+            Code snippet source: https://stackoverflow.com/questions/27943121/get-accessors-from-propertyinfo-as-funcobject-and-actionobject-delegates
+            </summary>
+            <param name="pi">The property info</param>
+            <returns>Action&lt;System.Object, System.Object&gt;.</returns>
+        </member>
         <member name="T:BSAG.IOCTalk.Common.Session.AbstractSession">
             <summary>
             Abstract implementation of the <see cref="T:BSAG.IOCTalk.Common.Interface.Session.ISession"/> interface.

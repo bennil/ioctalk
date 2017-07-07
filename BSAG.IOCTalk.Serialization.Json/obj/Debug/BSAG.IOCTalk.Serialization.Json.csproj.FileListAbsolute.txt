@@ -20,10 +20,7 @@ C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Deb
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Debug\BSAG.IOCTalk.Serialization.Json.pdb
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Debug\BSAG.IOCTalk.Common.dll
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Debug\BSAG.IOCTalk.Communication.Common.dll
-C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Debug\FastMember.dll
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Debug\BSAG.IOCTalk.Common.pdb
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Debug\BSAG.IOCTalk.Common.xml
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Debug\BSAG.IOCTalk.Communication.Common.pdb
 C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Debug\BSAG.IOCTalk.Communication.Common.xml
-C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Debug\FastMember.pdb
-C:\Users\ben\Source\Repos\ioctalk-github\BSAG.IOCTalk.Serialization.Json\bin\Debug\FastMember.xml

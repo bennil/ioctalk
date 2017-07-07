@@ -28,7 +28,7 @@ namespace BSAG.IOCTalk.Common.Reflection
         private static readonly char[] GenericTypeChars = new char[] { '`', '<' };
 
         private static Dictionary<Type, Func<object>> constructorDelegateCache = new Dictionary<Type, Func<object>>();
-        private static Tuple<Type, Func<object>> lastTypeActivator = new Tuple<Type, Func<object>>(null, null);
+        private static object syncObj = new object();
 
         /// <summary>
         /// Builds the type of the interface implementation.
@@ -753,17 +753,18 @@ namespace BSAG.IOCTalk.Common.Reflection
         /// <returns>System.Object.</returns>
         public static object CreateInstance(Type type)
         {
-            var lType = lastTypeActivator;
-            if (lType.Item1 == type)
-                return lType.Item2();
-
             Func<object> constructorDelegate;
             if (!constructorDelegateCache.TryGetValue(type, out constructorDelegate))
             {
-                constructorDelegate = CompileConstructorDelegate(type);
-                constructorDelegateCache[type] = constructorDelegate;
+                lock (syncObj)
+                {
+                    if (!constructorDelegateCache.TryGetValue(type, out constructorDelegate))   // recheck
+                    {
+                        constructorDelegate = CompileConstructorDelegate(type);
+                        constructorDelegateCache[type] = constructorDelegate;
+                    }
+                }
             }
-            lastTypeActivator = new Tuple<Type, Func<object>>(type, constructorDelegate);
 
             return constructorDelegate();
         }
@@ -781,6 +782,47 @@ namespace BSAG.IOCTalk.Common.Reflection
             // Compile it
             Func<object> compiled = (Func<object>)lambda.Compile();
             return compiled;
+        }
+
+        /// <summary>
+        /// Generates the getter function.
+        /// Code snippet source: https://stackoverflow.com/questions/27943121/get-accessors-from-propertyinfo-as-funcobject-and-actionobject-delegates
+        /// </summary>
+        /// <param name="pi">The property info.</param>
+        /// <returns>Func&lt;System.Object, System.Object&gt;.</returns>
+        public static Func<object, object> GenerateGetterFunc(this PropertyInfo pi)
+        {
+            var expParam = Expression.Parameter(typeof(object), "p");
+            var expParamTyped = Expression.Convert(expParam, pi.DeclaringType);
+
+            var expMember = Expression.MakeMemberAccess(expParamTyped, pi);
+
+            var expMemberTyped = Expression.Convert(expMember, typeof(object));
+
+            var exp = Expression.Lambda<Func<object, object>>(expMemberTyped, expParam);
+
+            return exp.Compile();
+        }
+
+        /// <summary>
+        /// Generates the setter action.
+        /// Code snippet source: https://stackoverflow.com/questions/27943121/get-accessors-from-propertyinfo-as-funcobject-and-actionobject-delegates
+        /// </summary>
+        /// <param name="pi">The property info</param>
+        /// <returns>Action&lt;System.Object, System.Object&gt;.</returns>
+        public static Action<object, object> GenerateSetterAction(this PropertyInfo pi)
+        {
+            var expParam = Expression.Parameter(typeof(object), "p");
+            var expParamTyped = Expression.Convert(expParam, pi.DeclaringType);
+
+            var expParamValue = Expression.Parameter(typeof(object), "v");
+            var expParamValueTyped = Expression.Convert(expParamValue, pi.PropertyType);
+
+            var expCall = Expression.Call(expParamTyped, pi.GetSetMethod(), expParamValueTyped);
+
+            var exp = Expression.Lambda<Action<object, object>>(expCall, expParam, expParamValue);
+
+            return exp.Compile();
         }
     }
 }

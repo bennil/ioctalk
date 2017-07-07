@@ -5,7 +5,6 @@ using System.Text;
 using System.Reflection;
 using System.ComponentModel;
 using BSAG.IOCTalk.Common.Reflection;
-using FastMember;
 using BSAG.IOCTalk.Common.Attributes;
 using System.Collections.Concurrent;
 
@@ -28,7 +27,8 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
         private Type concreteTargetType;
 
-        private TypeAccessor[] accessorByPropertyIndex;
+        private Func<object, object>[] getAccessorByPropertyIndex;
+        private Action<object, object>[] setAccessorByPropertyIndex;
 
 
         // ----------------------------------------------------------------------------------------
@@ -99,27 +99,27 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 HashSet<string> existingProperties = new HashSet<string>();
 
                 List<IJsonTypeStructure> objectStructureList = new List<IJsonTypeStructure>();
-                List<TypeAccessor> accessorList = new List<TypeAccessor>();
-                AddProperties(type, objectStructureList, accessorList, existingProperties);
+                List<Func<object, object>> getAccessors = new List<Func<object, object>>();
+                List<Action<object, object>> setAccessors = new List<Action<object, object>>();
+                AddProperties(type, objectStructureList, getAccessors, setAccessors, existingProperties);
 
                 if (type.IsInterface)
                 {
                     // analyze interface properties
                     foreach (Type interfaceType in type.GetInterfaces())
                     {
-                        AddProperties(interfaceType, objectStructureList, accessorList, existingProperties);
+                        AddProperties(interfaceType, objectStructureList, getAccessors, setAccessors, existingProperties);
                     }
                 }
 
                 objectStructure = objectStructureList.ToArray();
-                accessorByPropertyIndex = accessorList.ToArray();
+                getAccessorByPropertyIndex = getAccessors.ToArray();
+                setAccessorByPropertyIndex = setAccessors.ToArray();
             }
         }
 
-        private void AddProperties(Type type, List<IJsonTypeStructure> objectStructureList, List<TypeAccessor> accessorList, HashSet<string> existingProperties)
+        private void AddProperties(Type type, List<IJsonTypeStructure> objectStructureList, List<Func<object, object>> getAccessors, List<Action<object, object>> setAccessors, HashSet<string> existingProperties)
         {
-            TypeAccessor accessor = TypeAccessor.Create(type, false);
-
             foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Public))
             {
                 if (existingProperties.Contains(prop.Name))
@@ -141,7 +141,9 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                     continue;
                 }
                 objectStructureList.Add(Structure.DetermineStructure(prop.PropertyType, prop.Name, initialContext, false));
-                accessorList.Add(accessor);
+
+                getAccessors.Add(prop.GenerateGetterFunc());
+                setAccessors.Add(prop.GenerateSetterAction());
 
                 existingProperties.Add(prop.Name);
             }
@@ -244,7 +246,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 for (int i = 0; i <= endIndex; i++)
                 {
                     // get property value
-                    object propertyValue = accessorByPropertyIndex[i][obj, objectStructure[i].Key];
+                    object propertyValue = getAccessorByPropertyIndex[i](obj);
 
                     objectStructure[i].Serialize(sb, propertyValue, context);
 
@@ -428,10 +430,15 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                             structure = foundOutOfOrderStructure;
 
                             // switch value setter
-                            TypeAccessor currentAccessor = accessorByPropertyIndex[propIndex];
-                            TypeAccessor foundOutOfOrderAccessor = accessorByPropertyIndex[keyStructureIndex.Value];
-                            accessorByPropertyIndex[propIndex] = foundOutOfOrderAccessor;
-                            accessorByPropertyIndex[keyStructureIndex.Value] = currentAccessor;
+                            var currentAccessor = getAccessorByPropertyIndex[propIndex];
+                            var foundOutOfOrderAccessor = getAccessorByPropertyIndex[keyStructureIndex.Value];
+                            getAccessorByPropertyIndex[propIndex] = foundOutOfOrderAccessor;
+                            getAccessorByPropertyIndex[keyStructureIndex.Value] = currentAccessor;
+
+                            var currentAccessorSet = setAccessorByPropertyIndex[propIndex];
+                            var foundOutOfOrderAccessorSet = setAccessorByPropertyIndex[keyStructureIndex.Value];
+                            setAccessorByPropertyIndex[propIndex] = foundOutOfOrderAccessorSet;
+                            setAccessorByPropertyIndex[keyStructureIndex.Value] = currentAccessorSet;
                         }
                         else
                         {
@@ -454,7 +461,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
                     if (value != null)
                     {
-                        accessorByPropertyIndex[propIndex][target, structure.Key] = value;
+                        setAccessorByPropertyIndex[propIndex](target, value);
                     }
 
                     if (json[currentReadIndex] == Structure.CharRightBrace)
