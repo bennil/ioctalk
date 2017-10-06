@@ -1,9 +1,0 @@
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Communication.Common\bin\Release\BSAG.IOCTalk.Communication.Common.dll
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Communication.Common\bin\Release\BSAG.IOCTalk.Communication.Common.pdb
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Communication.Common\bin\Release\BSAG.IOCTalk.Common.dll
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Communication.Common\bin\Release\BSAG.IOCTalk.Common.pdb
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Communication.Common\bin\Release\BSAG.IOCTalk.Common.xml
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Communication.Common\obj\Release\ResolveAssemblyReference.cache
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Communication.Common\obj\Release\BSAG.IOCTalk.Communication.Common.dll
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Communication.Common\obj\Release\BSAG.IOCTalk.Communication.Common.pdb
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Communication.Common\bin\Release\BSAG.IOCTalk.Communication.Common.XML

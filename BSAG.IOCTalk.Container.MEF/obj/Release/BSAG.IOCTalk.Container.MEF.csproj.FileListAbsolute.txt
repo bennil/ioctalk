@@ -1,9 +1,0 @@
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Container.MEF\bin\Release\BSAG.IOCTalk.Container.MEF.dll
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Container.MEF\bin\Release\BSAG.IOCTalk.Container.MEF.pdb
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Container.MEF\bin\Release\BSAG.IOCTalk.Common.dll
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Container.MEF\bin\Release\BSAG.IOCTalk.Common.pdb
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Container.MEF\bin\Release\BSAG.IOCTalk.Common.xml
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Container.MEF\obj\Release\ResolveAssemblyReference.cache
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Container.MEF\obj\Release\BSAG.IOCTalk.Container.MEF.dll
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Container.MEF\obj\Release\BSAG.IOCTalk.Container.MEF.pdb
-E:\prj2010\Basis_Software\Common-Libraries\BSAG.IOCTalk\60_Source\BSAG.IOCTalk-public\BSAG.IOCTalk.Container.MEF\bin\Release\BSAG.IOCTalk.Container.MEF.XML
