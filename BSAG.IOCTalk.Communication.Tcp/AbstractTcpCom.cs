@@ -245,83 +245,55 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
             try
             {
-                //SpinWait spinWait = new SpinWait();
+                SpinWait spinWait = new SpinWait();
                 IRawMessage rawMessage = new RawMessage(state.Client.SessionId);
                 IRawMessage pendingMessage = null;
                 IRawMessage receivedMessage;
-                //bool pollResult;
+                bool pollResult;
                 while (clientSocket.Connected)
                 {
-                    int bytesReadCount = clientStream.Read(readBuffer, 0, readBufferLength);
-                    if (bytesReadCount > 0)
+                    pollResult = clientSocket.Poll(socketPollWaitMicroSec, SelectMode.SelectRead);
+                    
+                    if (clientSocket.Available > 0)
                     {
-                        int readIndex = 0;
-                        while ((receivedMessage = ReadRawMessage(readBuffer, ref readIndex, bytesReadCount, rawMessage, ref pendingMessage)) != null)
+                        int bytesReadCount = clientStream.Read(readBuffer, 0, readBufferLength);
+                        if (bytesReadCount > 0)
                         {
-                            // raw message received
-                            rawMessageReceivedDelegate(receivedMessage);
-                        }
+                            int readIndex = 0;
+                            while ((receivedMessage = ReadRawMessage(readBuffer, ref readIndex, bytesReadCount, rawMessage, ref pendingMessage)) != null)
+                            {
+                                // raw message received
+                                rawMessageReceivedDelegate(receivedMessage);
+                            }
 
-                        if (bytesReadCount == readBuffer.Length
-                            && bytesReadCount < maxReadBufferSize)
+                            if (bytesReadCount == readBuffer.Length
+                                && bytesReadCount < maxReadBufferSize)
+                            {
+                                // auto extend internal read buffer size if complete buffer is filled
+                                int newSize = readBuffer.Length * 2;
+                                state.readBuffer = new byte[newSize];
+                                readBuffer = state.readBuffer;
+                                readBufferLength = newSize;
+                            }
+                        }
+                        else
                         {
-                            // auto extend internal read buffer size if complete buffer is filled
-                            int newSize = readBuffer.Length * 2;
-                            state.readBuffer = new byte[newSize];
-                            readBuffer = state.readBuffer;
-                            readBufferLength = newSize;
+                            // Connection closed
+                            Close(state.Client);
+                            return;
                         }
                     }
-                    else
+                    else if (pollResult)
                     {
                         // Connection closed
                         Close(state.Client);
                         return;
                     }
-
-                    //pollResult = clientSocket.Poll(socketPollWaitMicroSec, SelectMode.SelectRead);
-
-                    //if (clientSocket.Available > 0)
-                    //{
-                    //    byte[] readBuffer = state.readBuffer;
-                    //    int bytesReadCount = clientSocket.Receive(readBuffer);
-                    //    if (bytesReadCount > 0)
-                    //    {
-                    //        int readIndex = 0;
-                    //        while ((receivedMessage = ReadRawMessage(readBuffer, ref readIndex, bytesReadCount, rawMessage, ref pendingMessage)) != null)
-                    //        {
-                    //            // raw message received
-                    //            rawMessageReceivedDelegate(receivedMessage);
-                    //        }
-
-                    //        if (bytesReadCount == readBuffer.Length
-                    //            && bytesReadCount < maxReadBufferSize)
-                    //        {
-                    //            // auto extend internal read buffer size if complete buffer is filled
-                    //            int newSize = readBuffer.Length * 2;
-                    //            state.readBuffer = new byte[newSize];
-                    //        }
-                    //    }
-                    //    else
-                    //    {
-                    //        // Connection closed
-                    //        Close(state.Client);
-                    //        return;
-                    //    }
-
-                    //    spinWait.Reset();
-                    //}
-                    //else if (pollResult)
-                    //{
-                    //    // Connection closed
-                    //    Close(state.Client);
-                    //    return;
-                    //}
-                    //else
-                    //{
-                    //    // continue to wait for incoming data
-                    //    spinWait.SpinOnce();
-                    //}
+                    else
+                    {
+                        // continue to wait for incoming data
+                        spinWait.SpinOnce();
+                    }
                 }
 
                 if (!state.Client.socket.Connected)

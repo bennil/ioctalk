@@ -36,7 +36,6 @@ namespace BSAG.IOCTalk.Communication.Tcp
         private EndPoint localEndPoint = null;
         private EndPoint remoteEndPoint = null;
         private int connectionSessionId;
-        private bool isSendBufferUnderPressure = false;
         private SpinLock spinLock = new SpinLock();
         private ILogger logger;
 
@@ -169,6 +168,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// <returns></returns>
         public void Send(byte[] dataBytes)
         {
+            if (!socket.Connected)
+                throw new RemoteConnectionLostException(null);
+
             bool lockTaken = false;
             try
             {
@@ -232,25 +234,6 @@ namespace BSAG.IOCTalk.Communication.Tcp
             finally
             {
                 spinLock.Exit();
-            }
-        }
-
-        /// <summary>
-        /// Determines whether [is send buffer under pressure] and resets the flag.
-        /// </summary>
-        /// <returns>
-        ///   <c>true</c> if [is send buffer under pressure]; otherwise, <c>false</c>.
-        /// </returns>
-        public bool IsSendBufferUnderPressure()
-        {
-            if (isSendBufferUnderPressure)
-            {
-                isSendBufferUnderPressure = false;  // reset flag
-                return true;
-            }
-            else
-            {
-                return false;
             }
         }
 
