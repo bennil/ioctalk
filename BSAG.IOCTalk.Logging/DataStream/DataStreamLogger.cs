@@ -35,7 +35,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         private ManualResetEvent stopSignal;
         private string targetFilePath;
         private ILogger log;
-        private string targetDir = @".\IOCTalk-DataStreamLogs";
+        private string targetDir = @"." + Path.DirectorySeparatorChar + "IOCTalk-DataStreamLogs";
 
         #endregion
 
@@ -199,14 +199,16 @@ namespace BSAG.IOCTalk.Logging.DataStream
             {
                 if (isProcessingStoreLogData)
                 {
-                    if (!Directory.Exists(TargetDir))
+                    string targetDir = Path.GetFullPath(TargetDir);
+
+                    if (!Directory.Exists(targetDir))
                     {
-                        Directory.CreateDirectory(TargetDir);
+                        Directory.CreateDirectory(targetDir);
                     }
 
-                    DeleteOldLogFiles(TargetDir);
+                    DeleteOldLogFiles(targetDir);
 
-                    targetFilePath = Path.Combine(TargetDir, string.Concat("DataStream_", name, "_", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-ffff"), ".dlog"));
+                    targetFilePath = Path.Combine(targetDir, string.Concat("DataStream_", name, "_", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-ffff"), ".dlog"));
 
                     log.Info(string.Format("Log data stream in \"{0}\"", targetFilePath));
 

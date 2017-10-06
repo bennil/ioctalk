@@ -46,6 +46,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         public const string ConfigParamClientCertificateRequired = "ClientCertificateRequired";
         public const string ConfigParamProvideClientCertificate = "ProvideClientCertificate";
         public const string ConfigParamClientCertificateName = "ClientCertificateName";
+        public const string ConfigParamLogDataStream = "LogDataStream";
 
         public const string ConfigAttributeEnabled = "enabled";
 
@@ -127,6 +128,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 }
             }
 
+            this.LogDataStream = Config.Root.GetConfigParameterValueOrDefault<bool>(false, ConfigParamLogDataStream);
+            
             if (connType == ConnectionType.Client)
             {
                 InitClient(securityXml, isSecurityEnabled);
@@ -165,9 +168,16 @@ namespace BSAG.IOCTalk.Communication.Tcp
             client.ConnectionClosed += new EventHandler<ConnectionStateChangedEventArgs>(OnClient_ConnectionClosed);
             SubscribeCommunicationEvents(client);
 
-            client.Init(Config.Root.GetConfigParameterValue<string>(ConfigParamHost), Config.Root.GetConfigParameterValue<int>(ConfigParamPort));
+            string host = Config.Root.GetConfigParameterValue<string>(ConfigParamHost);
+            int port = Config.Root.GetConfigParameterValue<int>(ConfigParamPort);
+            client.Init(host, port);
 
             this.communication = client;
+
+            if (LogDataStream)
+            {
+                dataStreamLogger.Init(this, host.Replace('.', '_') + "-" + port, Config.Root);
+            }
 
             string errMsg;
             if (this.communication.Connect(out errMsg))
@@ -205,6 +215,11 @@ namespace BSAG.IOCTalk.Communication.Tcp
             int servicePort = Config.Root.GetConfigParameterValue<int>(ConfigParamPort);
             service.Init(servicePort);
             this.communication = service;
+            
+            if (LogDataStream)
+            {
+                dataStreamLogger.Init(this, "Service-" + servicePort, Config.Root);
+            }
 
             string errMsg;
             if (this.communication.Connect(out errMsg))
@@ -281,6 +296,11 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             byte[] msgBytes = serializer.SerializeToBytes(message, context);
             byte[] encapsulatedMessageBytes = AbstractTcpCom.CreateMessage(RawMessageFormat.JSON, msgBytes);
+
+            if (logDataStream)
+            {
+                dataStreamLogger.LogStreamMessage(receiverSessionId, false, msgBytes);
+            }
 
             communication.Send(encapsulatedMessageBytes, receiverSessionId);
         }
