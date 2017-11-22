@@ -145,6 +145,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             try
             {
+                Logger.Info("Service listen on " + EndPoint.ToString());
+
                 this.socket.Bind(EndPoint);
                 this.socket.Listen(MaxConnectionCount);
 

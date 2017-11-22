@@ -137,6 +137,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             try
             {
+                Logger.Info("Client connect to " + EndPoint.ToString());
+
                 this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 this.InitSocketProperties(this.socket);
                 this.socket.Connect(EndPoint);
