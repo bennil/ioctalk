@@ -1,0 +1,86 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2005
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Common", "BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj", "{142E2367-370D-4EB3-89F7-781B94B8E54A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTests", "UnitTests", "{E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Common.Test", "BSAG.IOCTalk.Common.Test\BSAG.IOCTalk.Common.Test.csproj", "{79749AD1-FC19-4E12-A179-53F3055E9A92}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Communication.Common", "BSAG.IOCTalk.Communication.Common\BSAG.IOCTalk.Communication.Common.csproj", "{104BE2ED-AED9-42CB-BB64-252B5931616A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Communication.Tcp", "BSAG.IOCTalk.Communication.Tcp\BSAG.IOCTalk.Communication.Tcp.csproj", "{DE3ED1C1-A1E3-4B13-B545-C7D543F9F174}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Logging", "BSAG.IOCTalk.Logging\BSAG.IOCTalk.Logging.csproj", "{CC4B6092-F46D-421A-8C9D-2806C6F995EA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Serialization.Json", "BSAG.IOCTalk.Serialization.Json\BSAG.IOCTalk.Serialization.Json.csproj", "{261AD1FF-2DA1-4DE0-9E2D-B0FC64F0AEA9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Composition", "BSAG.IOCTalk.Composition\BSAG.IOCTalk.Composition.csproj", "{6F0AA0EE-4A1D-4B66-B7E3-BC12E5E14764}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Test.Common.Service", "BSAG.IOCTalk.Test.Common.Service\BSAG.IOCTalk.Test.Common.Service.csproj", "{2B7EAF82-8D99-42EE-9B72-1A03A67A00FA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Test.Interface", "BSAG.IOCTalk.Test.Interface\BSAG.IOCTalk.Test.Interface.csproj", "{20AD9229-4A46-40FD-A3E4-8A16CF577188}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Communication.PersistentQueue", "BSAG.IOCTalk.Communication.PersistentQueue\BSAG.IOCTalk.Communication.PersistentQueue.csproj", "{80D7225D-FE55-491E-B52E-7E838A45231D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{142E2367-370D-4EB3-89F7-781B94B8E54A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{142E2367-370D-4EB3-89F7-781B94B8E54A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{142E2367-370D-4EB3-89F7-781B94B8E54A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{142E2367-370D-4EB3-89F7-781B94B8E54A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79749AD1-FC19-4E12-A179-53F3055E9A92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79749AD1-FC19-4E12-A179-53F3055E9A92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79749AD1-FC19-4E12-A179-53F3055E9A92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79749AD1-FC19-4E12-A179-53F3055E9A92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{104BE2ED-AED9-42CB-BB64-252B5931616A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{104BE2ED-AED9-42CB-BB64-252B5931616A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{104BE2ED-AED9-42CB-BB64-252B5931616A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{104BE2ED-AED9-42CB-BB64-252B5931616A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE3ED1C1-A1E3-4B13-B545-C7D543F9F174}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE3ED1C1-A1E3-4B13-B545-C7D543F9F174}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE3ED1C1-A1E3-4B13-B545-C7D543F9F174}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE3ED1C1-A1E3-4B13-B545-C7D543F9F174}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC4B6092-F46D-421A-8C9D-2806C6F995EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC4B6092-F46D-421A-8C9D-2806C6F995EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC4B6092-F46D-421A-8C9D-2806C6F995EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC4B6092-F46D-421A-8C9D-2806C6F995EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{261AD1FF-2DA1-4DE0-9E2D-B0FC64F0AEA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{261AD1FF-2DA1-4DE0-9E2D-B0FC64F0AEA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{261AD1FF-2DA1-4DE0-9E2D-B0FC64F0AEA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{261AD1FF-2DA1-4DE0-9E2D-B0FC64F0AEA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F0AA0EE-4A1D-4B66-B7E3-BC12E5E14764}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F0AA0EE-4A1D-4B66-B7E3-BC12E5E14764}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F0AA0EE-4A1D-4B66-B7E3-BC12E5E14764}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F0AA0EE-4A1D-4B66-B7E3-BC12E5E14764}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B7EAF82-8D99-42EE-9B72-1A03A67A00FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B7EAF82-8D99-42EE-9B72-1A03A67A00FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B7EAF82-8D99-42EE-9B72-1A03A67A00FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B7EAF82-8D99-42EE-9B72-1A03A67A00FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20AD9229-4A46-40FD-A3E4-8A16CF577188}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20AD9229-4A46-40FD-A3E4-8A16CF577188}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20AD9229-4A46-40FD-A3E4-8A16CF577188}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20AD9229-4A46-40FD-A3E4-8A16CF577188}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80D7225D-FE55-491E-B52E-7E838A45231D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80D7225D-FE55-491E-B52E-7E838A45231D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80D7225D-FE55-491E-B52E-7E838A45231D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80D7225D-FE55-491E-B52E-7E838A45231D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{79749AD1-FC19-4E12-A179-53F3055E9A92} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
+		{2B7EAF82-8D99-42EE-9B72-1A03A67A00FA} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
+		{20AD9229-4A46-40FD-A3E4-8A16CF577188} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {53870CE6-F9E9-4FC3-A378-8E7A71F1DF33}
+	EndGlobalSection
+EndGlobal

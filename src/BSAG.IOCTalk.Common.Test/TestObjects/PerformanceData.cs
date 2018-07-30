@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace BSAG.IOCTalk.Test.Common.Service.Implementation
+{
+    public class PerformanceData : IPerformanceData
+    {
+        public MeasureType Type { get; set; }
+
+        public decimal Value { get; set; }
+
+        public string Unity { get; set; }
+
+    }
+}

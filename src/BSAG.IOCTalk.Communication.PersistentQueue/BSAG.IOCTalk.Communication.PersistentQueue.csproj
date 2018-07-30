@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
+    <ProjectReference Include="..\BSAG.IOCTalk.Communication.Common\BSAG.IOCTalk.Communication.Common.csproj" />
+    <ProjectReference Include="..\BSAG.IOCTalk.Serialization.Json\BSAG.IOCTalk.Serialization.Json.csproj" />
+  </ItemGroup>
+
+</Project>
