@@ -2,7 +2,7 @@
 
 Nuget Package: [ioctalk](https://www.nuget.org/packages/ioctalk-standard/)
 
-##Short example
+## Short example
 
 Orchestration:
 ```
@@ -43,7 +43,7 @@ Functional service implementation assembly:
 	public class MySuperService : IMySuperService
 	{
 		public MySuperService(out Action<IMySupremeRemoteClientService> clientServiceCreated, 
-								out Action<IMySupremeRemoteClientService> clientServiceTerminated)
+					out Action<IMySupremeRemoteClientService> clientServiceTerminated)
 		{
 			clientServiceCreated = OnClientServiceCreated;
 			clientServiceTerminated = OnClientServiceTerminated;
