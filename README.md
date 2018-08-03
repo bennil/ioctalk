@@ -43,7 +43,7 @@ Functional service implementation assembly:
 	public class MySuperService : IMySuperService
 	{
 		public MySuperService(out Action<IMySupremeRemoteClientService> clientServiceCreated, 
-							  out Action<IMySupremeRemoteClientService> clientServiceTerminated)
+								out Action<IMySupremeRemoteClientService> clientServiceTerminated)
 		{
 			clientServiceCreated = OnClientServiceCreated;
 			clientServiceTerminated = OnClientServiceTerminated;
@@ -51,7 +51,7 @@ Functional service implementation assembly:
 
 		private void OnClientServiceCreated(IMySupremeRemoteClientService client)
 		{
-			// my remote (or local - depending on the orchestration) client service instance
+			// available remote (or local - depending on the orchestration) client service instance
 		}
 
 		private void OnClientServiceTerminated(IMySupremeRemoteClientService client)
