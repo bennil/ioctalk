@@ -42,10 +42,11 @@ Functional service implementation assembly:
 ```
 	public class MySuperService : IMySuperService
 	{
-		public MySuperService(out Action<IMySupremeRemoteClientService> clientServiceCreated, out Action<IMySupremeRemoteClientService> clientServiceTerminated)
+		public MySuperService(out Action<IMySupremeRemoteClientService> clientServiceCreated, 
+							  out Action<IMySupremeRemoteClientService> clientServiceTerminated)
 		{
 			clientServiceCreated = OnClientServiceCreated;
-            clientServiceTerminated = OnClientServiceTerminated;
+			clientServiceTerminated = OnClientServiceTerminated;
 		}
 
 		private void OnClientServiceCreated(IMySupremeRemoteClientService client)
