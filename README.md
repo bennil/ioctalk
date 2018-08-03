@@ -1,9 +1,8 @@
 # IOC-Talk
-Keep transport technology out of your (microservice) business.
 
 Nuget Package: [ioctalk](https://www.nuget.org/packages/ioctalk-standard/)
 
-Short example
+##Short example
 
 Orchestration:
 ```
@@ -50,12 +49,12 @@ Functional service implementation assembly:
 		}
 
 		private void OnClientServiceCreated(IMySupremeRemoteClientService client)
-        {
+		{
 			// my remote (or local - depending on the orchestration) client service instance
 		}
 
 		private void OnClientServiceTerminated(IMySupremeRemoteClientService client)
-        {
+		{
 		}
 	}
 ```
