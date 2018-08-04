@@ -1,1 +1,10 @@
 .vs
+/examples/CmdChat/CmdChat/bin
+/examples/CmdChat/CmdChat/obj
+/examples/CmdChat/CmdChat.Frontend/bin
+/examples/CmdChat/CmdChat.Frontend/obj
+/examples/CmdChat/CmdChat.Frontend.Implementation/bin
+/examples/CmdChat/CmdChat.Frontend.Implementation/obj
+/examples/CmdChat/CmdChat.Interface/obj
+/examples/CmdChat/CmdChat.Server.Implementation/bin
+/examples/CmdChat/CmdChat.Server.Implementation/obj
