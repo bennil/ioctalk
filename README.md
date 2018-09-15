@@ -1,7 +1,6 @@
 # IOC-Talk
 
 Nuget Package: [ioctalk](https://www.nuget.org/packages/ioctalk-standard/)
-
 			   [ioctalk-AheadOfTimeOnly](https://www.nuget.org/packages/ioctalk-standard-AheadOfTimeOnly/)
 			   (No Roslyn dependency required - no auto proxy generation)
 
