@@ -64,6 +64,81 @@ namespace BSAG.IOCTalk.Composition
             return false;
         }
 
+        //todo move to share ctx
+        //public bool TryGetExport(Type type, Type injectTargetType, out object instance)
+        //{
+        //    if (SharedLocalInstances.TryGetValue(type, out instance))
+        //    {
+        //        return true;
+        //    }
+
+        //    //if (hostSessionsSharedInstances.TryGetValue(type, out instance))
+        //    //{
+        //    //    return true;
+        //    //}
+
+        //    Type targetType;
+        //    if (type.IsInterface)
+        //    {
+        //        //var contract = currentContract;
+        //        //if (contract != null)
+        //        //{
+        //        //    if (contract.TryGetSessionInstance(type, out instance))
+        //        //    {
+        //        //        return true;
+        //        //    }
+        //        //}
+
+        //        if (!TryFindInterfaceImplementation(type, injectTargetType, out targetType))
+        //        {
+        //            // not found > check if multiple import
+        //            if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
+        //            {
+        //                var multiImportColl = localShare.CollectLocalMultiImports(this, type, injectTargetType);
+        //                if (multiImportColl != null)
+        //                {
+        //                    instance = multiImportColl;
+        //                    return true;
+        //                }
+        //            }
+        //            else
+        //            {
+        //                instance = null;
+        //                return false;
+        //            }
+        //        }
+        //    }
+        //    else if (type.IsArray)
+        //    {
+        //        var multiImportColl = this.CollectLocalMultiImports(this, type, injectTargetType);
+        //        if (multiImportColl != null)
+        //        {
+        //            instance = multiImportColl;
+        //            return true;
+        //        }
+        //        else
+        //        {
+        //            instance = null;
+        //            return false;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        targetType = type;
+        //    }
+
+        //    object[] outParams;
+        //    ParameterInfo[] outParamsInfo;
+        //    instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, out outParams, out outParamsInfo);
+        //    CheckOutParamsSubscriptions(instance, outParams);
+
+        //    RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
+
+        //    return true;
+        //}
+
+
+
         internal void AssignHost(TalkCompositionHost host)
         {
             if (!assignedHosts.Contains(host))
@@ -81,7 +156,7 @@ namespace BSAG.IOCTalk.Composition
         }
 
 
-        internal IEnumerable CollectLocalMultiImports(TalkCompositionHost host, Type type)
+        internal IEnumerable CollectLocalMultiImports(TalkCompositionHost host, Type type, Type injectTargetType)
         {
             // multiple imports
             // 1. determine generic target interface type
@@ -123,9 +198,9 @@ namespace BSAG.IOCTalk.Composition
 
                         // create new instances
                         HashSet<Type> createdTypes = new HashSet<Type>();
-                        foreach (Type implType in host.FindInterfaceImplementations(targetInterfaceType))
+                        foreach (Type implType in host.FindInterfaceImplementations(targetInterfaceType, injectTargetType))
                         {
-                            if (!createdTypes.Contains(implType))
+                            if (!createdTypes.Contains(implType) && injectTargetType != implType)
                             {
                                 object[] outParams;
                                 ParameterInfo[] outParamsInfo;

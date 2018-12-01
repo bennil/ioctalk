@@ -13,6 +13,7 @@ using BSAG.IOCTalk.Common.Session;
 using System.Linq.Expressions;
 using System.Reflection;
 using BSAG.IOCTalk.Test.Common.Service;
+using BSAG.IOCTalk.Common.Test.TestObjects.InterfaceMapTest;
 
 namespace BSAG.IOCTalk.Common.Test
 {
@@ -63,6 +64,34 @@ namespace BSAG.IOCTalk.Common.Test
 
             Type resultType = hostContainer.GetInterfaceImplementationType(typeof(IDataTransferTest).FullName);
         }
+
+        [Fact]
+        public void TestMethodSpecialInterfaceClassMapping()
+        {
+            var t = typeof(IOCTalk.Test.Common.Service.MyTestService);
+
+            DummyCommunicationService dummyComm = new DummyCommunicationService();
+
+            TalkCompositionHost hostContainer = new TalkCompositionHost();
+            hostContainer.RegisterLocalSessionService<IMyTestService>();
+            hostContainer.RegisterRemoteService<IMyRemoteTestService>();
+            hostContainer.RegisterExposedSubInterfaceForType<IMapTestMainInterface, MapTestMain>();
+            hostContainer.RegisterExposedSubInterfaceForType<IMapTestDerivedInterface, MapTestDerived>();
+            hostContainer.AddReferencedAssemblies();
+
+            hostContainer.InitGenericCommunication(dummyComm);
+
+            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session");
+
+            var result = hostContainer.CreateSessionContractInstance(session);
+
+            Type resultTypeMain = hostContainer.GetInterfaceImplementationType(typeof(IMapTestMainInterface).FullName);
+            Assert.Equal(typeof(MapTestMain), resultTypeMain);
+
+            Type resultTypeDerived = hostContainer.GetInterfaceImplementationType(typeof(IMapTestDerivedInterface).FullName);
+            Assert.Equal(typeof(MapTestDerived), resultTypeDerived);
+        }
+
 
 
         [Fact]

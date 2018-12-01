@@ -166,6 +166,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
             Type objectType = obj.GetType();
             Type exposedSubInterfaceType = null;
+            bool isSpecialTargetType = false;
             if (context.SpecialTypeResolver != null
                 && !IsSpecializedSubType) // do not recheck specialized sub structure
             {
@@ -174,21 +175,20 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 if (exposedSubInterfaceType != null)
                 {
                     // expose specialized sub interface type
-                    this.isObject = true;
+                    isSpecialTargetType = true;
                     if (this.typeSerializerCache == null)
                         this.typeSerializerCache = new ConcurrentDictionary<Type, IJsonTypeStructure>();
                 }
             }
 
-            if (isObject)
+            if (isObject || isSpecialTargetType)
             {
                 // undefined object -> determine target type first
                 IJsonTypeStructure currentObjectStructure;
                 if (!typeSerializerCache.TryGetValue(objectType, out currentObjectStructure))
                 {
                     Type targetType = null;
-                    bool isSpecialTargetType = false;
-                    if (exposedSubInterfaceType != null)
+                    if (isSpecialTargetType)
                     {
                         // expose specialized sub interface type
                         targetType = exposedSubInterfaceType;

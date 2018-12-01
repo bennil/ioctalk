@@ -47,7 +47,7 @@ namespace BSAG.IOCTalk.Common.Test
         }
 
 
-        public class PersistentTestCommService : IGenericCommunicationService
+        public class PersistentTestCommService : IGenericCommunicationService, ILogger
         {
             private IGenericContainerHost containerHost;
             public IGenericContainerHost ContainerHost => containerHost;
@@ -59,7 +59,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             public string LoggerTypeName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-            public ILogger Logger => throw new NotImplementedException();
+            public ILogger Logger => this;
 
             public bool LogDataStream { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
             public string DataStreamLoggerTypeName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -109,6 +109,23 @@ namespace BSAG.IOCTalk.Common.Test
             public void Shutdown()
             {
                 throw new NotImplementedException();
+            }
+
+            void ILogger.Debug(string message)
+            {
+            }
+
+            void ILogger.Info(string message)
+            {
+            }
+
+            void ILogger.Warn(string message)
+            {
+            }
+
+            void ILogger.Error(string message)
+            {
+                throw new Exception(message);
             }
         }
     }

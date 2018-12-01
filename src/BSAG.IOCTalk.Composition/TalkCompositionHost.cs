@@ -4,6 +4,7 @@ using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Common.Session;
+using BSAG.IOCTalk.Composition.Condition;
 using BSAG.IOCTalk.Composition.Fluent;
 using System;
 using System.Collections;
@@ -16,8 +17,8 @@ using System.Reflection;
 
 namespace BSAG.IOCTalk.Composition
 {
-    public class TalkCompositionHost : IGenericContainerHost //IGenericContractContainerHost<TServiceContractSession> //, IXmlConfig
-                                                             //where TServiceContractSession : class
+    public class TalkCompositionHost : IGenericContainerHost, ITalkContainer //IGenericContractContainerHost<TServiceContractSession> //, IXmlConfig
+                                                                             //where TServiceContractSession : class
     {
         #region TalkCompositionHost fields
         // ----------------------------------------------------------------------------------------
@@ -28,6 +29,7 @@ namespace BSAG.IOCTalk.Composition
         private SessionManagerNeu sessionManager = new SessionManagerNeu();
         //private SessionExportDescriptorProvider sessionExportProvider = new SessionExportDescriptorProvider();
         private List<Assembly> assemblies = new List<Assembly>();
+        private List<IDiscoveryCondition> discoveryConditionItems;
         private static Dictionary<string, Assembly> globalLoadedAssemblies = new Dictionary<string, Assembly>();
 
         private List<Type> localSessionServiceInterfaceTypes = new List<Type>();
@@ -43,8 +45,9 @@ namespace BSAG.IOCTalk.Composition
         private Dictionary<int, SessionContract> sessionIdContractMapping = new Dictionary<int, SessionContract>();
         private LocalShareContext localShare;
         private Dictionary<Type, object> hostSessionsSharedInstances = new Dictionary<Type, object>();
-        private object syncObj = new object();
+        private static object syncObj = new object();
         private Dictionary<Type, Type> exposedSubInterfaceTypeMapping;
+        private Dictionary<Type, Type> exposedSubInterfaceTypeMappingInterfToClass;
         private ILogger logger;
         private ISession currentSession;
         private IContract currentContract;
@@ -146,17 +149,14 @@ namespace BSAG.IOCTalk.Composition
                 Type proxyImplementationType;
                 if (!interfaceTypeProxyImplCache.TryGetValue(interfaceType, out proxyImplementationType))
                 {
-                    if (!TryFindInterfaceImplementation(interfaceType, out proxyImplementationType))
+                    if (!TryFindInterfaceImplementation(interfaceType, null, out proxyImplementationType))
                     {
                         // auto generate proxy
                         proxyImplementationType = TypeService.BuildProxyImplementation(interfaceType); // "[System.Composition.Import]");
                         interfaceTypeProxyImplCache.Add(interfaceType, proxyImplementationType);
                     }
 
-                    if (!assemblies.Contains(proxyImplementationType.Assembly))
-                    {
-                        assemblies.Add(proxyImplementationType.Assembly);
-                    }
+                    AddAssembly(proxyImplementationType.Assembly);
                 }
 
                 remoteServiceInterfaceTypes.Add(interfaceType);
@@ -214,7 +214,7 @@ namespace BSAG.IOCTalk.Composition
         /// <param name="interfaceType"></param>
         public void RegisterLocalSharedServices<T>()
         {
-            localShare.RegisterLocalSharedService<T>();
+            localShare.RegisterLocalSharedServices<T>();
         }
 
         /// <summary>
@@ -333,26 +333,50 @@ namespace BSAG.IOCTalk.Composition
             }
         }
 
+        public void AddDiscoveryCondition(IDiscoveryCondition discoveryCondition)
+        {
+            lock (syncObj)
+            {
+                if (discoveryConditionItems == null)
+                    discoveryConditionItems = new List<IDiscoveryCondition>();
+
+                if (!discoveryConditionItems.Contains(discoveryCondition))
+                    discoveryConditionItems.Add(discoveryCondition);
+            }
+        }
+
         public bool AddAssembly(Assembly assembly)
         {
             lock (syncObj)
             {
-                if (assembly != null && !assemblies.Contains(assembly))
+                if (assembly != null)
                 {
-                    assemblies.Add(assembly);
-
                     string key = assembly.FullName;
 
-                    if (key != null && !globalLoadedAssemblies.ContainsKey(key))
+                    if (key != null)
                     {
-                        //try   (hangs up if try catch is unommented) (xamarin: only occurs if init is not executed in the main thread - even tough it is locked)
-                        //{
-                        globalLoadedAssemblies.Add(key, assembly);
-                        //}
-                        //catch (NullReferenceException nEx)
-                        //{
-                        //    // ignore undifinably NullReferenceException in Xamarin context
-                        //}
+                        Assembly alreadyLoaded = null;
+                        if (!globalLoadedAssemblies.TryGetValue(key, out alreadyLoaded))
+                        {
+                            //try   (hangs up if try catch is unommented) (xamarin: only occurs if init is not executed in the main thread - even tough it is locked)
+                            //{
+                            globalLoadedAssemblies.Add(key, assembly);
+                            //}
+                            //catch (NullReferenceException nEx)
+                            //{
+                            //    // ignore undifinably NullReferenceException in Xamarin context
+                            //}
+                        }
+                        else if (!alreadyLoaded.Equals(assembly))
+                        {
+                            // use already loaded assembly because of dynamic load problems (https://github.com/dotnet/corefx/issues/21982)
+                            assembly = alreadyLoaded;
+                        }
+                    }
+
+                    if (!assemblies.Contains(assembly))
+                    {
+                        assemblies.Add(assembly);
                     }
 
                     return true;
@@ -516,12 +540,26 @@ namespace BSAG.IOCTalk.Composition
         /// <summary>
         /// Registers the type mapping for an exposed sub interface.
         /// </summary>
+        /// <typeparam name="InterfaceType">Type of the exposed derived interface.</typeparam>
+        /// <typeparam name="SourceType">Type of the concrete source class.</typeparam>
+        public void RegisterExposedSubInterfaceForType<InterfaceType, SourceType>()
+        {
+            RegisterExposedSubInterfaceForType(typeof(InterfaceType), typeof(SourceType));
+        }
+
+
+        /// <summary>
+        /// Registers the type mapping for an exposed sub interface.
+        /// </summary>
         /// <param name="interfaceType">Type of the exposed interface.</param>
-        /// <param name="sourceType">Type of the concrete source.</param>
+        /// <param name="sourceType">Type of the concrete source class.</param>
         public void RegisterExposedSubInterfaceForType(Type interfaceType, Type sourceType)
         {
             if (exposedSubInterfaceTypeMapping == null)
+            {
                 exposedSubInterfaceTypeMapping = new Dictionary<Type, Type>();
+                exposedSubInterfaceTypeMappingInterfToClass = new Dictionary<Type, Type>();
+            }
 
             if (!interfaceType.IsInterface)
             {
@@ -529,6 +567,11 @@ namespace BSAG.IOCTalk.Composition
             }
 
             exposedSubInterfaceTypeMapping[sourceType] = interfaceType;
+
+            if (sourceType.IsClass)
+            {
+                exposedSubInterfaceTypeMappingInterfToClass[interfaceType] = sourceType;
+            }
         }
 
 
@@ -556,6 +599,16 @@ namespace BSAG.IOCTalk.Composition
                 Type interfType;
                 if (TypeService.TryGetTypeByName(interfaceType, out interfType))
                 {
+                    // check if a special sub type mapping resolver is registered
+                    if (exposedSubInterfaceTypeMappingInterfToClass != null)
+                    {
+                        Type exposedType;
+                        if (exposedSubInterfaceTypeMappingInterfToClass.TryGetValue(interfType, out exposedType))
+                        {
+                            return exposedType;
+                        }
+                    }
+
                     // check if a local export is present for the type
                     object instance;
                     if (TryGetExport(interfType, out instance))
@@ -613,8 +666,13 @@ namespace BSAG.IOCTalk.Composition
 
         public object GetExport(Type type)
         {
+            return GetExport(type, null);
+        }
+
+        public object GetExport(Type type, Type injectTargetType)
+        {
             object instance;
-            if (!TryGetExport(type, out instance))
+            if (!TryGetExport(type, injectTargetType, out instance))
             {
                 if (assemblies.Count == 0)
                 {
@@ -622,7 +680,10 @@ namespace BSAG.IOCTalk.Composition
                 }
                 else
                 {
-                    throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"");
+                    if (injectTargetType != null)
+                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! Inject Target type: {injectTargetType.FullName}");
+                    else
+                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"");
                 }
             }
 
@@ -631,6 +692,24 @@ namespace BSAG.IOCTalk.Composition
 
         public bool TryGetExport(Type type, out object instance)
         {
+            return TryGetExport(type, null, out instance);
+        }
+
+        public bool TryGetExport(Type type, Type injectTargetType, out object instance)
+        {
+            if (discoveryConditionItems != null)
+            {
+                DiscoveryContext ctx = new DiscoveryContext(type, injectTargetType);
+
+                foreach (var cond in discoveryConditionItems)
+                {
+                    if (cond.IsMatching(ctx))
+                    {
+                        return cond.TargetContainer.TryGetExport(type, injectTargetType, out instance);
+                    }
+                }
+            }
+
             if (localShare.SharedLocalInstances.TryGetValue(type, out instance))
             {
                 return true;
@@ -653,12 +732,12 @@ namespace BSAG.IOCTalk.Composition
                     }
                 }
 
-                if (!TryFindInterfaceImplementation(type, out targetType))
+                if (!TryFindInterfaceImplementation(type, injectTargetType, out targetType))
                 {
                     // not found > check if multiple import
                     if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
                     {
-                        var multiImportColl = localShare.CollectLocalMultiImports(this, type);
+                        var multiImportColl = localShare.CollectLocalMultiImports(this, type, injectTargetType);
                         if (multiImportColl != null)
                         {
                             instance = multiImportColl;
@@ -674,7 +753,7 @@ namespace BSAG.IOCTalk.Composition
             }
             else if (type.IsArray)
             {
-                var multiImportColl = this.localShare.CollectLocalMultiImports(this, type);
+                var multiImportColl = this.localShare.CollectLocalMultiImports(this, type, injectTargetType);
                 if (multiImportColl != null)
                 {
                     instance = multiImportColl;
@@ -701,7 +780,7 @@ namespace BSAG.IOCTalk.Composition
             return true;
         }
 
-        internal object DetermineConstructorImportInstance(Type type, string parameterName)
+        internal object DetermineConstructorImportInstance(Type type, string parameterName, Type injectTargetType)
         {
             if (string.Compare(parameterName, "sessionId", true) == 0)
             {
@@ -710,37 +789,57 @@ namespace BSAG.IOCTalk.Composition
             }
             else
             {
-                return GetExport(type);
+                return GetExport(type, injectTargetType);
             }
         }
 
-        private bool TryFindInterfaceImplementation(Type interfaceType, out Type targetType)
+        private bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, out Type targetType)
         {
+            if (injectTargetType != null)
+            {
+                // first scan inject assembly
+                targetType = ScanAssembly(interfaceType, injectTargetType.Assembly);
+
+                if (targetType != null && targetType != injectTargetType)
+                    return true;
+            }
+
             foreach (var a in this.assemblies)
             {
-                try
-                {
-                    foreach (var t in a.GetTypes())
-                    {
-                        if (interfaceType.IsAssignableFrom(t) && !t.IsAbstract)
-                        {
-                            targetType = t;
-                            return true;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // ignore loading error
-                    Console.WriteLine($"Error iterating types for assembly: {a}:\n{ex}");
-                }
+                targetType = ScanAssembly(interfaceType, a);
+
+                if (targetType != null && targetType != injectTargetType)
+                    return true;
             }
 
             targetType = null;
             return false;
         }
 
-        internal IEnumerable<Type> FindInterfaceImplementations(Type interfaceType)
+        private static Type ScanAssembly(Type interfaceType, Assembly assembly)
+        {
+            Type targetType = null;
+            try
+            {
+                foreach (var t in assembly.GetTypes())
+                {
+                    if (interfaceType.IsAssignableFrom(t) && !t.IsAbstract)
+                    {
+                        targetType = t;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // ignore loading error
+                Console.WriteLine($"Error iterating types for assembly: {assembly}:\n{ex}");
+            }
+
+            return targetType;
+        }
+
+        internal IEnumerable<Type> FindInterfaceImplementations(Type interfaceType, Type injectTargetType)
         {
             foreach (var a in this.assemblies)
             {

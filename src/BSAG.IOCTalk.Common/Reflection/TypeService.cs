@@ -746,7 +746,7 @@ namespace BSAG.IOCTalk.Common.Reflection
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>System.Object.</returns>
-        public static object CreateInstance(Type type, Func<Type, string, object> constructorParamResolver, out object[] outParams, out ParameterInfo[] outParamsInfo)
+        public static object CreateInstance(Type type, Func<Type, string, Type, object> constructorParamResolver, out object[] outParams, out ParameterInfo[] outParamsInfo)
         {
             ConstructorParamsCache paramsCache;
             Func<object[], object> constructorDelegate;
@@ -779,7 +779,7 @@ namespace BSAG.IOCTalk.Common.Reflection
             for (int i = 0; i < paramsCache.ParamTypes.Length; i++)
             {
                 if (!paramsCache.Parameters[i].IsOut)
-                    ctorParams[i] = constructorParamResolver(paramsCache.ParamTypes[i], paramsCache.ParamNames[i]);
+                    ctorParams[i] = constructorParamResolver(paramsCache.ParamTypes[i], paramsCache.ParamNames[i], type);
             }
 
             if (paramsCache.ContainsOutParams)
