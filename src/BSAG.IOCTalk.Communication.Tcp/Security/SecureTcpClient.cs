@@ -80,6 +80,30 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
             set { protocol = value; }
         }
 
+        /// <summary>
+        /// Gets or sets the store location
+        /// </summary>
+        public StoreLocation Location { get; set; } = StoreLocation.LocalMachine;
+
+        /// <summary>
+        /// Gets or sets the certificate filename (no store is used).
+        /// </summary>
+        public string ClientCertificateFilename { get; set; }
+
+        /// <summary>
+        /// Gets or sets the local certificate file password.
+        /// </summary>
+        public string ClientCertificateFilePassword { get; set; }
+
+        /// <summary>
+        /// If the store does not accept the remote certificate the chain will be rechecked against the LocalCertFilename.
+        /// </summary>
+        public bool CheckLocalCertFile { get; set; }
+
+        /// <summary>
+        /// The local certificate file for remote chain validation check
+        /// </summary>
+        public string LocalCertFilename { get; set; }
 
         #endregion
 
@@ -106,7 +130,19 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
 
                 if (ProvideClientCertificate)
                 {
-                    X509Certificate2 clientCertificate = SecureTcpServer.GetCertificateByName(ClientCertificateName);
+                    X509Certificate2 clientCertificate;
+                    if (!string.IsNullOrEmpty(ClientCertificateFilename))
+                    {
+                        Logger?.Info($"Load client certificate file: \"{ClientCertificateFilename}\"");
+                        clientCertificate = SecureTcpServer.GetCertificateByFilename(ClientCertificateFilename, ClientCertificateFilePassword);
+                    }
+                    else
+                    {
+                        Logger?.Info($"Load client certificate from store: \"{ClientCertificateName}\"; Location: {Location}");
+                        clientCertificate = SecureTcpServer.GetCertificateByName(ClientCertificateName, Location);
+                    }
+                    Logger?.Info($"Client certificate \"{clientCertificate.SubjectName.Name}\" loaded successfully - Thumbprint: {clientCertificate.Thumbprint}");
+
                     X509Certificate2Collection clientCerts = new X509Certificate2Collection(clientCertificate);
 
                     tlsStream.AuthenticateAsClient(ServerName, clientCerts, protocol, true);
@@ -118,9 +154,9 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
 
                 this.client = new Client(this.socket, this.tlsStream, new ConcurrentQueue<IGenericMessage>(), socket.LocalEndPoint, socket.RemoteEndPoint, Logger);
 
-                OnConnectionEstablished(client);
-
                 StartReceivingData(client);
+
+                OnConnectionEstablished(client);
             }
             catch (Exception ex)
             {
@@ -154,8 +190,28 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
             }
             else
             {
-                this.Logger.Error(string.Format("Certificate error: {0}", sslPolicyErrors));
-                return false;
+                if (CheckLocalCertFile)
+                {
+                    X509Certificate2 customCertAuthority = new X509Certificate2(LocalCertFilename);
+
+                    // Check if CA certificate is available in the chain.
+                    var isInChain = chain.ChainElements.Cast<X509ChainElement>()
+                                              .Select(element => element.Certificate)
+                                              .Where(chainCertificate => chainCertificate.Subject == customCertAuthority.Subject)
+                                              .Where(chainCertificate => chainCertificate.GetRawCertData().SequenceEqual(customCertAuthority.GetRawCertData()))
+                                              .Any();
+
+                    if (!isInChain)
+                    {
+                        this.Logger.Error(string.Format("Certificate error: {0} - local cert also not in chain", sslPolicyErrors));
+                    }
+                    return isInChain;
+                }
+                else
+                {
+                    this.Logger.Error(string.Format("Certificate error: {0}", sslPolicyErrors));
+                    return false;
+                }
             }
         }
 

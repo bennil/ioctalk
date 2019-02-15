@@ -24,7 +24,7 @@ namespace BSAG.IOCTalk.Composition
         // ----------------------------------------------------------------------------------------
         // TalkCompositionHost fields
         // ----------------------------------------------------------------------------------------
-        private static readonly string[] IgnoreAssemblyStartNames = new string[] { "System", "Microsoft.", "netstandard", "Mono.", "mscorlib" };
+        private static readonly string[] IgnoreAssemblyStartNames = new string[] { "System", "Microsoft.", "netstandard", "Mono.", "mscorlib", "api-ms-", "hostfxr", "mscor", "hostfxr", "clrcompression", "clretwrc", "clrjit", "coreclr", "dbgshim", "hostpolicy", "sos", "ucrtbase", "PresentationFramework", "WindowsBase", "PresentationCore" };
 
         private SessionManagerNeu sessionManager = new SessionManagerNeu();
         //private SessionExportDescriptorProvider sessionExportProvider = new SessionExportDescriptorProvider();
@@ -305,17 +305,29 @@ namespace BSAG.IOCTalk.Composition
                 if (IgnoreAssemblyStartNames.Any(startN => aFile.Name.StartsWith(startN)))
                     continue;
 
-                AssemblyName aName = AssemblyName.GetAssemblyName(aFile.FullName);
+                try
+                {
+                    AssemblyName aName = AssemblyName.GetAssemblyName(aFile.FullName);
 
-                Assembly assembly;
-                if (globalLoadedAssemblies.TryGetValue(aName.FullName, out assembly))   // do not load assemblies twice
-                {
-                    AddAssembly(assembly);
+                    Assembly assembly;
+                    if (globalLoadedAssemblies.TryGetValue(aName.FullName, out assembly))   // do not load assemblies twice
+                    {
+                        AddAssembly(assembly);
+                    }
+                    else
+                    {
+                        assembly = Assembly.LoadFile(aFile.FullName);
+                        AddAssemblyTree(assembly, assemblies);
+                    }
                 }
-                else
+                catch (Exception loadEx)
                 {
-                    assembly = Assembly.LoadFile(aFile.FullName);
-                    AddAssemblyTree(assembly, assemblies);
+                    string errMsg = "AddExecutionDirAssemblies ignore assembly with load error:\r\n" + loadEx.ToString();
+                    if (logger != null)
+                        logger.Warn(errMsg);
+                    else
+                        Console.WriteLine(errMsg);
+
                 }
             }
         }
@@ -377,9 +389,9 @@ namespace BSAG.IOCTalk.Composition
                     if (!assemblies.Contains(assembly))
                     {
                         assemblies.Add(assembly);
+                        return true;    // only the first time
                     }
 
-                    return true;
                 }
                 return false;
             }
@@ -393,7 +405,7 @@ namespace BSAG.IOCTalk.Composition
 
             if (AddAssembly(assembly))
             {
-                assemblies.Add(assembly);
+                //assemblies.Add(assembly);
 
                 foreach (var assemblyName in assembly.GetReferencedAssemblies())
                 {
@@ -809,7 +821,7 @@ namespace BSAG.IOCTalk.Composition
                 targetType = ScanAssembly(interfaceType, a);
 
                 if (targetType != null && targetType != injectTargetType)
-                    return true;
+                    return true;    // todo: choose next implementation to interface hierachy
             }
 
             targetType = null;

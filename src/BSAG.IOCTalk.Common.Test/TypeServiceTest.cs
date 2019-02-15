@@ -86,32 +86,39 @@ namespace BSAG.IOCTalk.Common.Test
 
 
         [Fact]
+        private void TestAdvancedProxyImplementation()
+        {
+            try
+            {
+                Type result = TypeService.BuildProxyImplementation(typeof(IPerformanceMonitorService));
+
+                DummyCommunicationService dummyCommService = new DummyCommunicationService();
+                
+                var constructorParams = new object[2];
+                constructorParams[0] = dummyCommService;
+
+                IPerformanceMonitorService instance = (IPerformanceMonitorService)Activator.CreateInstance(result, constructorParams);
+
+                TimeSpan timeSpan = new TimeSpan(23532534);
+                List<string> testColl = new List<string>();
+                testColl.Add("item 1");
+                string testOutput;
+                instance.SubscribeCpuUsageNotification(timeSpan, out testOutput, testColl);
+            }
+            catch (Exception ex)
+            {
+                // because of buggy unit test environment
+                throw;
+            }
+        }
+
+
+
+        [Fact]
         public void TestMethodCreateProxyImplementation()
         {
             SimpleProxyImplementationTest();
-
-            //AdvancedProxyImplementation();
         }
-
-        //private static void AdvancedProxyImplementation()
-        //{
-        //    Type result = TypeService.BuildProxyImplementation(typeof(IPerformanceMonitorService), true);
-
-        //    IPerformanceMonitorService instance = (IPerformanceMonitorService)Activator.CreateInstance(result);
-
-        //    var piCommSerivce = instance.GetType().GetProperty("CommunicationService");
-
-        //    DummyCommunicationService dummyCommService = new DummyCommunicationService();
-
-        //    piCommSerivce.SetValue(instance, dummyCommService, null);
-
-        //    TimeSpan timeSpan = new TimeSpan(23532534);
-        //    List<string> testColl = new List<string>();
-        //    testColl.Add("item 1");
-        //    string testOutput;
-        //    instance.SubscribeCpuUsageNotification(timeSpan, out testOutput, testColl);
-        //}
-
 
         private static void SimpleProxyImplementationTest()
         {

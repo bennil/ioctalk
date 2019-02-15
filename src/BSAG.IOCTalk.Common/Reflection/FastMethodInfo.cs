@@ -29,7 +29,31 @@ namespace BSAG.IOCTalk.Common.Reflection
             for (var i = 0; i < parameterInfos.Length; ++i)
             {
                 var parameterInfo = parameterInfos[i];
-                argumentExpressions.Add(Expression.Convert(Expression.ArrayIndex(argumentsExpression, Expression.Constant(i)), parameterInfo.ParameterType));
+
+                var paramType = parameterInfo.ParameterType;
+                //todo: behaviour changed in .net core 2.1 -> find new solution -> solution pending for method out parameter support !!!
+                //if (parameterInfo.IsOut)
+                //{
+
+                //    //  System.ArgumentException : Type must not be ByRef
+                //    var indexExpr = Expression.Constant(i); //, paramType.GetElementType());
+                //    var expr1 = Expression.ArrayIndex(argumentsExpression, indexExpr);
+
+                //    //Expression.ArrayAccess(argumentExpressions, indexExpr);
+                //    var contypeCode = Expression.Constant(Type.GetTypeCode(paramType));
+                //    var t1 = Expression.Convert(expr1, paramType);
+
+                //    //if (parameterInfo.ParameterType.IsByRef)
+                //    //{
+                //    //paramType = paramType.GetElementType();
+                //    var paramExpression = Expression.Parameter(parameterInfo.ParameterType, parameterInfo.Name);
+                //    argumentExpressions.Add(paramExpression);
+                //    //}
+                //}
+                //else
+                {
+                    argumentExpressions.Add(Expression.Convert(Expression.ArrayIndex(argumentsExpression, Expression.Constant(i)), paramType));
+                }
             }
             var callExpression = Expression.Call(!methodInfo.IsStatic ? Expression.Convert(instanceExpression, methodInfo.ReflectedType) : null, methodInfo, argumentExpressions);
             if (callExpression.Type == typeof(void))

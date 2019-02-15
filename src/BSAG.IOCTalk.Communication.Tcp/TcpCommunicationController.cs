@@ -176,16 +176,23 @@ namespace BSAG.IOCTalk.Communication.Tcp
             InitClient(null, false, host, port);
         }
 
+        public void InitClient(string host, int port, SecureTcpClient secureTcpClient)
+        {
+            InitClientInternal(host, port, secureTcpClient);
+        }
+
         public void InitService(int port)
         {
             InitService(null, false, port);
         }
 
+        public void InitService(int port, SecureTcpServer secureTcpServer)
+        {
+            InitServiceInternal(port, secureTcpServer);
+        }
 
         private void InitClient(XElement securityXml, bool isSecurityEnabled, string host, int port)
         {
-            this.connectionType = ConnectionType.Client;
-
             TcpClientCom client;
             if (isSecurityEnabled)
             {
@@ -204,6 +211,12 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 client = new TcpClientCom();
             }
 
+            InitClientInternal(host, port, client);
+        }
+
+        private void InitClientInternal(string host, int port, TcpClientCom client)
+        {
+            this.connectionType = ConnectionType.Client;
             client.Logger = this.logger;
             SubscribeCommunicationEvents(client);
 
@@ -218,12 +231,10 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
             // async client connect
             StartAutoReconnectAsync();
-
         }
 
         private void InitService(XElement securityXml, bool isSecurityEnabled, int servicePort)
         {
-            this.connectionType = ConnectionType.Service;
 
             TcpServiceCom service;
             if (isSecurityEnabled)
@@ -237,6 +248,12 @@ namespace BSAG.IOCTalk.Communication.Tcp
             {
                 service = new TcpServiceCom();
             }
+            InitServiceInternal(servicePort, service);
+        }
+
+        private void InitServiceInternal(int servicePort, TcpServiceCom service)
+        {
+            this.connectionType = ConnectionType.Service;
             service.Logger = this.logger;
 
 

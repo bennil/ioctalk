@@ -106,6 +106,11 @@ namespace BSAG.IOCTalk.Communication.Common
         protected bool isActive = true;
         private static long globalThreadId = 0;
 
+        private long receivedMessageCounter = 0;
+        private long sentMessageCounter = 0;
+        private long lastReceivedMessageCounter = 0;
+        private long lastSentMessageCounter = 0;
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -287,6 +292,21 @@ namespace BSAG.IOCTalk.Communication.Common
             set { requestTimeout = value; }
         }
 
+        /// <summary>
+        /// Gets or sets the heartbeat interval time in seconds
+        /// </summary>
+        public int HeartbeatIntervalTimeSeconds
+        {
+            get { return (int)HeartbeatIntervalTime.TotalSeconds; }
+            set { HeartbeatIntervalTime = new TimeSpan(0, 0, value); }
+        }
+
+        /// <summary>
+        /// Gets or sets the heartbeat interval time
+        /// </summary>
+        [XmlIgnore]
+        public TimeSpan HeartbeatIntervalTime { get; set; } = TimeSpan.Zero;
+
 
         /// <summary>
         /// Gets or sets the maximum time a session created client event is allowed to block the invoke processing in seconds.
@@ -440,6 +460,11 @@ namespace BSAG.IOCTalk.Communication.Common
                     {
                         OnSessionCreatedInternal(new SessionEventArgs(newSession, sessionContract));
                     }
+
+                    if (HeartbeatIntervalTime.TotalSeconds > 0)
+                    {
+                        ActivateSendHeartbeats(newSession);
+                    }
                 }
             }
             finally
@@ -447,6 +472,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 Interlocked.Decrement(ref pendingSessionCreationCount);
             }
         }
+
 
         private void OnSessionCreatedInternal(object newSessionObj)
         {
@@ -769,6 +795,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
 
             baseCommunicationServiceSupport.SendMessage(requestMsg, session.SessionId, invokeInfo);
+            sentMessageCounter++;
 
             if (responseExpected)
             {
@@ -929,6 +956,8 @@ namespace BSAG.IOCTalk.Communication.Common
         /// <param name="message">The message.</param>
         public void ProcessReceivedMessage(ISession session, IGenericMessage message)
         {
+            receivedMessageCounter++;
+
             switch (message.Type)
             {
                 case MessageType.MethodInvokeRequest:
@@ -1126,6 +1155,7 @@ namespace BSAG.IOCTalk.Communication.Common
                     // Send response message
                     GenericMessage responseMessage = new GenericMessage(message.RequestId, responseObject);
                     baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, methodInfo);
+                    sentMessageCounter++;
                 }
 
             }
@@ -1144,6 +1174,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 // Send exception message
                 GenericMessage responseMessage = new GenericMessage(message.RequestId, ex);
                 baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, null);
+                sentMessageCounter++;
             }
         }
 
@@ -1265,6 +1296,50 @@ namespace BSAG.IOCTalk.Communication.Common
             return false;
         }
 
+
+
+        private async void ActivateSendHeartbeats(ISession session)
+        {
+            try
+            {
+                logger.Debug($"Activate send hearbeats - session ID: {session.SessionId} - Interv.: {HeartbeatIntervalTimeSeconds} sec. ");
+
+                GenericMessage heartbeatMsg = new GenericMessage();
+                heartbeatMsg.Type = MessageType.Heartbeat;
+
+                // initial wait
+                await Task.Delay(HeartbeatIntervalTime);
+
+                lastReceivedMessageCounter = receivedMessageCounter;
+                lastSentMessageCounter = sentMessageCounter;
+
+                while (session.IsActive)
+                {
+                    if (receivedMessageCounter == lastReceivedMessageCounter
+                        && sentMessageCounter == lastSentMessageCounter)
+                    {
+                        heartbeatMsg.RequestId = Interlocked.Increment(ref currentRequestId);
+
+                        baseCommunicationServiceSupport.SendMessage(heartbeatMsg, session.SessionId, null);
+                    }
+                    else
+                    {
+                        lastReceivedMessageCounter = receivedMessageCounter;
+                        lastSentMessageCounter = sentMessageCounter;
+                    }
+
+                    await Task.Delay(HeartbeatIntervalTime);
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+            finally
+            {
+                logger.Debug($"Send heartbeats for {session.SessionId} stopped");
+            }
+        }
 
         // ----------------------------------------------------------------------------------------
         #endregion

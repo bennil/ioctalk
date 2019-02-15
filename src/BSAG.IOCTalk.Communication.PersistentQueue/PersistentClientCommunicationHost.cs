@@ -23,6 +23,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         private FileStream persistMsgFile;
         private object syncLock = new object();
         private EventHandler<SessionEventArgs> fictionalSessionCreatedEvent;
+        private EventHandler<SessionEventArgs> sessionCreatedBeforeResendEvent;
         private EventHandler<SessionEventArgs> fictionalSessionTerminatedEvent;
         private Session fictionalSession;
         private IContract fictionalSessionContract;
@@ -42,6 +43,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             this.underlyingCom.SessionTerminated += UnderlyingCom_SessionTerminated;
         }
 
+        public bool RedirectSessionEvents { get; set; }
 
         public IGenericContainerHost ContainerHost => underlyingCom.ContainerHost;
 
@@ -77,6 +79,19 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
         }
 
+        public event EventHandler<SessionEventArgs> SessionCreatedBeforeResend
+        {
+            add
+            {
+                sessionCreatedBeforeResendEvent += value;
+            }
+            remove
+            {
+                sessionCreatedBeforeResendEvent -= value;
+            }
+        }
+
+
         public event EventHandler<SessionEventArgs> SessionTerminated
         {
             add
@@ -88,6 +103,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 fictionalSessionTerminatedEvent -= value;
             }
         }
+
 
         public void RegisterPersistentMethod<InterfaceT>(string methodName)
         {
@@ -114,6 +130,9 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
         public void RaiseFictionalSession()
         {
+            if (RedirectSessionEvents)
+                throw new NotSupportedException("RaiseFictionalSession not supported in RedirectSessionEvents mode!");
+
             if (fictionalSessionCreatedEvent != null)
                 fictionalSessionCreatedEvent(this, new SessionEventArgs(fictionalSession, fictionalSessionContract));
         }
@@ -122,6 +141,9 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         {
             try
             {
+                if (sessionCreatedBeforeResendEvent != null)
+                    sessionCreatedBeforeResendEvent(sender, e);
+
                 lock (syncLock)
                 {
                     // release opened file
@@ -137,6 +159,12 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 }
 
                 ResendPendingMethodInvokes(e.Session);
+
+                if (RedirectSessionEvents)
+                {
+                    if (fictionalSessionCreatedEvent != null)
+                        fictionalSessionCreatedEvent(sender, e);
+                }
             }
             catch (Exception ex)
             {
@@ -149,6 +177,12 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             lock (syncLock)
             {
                 realUnderlyingSession = null;
+            }
+
+            if (RedirectSessionEvents)
+            {
+                if (fictionalSessionTerminatedEvent != null)
+                    fictionalSessionTerminatedEvent(sender, e);
             }
         }
 
@@ -347,21 +381,24 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         {
             underlyingCom.RegisterContainerHost(containerHost);
 
-            if (fictionalSession == null)
+            if (!RedirectSessionEvents)
             {
-                fictionalSession = new Session(this, 0, "Fictional Persistent Session");
+                if (fictionalSession == null)
+                {
+                    fictionalSession = new Session(this, 0, "Fictional Persistent Session");
 
-                fictionalSessionContract = containerHost.CreateSessionContractInstance(fictionalSession);
-            }
-            else
-            {
-                throw new InvalidOperationException("Container host already registered!");
+                    fictionalSessionContract = containerHost.CreateSessionContractInstance(fictionalSession);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Container host already registered!");
+                }
             }
         }
 
         public void Shutdown()
         {
-            if (fictionalSessionTerminatedEvent != null)
+            if (fictionalSessionTerminatedEvent != null && !RedirectSessionEvents)
                 fictionalSessionTerminatedEvent(this, new SessionEventArgs(fictionalSession, fictionalSessionContract));
 
             underlyingCom.Shutdown();

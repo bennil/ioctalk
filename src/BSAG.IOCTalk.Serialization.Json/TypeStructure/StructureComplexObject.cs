@@ -23,14 +23,14 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         // ----------------------------------------------------------------------------------------
         // StructureComplexObject fields
         // ----------------------------------------------------------------------------------------
-        private IJsonTypeStructure[] objectStructure;
-
         private Type concreteTargetType;
 
+        private IJsonTypeStructure[] objectStructure;
         private Func<object, object>[] getAccessorByPropertyIndex;
         private Action<object, object>[] setAccessorByPropertyIndex;
 
-
+        private List<StructureComplexOutOfOrder> outOfOrderStructures;
+        private static object syncObj = new object();
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -395,6 +395,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 for (int propIndex = 0; propIndex < objectStructure.Length; propIndex++)
                 {
                     IJsonTypeStructure structure = objectStructure[propIndex];
+                    var setPropertyAccessor = setAccessorByPropertyIndex[propIndex];
 
                     // check out of order json
                     int expectedKeyStartIndex = currentReadIndex + 1;
@@ -403,42 +404,105 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                         || json[structure.Key.Length + actualKeyIndex] != Structure.CharQuotationMark)  // Recognize key with the same begin string but different ending
                     {
                         // out of order key recognized  
+
+
                         int keyEndIndex = json.IndexOf(Structure.CharQuotationMark, expectedKeyStartIndex);
                         int? keyStructureIndex = null;
+                        StructureComplexOutOfOrder cachedOutOfOrderStruct = null;
                         string actualKey = null;
                         if (keyEndIndex != -1)  // ignore if end of json is reached
                         {
                             actualKey = json.Substring(expectedKeyStartIndex, keyEndIndex - expectedKeyStartIndex);
 
-                            // find out of order key
-                            for (int tempPropIndex = 0; tempPropIndex < objectStructure.Length; tempPropIndex++)
+                            // check if out of order structure is already cached
+                            if (outOfOrderStructures != null)
                             {
-                                if (objectStructure[tempPropIndex].Key == actualKey)
+                                for (int indexCachedOutOfOrder = 0; indexCachedOutOfOrder < outOfOrderStructures.Count; indexCachedOutOfOrder++)
                                 {
-                                    keyStructureIndex = tempPropIndex;
-                                    break;
+                                    var cachedItem = outOfOrderStructures[indexCachedOutOfOrder];
+
+                                    if (cachedItem.ObjectStructure[propIndex].Key == actualKey)
+                                    {
+                                        cachedOutOfOrderStruct = cachedItem;
+                                        break;
+                                    }
                                 }
+                            }
+
+                            if (cachedOutOfOrderStruct == null)
+                            {
+                                // find out of order key
+                                keyStructureIndex = FindOutOfOrderKey(objectStructure, actualKey);
                             }
                         }
 
-                        if (keyStructureIndex.HasValue)
+                        if (cachedOutOfOrderStruct != null)
                         {
-                            // switch object structure to received json order
-                            IJsonTypeStructure foundOutOfOrderStructure = objectStructure[keyStructureIndex.Value];
-                            objectStructure[propIndex] = foundOutOfOrderStructure;
-                            objectStructure[keyStructureIndex.Value] = structure;
-                            structure = foundOutOfOrderStructure;
+                            structure = cachedOutOfOrderStruct.ObjectStructure[propIndex];
+                            setPropertyAccessor = cachedOutOfOrderStruct.SetAccessorByPropertyIndex[propIndex];
+                        }
+                        else if (keyStructureIndex.HasValue)
+                        {
+                            lock (syncObj)
+                            {
+                                // create or move out of order structure
 
-                            // switch value setter
-                            var currentAccessor = getAccessorByPropertyIndex[propIndex];
-                            var foundOutOfOrderAccessor = getAccessorByPropertyIndex[keyStructureIndex.Value];
-                            getAccessorByPropertyIndex[propIndex] = foundOutOfOrderAccessor;
-                            getAccessorByPropertyIndex[keyStructureIndex.Value] = currentAccessor;
+                                if (outOfOrderStructures == null)
+                                    outOfOrderStructures = new List<StructureComplexOutOfOrder>();
 
-                            var currentAccessorSet = setAccessorByPropertyIndex[propIndex];
-                            var foundOutOfOrderAccessorSet = setAccessorByPropertyIndex[keyStructureIndex.Value];
-                            setAccessorByPropertyIndex[propIndex] = foundOutOfOrderAccessorSet;
-                            setAccessorByPropertyIndex[keyStructureIndex.Value] = currentAccessorSet;
+                                // try reuse existing out of order array
+                                StructureComplexOutOfOrder currentOutOfOrderStruct;
+                                var existing = outOfOrderStructures.Where(ooo => ooo.MaxTargetIndex < propIndex).FirstOrDefault();
+
+                                IJsonTypeStructure[] sourceStructure = objectStructure;
+                                Func<object, object>[] sourceGetAccessorByPropertyIndex = getAccessorByPropertyIndex;
+                                Action<object, object>[] sourceSetAccessorByPropertyIndex = setAccessorByPropertyIndex;
+
+                                // create new cloned out of order strucutre
+                                if (existing == null)
+                                {
+                                    currentOutOfOrderStruct = new StructureComplexOutOfOrder()
+                                    {
+                                        ObjectStructure = (IJsonTypeStructure[])sourceStructure.Clone(),
+                                        GetAccessorByPropertyIndex = (Func<object, object>[])sourceGetAccessorByPropertyIndex.Clone(),
+                                        SetAccessorByPropertyIndex = (Action<object, object>[])sourceSetAccessorByPropertyIndex.Clone()
+                                    };
+                                }
+                                else
+                                {
+                                    currentOutOfOrderStruct = existing;
+                                    sourceStructure = existing.ObjectStructure;
+                                    structure = sourceStructure[propIndex];
+                                    sourceGetAccessorByPropertyIndex = existing.GetAccessorByPropertyIndex;
+                                    sourceSetAccessorByPropertyIndex = existing.SetAccessorByPropertyIndex;
+
+                                    // search in chached object structure again
+                                    keyStructureIndex = FindOutOfOrderKey(sourceStructure, actualKey);
+                                }
+
+                                // switch object structure to received json order
+                                IJsonTypeStructure foundOutOfOrderStructure = sourceStructure[keyStructureIndex.Value];
+                                currentOutOfOrderStruct.ObjectStructure[propIndex] = foundOutOfOrderStructure;
+                                currentOutOfOrderStruct.ObjectStructure[keyStructureIndex.Value] = structure;
+                                structure = foundOutOfOrderStructure;
+                                currentOutOfOrderStruct.MaxTargetIndex = propIndex;
+
+                                // switch value setter
+                                var currentAccessor = sourceGetAccessorByPropertyIndex[propIndex];
+                                var foundOutOfOrderAccessor = sourceGetAccessorByPropertyIndex[keyStructureIndex.Value];
+                                currentOutOfOrderStruct.GetAccessorByPropertyIndex[propIndex] = foundOutOfOrderAccessor;
+                                currentOutOfOrderStruct.GetAccessorByPropertyIndex[keyStructureIndex.Value] = currentAccessor;
+
+                                var currentAccessorSet = sourceSetAccessorByPropertyIndex[propIndex];
+                                var foundOutOfOrderAccessorSet = sourceSetAccessorByPropertyIndex[keyStructureIndex.Value];
+                                currentOutOfOrderStruct.SetAccessorByPropertyIndex[propIndex] = foundOutOfOrderAccessorSet;
+                                currentOutOfOrderStruct.SetAccessorByPropertyIndex[keyStructureIndex.Value] = currentAccessorSet;
+
+                                setPropertyAccessor = foundOutOfOrderAccessorSet;
+
+                                if (existing == null)
+                                    outOfOrderStructures.Add(currentOutOfOrderStruct);
+                            }
                         }
                         else
                         {
@@ -455,13 +519,14 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                                 throw new KeyNotFoundException(string.Format("The key: \"{0}\" is not present in the object structure! JSON: \"{1}\"; Target Type: \"{2}\"", actualKey, json, this.type.AssemblyQualifiedName));
                             }
                         }
+
                     }
 
                     object value = structure.Deserialize(json, ref currentReadIndex, context);
 
                     if (value != null)
                     {
-                        setAccessorByPropertyIndex[propIndex](target, value);
+                        setPropertyAccessor(target, value);
                     }
 
                     if (json[currentReadIndex] == Structure.CharRightBrace)
@@ -494,6 +559,20 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
             }
         }
 
+        private int? FindOutOfOrderKey(IJsonTypeStructure[] sourceObjStruct, string actualKey)
+        {
+            int? keyStructureIndex = null;
+            for (int tempPropIndex = 0; tempPropIndex < sourceObjStruct.Length; tempPropIndex++)
+            {
+                if (sourceObjStruct[tempPropIndex].Key == actualKey)
+                {
+                    keyStructureIndex = tempPropIndex;
+                    break;
+                }
+            }
+
+            return keyStructureIndex;
+        }
 
         private static bool SkipJsonElement(string json, ref int currentReadIndex)
         {

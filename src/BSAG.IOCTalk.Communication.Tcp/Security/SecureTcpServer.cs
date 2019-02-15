@@ -69,7 +69,22 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
             get { return protocol; }
             set { protocol = value; }
         }
-        
+
+        /// <summary>
+        /// Gets or sets the store location
+        /// </summary>
+        public StoreLocation Location { get; set; } = StoreLocation.LocalMachine;
+
+        /// <summary>
+        /// Gets or sets the certificate filename (no store is used).
+        /// </summary>
+        public string CertificateFilename { get; set; }
+
+        /// <summary>
+        /// Gets or sets the local certificate file password.
+        /// </summary>
+        public string CertificateFilePassword { get; set; }
+
 
         #endregion
 
@@ -84,8 +99,19 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
             {
                 clientSocket = listener.EndAccept(asyncResult);
                 clientSocket.ReceiveBufferSize = this.ReceiveBufferSize;
-
-                X509Certificate2 certificate = GetCertificateByName(CertificateName);
+                
+                X509Certificate2 certificate;
+                if (!string.IsNullOrEmpty(CertificateFilename))
+                {
+                    Logger?.Info($"Load certificate file: \"{CertificateFilename}\"");
+                    certificate = GetCertificateByFilename(CertificateFilename, CertificateFilePassword);
+                }
+                else
+                {
+                    Logger?.Info($"Load certificate from store: \"{CertificateName}\"; Location: {Location}");
+                    certificate = GetCertificateByName(CertificateName, Location);
+                }
+                Logger?.Info($"Certificate \"{certificate.SubjectName.Name}\" loaded successfully - Thumbprint: {certificate.Thumbprint}");
 
                 SslStream tlsStream = new SslStream(new NetworkStream(clientSocket), false);
                 tlsStream.AuthenticateAsServer(certificate, ClientCertificateRequired, protocol, true);
@@ -121,9 +147,9 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
             listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);         
         }
 
-        public static X509Certificate2 GetCertificateByName(string name)
+        public static X509Certificate2 GetCertificateByName(string name, StoreLocation location)
         {
-            X509Store certStore = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+            X509Store certStore = new X509Store(StoreName.My, location);
             certStore.Open(OpenFlags.ReadOnly);
 
             X509Certificate2Collection certificates = certStore.Certificates.Find(X509FindType.FindBySubjectName, name, true);
@@ -136,6 +162,12 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
 
             return certificates[0];
 
+        }
+
+        public static X509Certificate2 GetCertificateByFilename(string fileName, string password)
+        {
+            X509Certificate2 cert = new X509Certificate2(fileName, password);
+            return cert;
         }
 
         #endregion

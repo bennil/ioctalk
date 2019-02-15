@@ -409,6 +409,38 @@ namespace BSAG.IOCTalk.Common.Test
 
 
         [Fact]
+        public void TestMethodOutOfOrderDeserialization2()
+        {
+            JsonObjectSerializer serializer = new JsonObjectSerializer();
+
+            {
+                string outOfOrderJson = "{\"SubDe\":\"Test String\",\"SubId\":2}";
+
+                SubObjectEx subObj = (SubObjectEx)serializer.Deserialize(outOfOrderJson, typeof(SubObjectEx), null);
+
+                Assert.Equal<int>(2, subObj.SubId);
+                Assert.Equal("Test String", subObj.SubDe);
+            }
+
+            {
+                string outOfOrderJson = "{\"Flag\":true,\"Number\":3.5,\"SubDe\":\"Test String\",\"SubId\":2}";
+                SubObjectEx subObj = (SubObjectEx)serializer.Deserialize(outOfOrderJson, typeof(SubObjectEx), null);
+
+                Assert.Equal<int>(2, subObj.SubId);
+                Assert.Equal("Test String", subObj.SubDe);
+                Assert.True(subObj.Flag);
+                Assert.Equal(3.5m, subObj.Number);
+
+                SubObjectEx subObj2 = (SubObjectEx)serializer.Deserialize(outOfOrderJson, typeof(SubObjectEx), null);
+                Assert.Equal<int>(2, subObj2.SubId);
+                Assert.Equal("Test String", subObj2.SubDe);
+                Assert.True(subObj2.Flag);
+                Assert.Equal(3.5m, subObj2.Number);
+            }
+        }
+
+
+        [Fact]
         public void TestMethodEnumSerialization()
         {
             JsonObjectSerializer serializer = new JsonObjectSerializer();
@@ -571,7 +603,7 @@ namespace BSAG.IOCTalk.Common.Test
         {
             JsonObjectSerializer serializer = new JsonObjectSerializer(UnknownTypeResolver, SpecialTypeResolver);
             serializer.IsMissingFieldDataAllowed = true;
-            
+
             CheckNumberSerialization<decimal>(serializer, 0.0000001m, "0", "0000001");
             CheckNumberSerialization<double>(serializer, 0.0001d, "0", "0001");
             CheckNumberSerialization<double>(serializer, 123456789.0001d, "123456789", "0001");
@@ -607,7 +639,7 @@ namespace BSAG.IOCTalk.Common.Test
         public void TestMethodDateTimieSerializationTest()
         {
             JsonObjectSerializer serializer = new JsonObjectSerializer(UnknownTypeResolver, SpecialTypeResolver);
-            
+
             // 2015-10-12T17:24:33.221224
             CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.2512345"), serializer);
             CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.251234"), serializer);
@@ -632,7 +664,7 @@ namespace BSAG.IOCTalk.Common.Test
             CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.9999999"), serializer);
             CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.999999"), serializer);
             CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.9"), serializer);
-            
+
             ExplicitCheckTimeDeserialization("17:24:33.1234567");
             ExplicitCheckTimeDeserialization("17:24:33.123456");
             ExplicitCheckTimeDeserialization("17:24:33.12345");
@@ -657,7 +689,7 @@ namespace BSAG.IOCTalk.Common.Test
         private void CheckDateTimeSerialisation(DateTime dateTime, JsonObjectSerializer serializer)
         {
             TestObject testObj = new TestObject();
-            testObj.TimeSpanValue = dateTime.TimeOfDay;            
+            testObj.TimeSpanValue = dateTime.TimeOfDay;
             testObj.DateTimeValue = dateTime;
 
             string json = serializer.Serialize(testObj, null);

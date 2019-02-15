@@ -35,5 +35,10 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// Exception occured
         /// </summary>
         Exception = 12,
+
+        /// <summary>
+        /// Connection keep alive heartbeat
+        /// </summary>
+        Heartbeat = 13,
     }
 }
