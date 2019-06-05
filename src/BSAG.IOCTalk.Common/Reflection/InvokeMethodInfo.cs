@@ -220,6 +220,7 @@ namespace BSAG.IOCTalk.Common.Reflection
         public bool IsAsyncRemoteInvoke
         {
             get { return isAsyncRemoteInvoke; }
+            set { isAsyncRemoteInvoke = value; }
         }
 
 

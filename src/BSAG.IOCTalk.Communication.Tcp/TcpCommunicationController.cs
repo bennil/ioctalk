@@ -302,19 +302,19 @@ namespace BSAG.IOCTalk.Communication.Tcp
                         if (!isActive)
                         {
                             if (Logger != null)
-                                Logger.Info($"No reconnect to {communication.EndPoint.ToString()} because of shutdown");
+                                Logger.Info($"No reconnect to {communication?.EndPoint} because of shutdown");
 
                             return;
                         }
 
                         if (Logger != null)
-                            Logger.Info($"Connect to {communication.EndPoint.ToString()}...");
+                            Logger.Info($"Connect to {communication?.EndPoint}...");
 
                         string errMsg;
                         while (!this.communication.Connect(out errMsg))
                         {
                             if (Logger != null)
-                                Logger.Warn($"Connection refused {communication.EndPoint.ToString()}! {errMsg}");
+                                Logger.Warn($"Connection refused {communication?.EndPoint}! {errMsg}");
 
                             await Task.Delay(ClientReconnectInterval);
                         }
@@ -324,6 +324,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     {
                         if (Logger != null)
                             Logger.Error(ex.ToString());
+
+                        await Task.Delay(1000);    // pause between reconnect
                     }
                     finally
                     {

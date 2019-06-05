@@ -196,26 +196,34 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 {
                     return underlyingCom.InvokeMethod(source, invokeInfo, realSession, parameters);
                 }
-                catch (TimeoutException)
+                catch (TimeoutException timeoutEx)
                 {
-                    if (IsPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name))
-                    {
-                        // persist
-                        PersistPendingMethodInvoke(invokeInfo, parameters);
-                        return null;    // only void methods
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return PersistOrThrow(invokeInfo, parameters, timeoutEx);
                 }
-                catch (OperationCanceledException)
+                catch (IOException ioExc)
                 {
-                    if (IsPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name))
+                    return PersistOrThrow(invokeInfo, parameters, ioExc);
+                }
+                catch (OperationCanceledException operationCancelledEx)
+                {
+                    return PersistOrThrow(invokeInfo, parameters, operationCancelledEx);
+                }
+                catch (AggregateException aggExc)
+                {
+                    // check if AggregateException contains a connection related exception
+                    Exception connectionException = null;
+                    foreach (var innerEx in aggExc.InnerExceptions)
                     {
-                        // persist
-                        PersistPendingMethodInvoke(invokeInfo, parameters);
-                        return null;    // only void methods
+                        if (innerEx is TimeoutException || innerEx is OperationCanceledException)
+                        {
+                            connectionException = innerEx;
+                            break;
+                        }
+                    }
+
+                    if (connectionException != null)
+                    {
+                        return PersistOrThrow(invokeInfo, parameters, connectionException);
                     }
                     else
                     {
@@ -234,6 +242,20 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             else
             {
                 throw new OperationCanceledException("Remote connection lost!");
+            }
+        }
+
+        private object PersistOrThrow(IInvokeMethodInfo invokeInfo, object[] parameters, Exception exception)
+        {
+            if (IsPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name))
+            {
+                // persist
+                PersistPendingMethodInvoke(invokeInfo, parameters);
+                return null;    // only void methods
+            }
+            else
+            {
+                throw exception;
             }
         }
 

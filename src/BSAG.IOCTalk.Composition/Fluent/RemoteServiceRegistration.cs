@@ -18,7 +18,9 @@ namespace BSAG.IOCTalk.Composition.Fluent
 
         public RemoteServiceRegistration<InterfaceType> AsAsync(string methodName)
         {
-            throw new NotImplementedException();
+            //todo: handle / include command parameters
+            source.RegisterAsyncMethod<InterfaceType>(methodName);
+
             return this;
         }
 

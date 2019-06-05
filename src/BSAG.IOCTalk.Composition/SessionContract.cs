@@ -110,10 +110,18 @@ namespace BSAG.IOCTalk.Composition
             else
             {
                 // check local services
+                Type alternativeLocalSourceType;
+                int foundIndexAlternative;
                 int foundIndex = Array.IndexOf<Type>(source.LocalServiceInterfaceTypes, interfType);
                 if (foundIndex >= 0)
                 {
                     instance = LocalServices[foundIndex];
+                }
+                else if (source.LocalSessionServiceTypeMappings != null 
+                    && source.LocalSessionServiceTypeMappings.TryGetValue(interfType, out alternativeLocalSourceType)
+                    && (foundIndexAlternative = Array.IndexOf<Type>(source.LocalServiceInterfaceTypes, alternativeLocalSourceType)) >= 0)
+                {
+                    instance = LocalServices[foundIndexAlternative];
                 }
                 else
                 {

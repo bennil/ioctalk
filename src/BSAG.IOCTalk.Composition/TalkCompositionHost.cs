@@ -24,7 +24,7 @@ namespace BSAG.IOCTalk.Composition
         // ----------------------------------------------------------------------------------------
         // TalkCompositionHost fields
         // ----------------------------------------------------------------------------------------
-        private static readonly string[] IgnoreAssemblyStartNames = new string[] { "System", "Microsoft.", "netstandard", "Mono.", "mscorlib", "api-ms-", "hostfxr", "mscor", "hostfxr", "clrcompression", "clretwrc", "clrjit", "coreclr", "dbgshim", "hostpolicy", "sos", "ucrtbase", "PresentationFramework", "WindowsBase", "PresentationCore" };
+        private static readonly string[] IgnoreAssemblyStartNames = new string[] { "System", "Microsoft.", "netstandard", "Mono.", "mscorlib", "api-ms-", "hostfxr", "mscor", "hostfxr", "clrcompression", "clretwrc", "clrjit", "coreclr", "dbgshim", "hostpolicy", "sos", "ucrtbase", "PresentationFramework", "WindowsBase", "PresentationCore", "sni.dll" };
 
         private SessionManagerNeu sessionManager = new SessionManagerNeu();
         //private SessionExportDescriptorProvider sessionExportProvider = new SessionExportDescriptorProvider();
@@ -48,6 +48,7 @@ namespace BSAG.IOCTalk.Composition
         private static object syncObj = new object();
         private Dictionary<Type, Type> exposedSubInterfaceTypeMapping;
         private Dictionary<Type, Type> exposedSubInterfaceTypeMappingInterfToClass;
+        private Dictionary<Type, List<string>> asyncMethods = null;
         private ILogger logger;
         private ISession currentSession;
         private IContract currentContract;
@@ -94,13 +95,18 @@ namespace BSAG.IOCTalk.Composition
             get { return localSessionServiceInterfaceTypesResolved; }
         }
 
+        /// <summary>
+        /// Interface mapping to export a single session instance in multiple interfaces (TargetAlsoImplements)
+        /// </summary>
+        internal Dictionary<Type, Type> LocalSessionServiceTypeMappings { get; set; }
+        
         public Type[] RemoteServiceInterfaceTypes
         {
             get { return remoteServiceInterfaceTypesResolved; }
         }
 
         public IGenericCommunicationService CommunicationService { get; private set; }
-
+        
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -164,9 +170,12 @@ namespace BSAG.IOCTalk.Composition
             }
         }
 
-        public void RegisterLocalSessionService<InterfaceType>()
+        public LocalSessionRegistration<InterfaceType> RegisterLocalSessionService<InterfaceType>()
         {
+            LocalSessionRegistration<InterfaceType> localReg = new LocalSessionRegistration<InterfaceType>(this);
             RegisterLocalSessionService(typeof(InterfaceType));
+
+            return localReg;
         }
 
         public void RegisterLocalSessionService(Type interfaceType)
@@ -971,6 +980,41 @@ namespace BSAG.IOCTalk.Composition
         public void RaiseManualServiceCreated<T>(T serviceInstance)
         {
             localShare.RaiseManualServiceCreated<T>(serviceInstance);
+        }
+
+        public void RegisterAsyncMethod<InterfaceType>(string methodName)
+        {
+            lock (syncObj)
+            {
+                if (asyncMethods == null)
+                    asyncMethods = new Dictionary<Type, List<string>>();
+
+                //todo: handle / include command parameters
+
+                List<string> methods;
+                if (!asyncMethods.TryGetValue(typeof(InterfaceType), out methods))
+                {
+                    methods = new List<string>();
+                    asyncMethods.Add(typeof(InterfaceType), methods);
+                }
+
+                if (!methods.Contains(methodName))
+                    methods.Add(methodName);
+            }
+        }
+
+        public bool IsAsyncRemoteInvoke(Type type, string methodName)
+        {
+            if (asyncMethods == null)
+                return false;
+
+            List<string> methods;
+            if (asyncMethods.TryGetValue(type, out methods))
+            {
+                return methods.Contains(methodName);
+            }
+
+            return false;
         }
 
         // ----------------------------------------------------------------------------------------

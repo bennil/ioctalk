@@ -67,5 +67,8 @@ namespace BSAG.IOCTalk.Common.Interface.Container
         /// <param name="interfaceType">Type of the exposed interface.</param>
         /// <param name="sourceType">Type of the concrete source.</param>
         void RegisterExposedSubInterfaceForType(Type interfaceType, Type sourceType);
+
+
+        bool IsAsyncRemoteInvoke(Type type, string methodName);
     }
 }

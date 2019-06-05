@@ -25,6 +25,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         // ----------------------------------------------------------------------------------------
 
         protected Client client = null;
+        private string host;
+        private int port;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -125,7 +127,17 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// </summary>
         public void Init(string host, int port)
         {
-            SetEndPoint(host, port);
+            this.host = host;
+            this.port = port;
+
+            try
+            {
+                SetEndPoint(host, port);
+            }
+            catch 
+            {
+                // ignore dns failure > set endpoint on connect
+            }
         }
 
         /// <summary>
@@ -137,6 +149,12 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             try
             {
+                if (EndPoint == null)
+                {
+                    // try get dns
+                    SetEndPoint(this.host, this.port);
+                }
+
                 this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 this.InitSocketProperties(this.socket);
                 this.socket.Connect(EndPoint);

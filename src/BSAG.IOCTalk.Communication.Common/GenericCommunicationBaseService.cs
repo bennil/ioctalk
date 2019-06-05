@@ -1107,6 +1107,12 @@ namespace BSAG.IOCTalk.Communication.Common
                 {
                     Type interfaceType = serviceType.GetInterface(message.Target);
                     methodInfo = new InvokeMethodInfo(interfaceType, message.Name, null, serviceType);
+
+                    if (!methodInfo.IsAsyncRemoteInvoke)
+                    {
+                        methodInfo.IsAsyncRemoteInvoke = containerHost.IsAsyncRemoteInvoke(interfaceType, message.Name);
+                    }
+
                     methodInfoCache[invokeInfoCacheKey] = methodInfo;
                 }
 
@@ -1152,10 +1158,17 @@ namespace BSAG.IOCTalk.Communication.Common
                         responseObject = returnObject;
                     }
 
-                    // Send response message
-                    GenericMessage responseMessage = new GenericMessage(message.RequestId, responseObject);
-                    baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, methodInfo);
-                    sentMessageCounter++;
+                    try
+                    {
+                        // Send response message
+                        GenericMessage responseMessage = new GenericMessage(message.RequestId, responseObject);
+                        baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, methodInfo);
+                        sentMessageCounter++;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        logger.Warn($"Could not answer to request id {message.RequestId} because of session id {session.SessionId} connection loss");
+                    }
                 }
 
             }
@@ -1171,10 +1184,17 @@ namespace BSAG.IOCTalk.Communication.Common
                     ex = targetInvokeEx.InnerException;
                 }
 
-                // Send exception message
-                GenericMessage responseMessage = new GenericMessage(message.RequestId, ex);
-                baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, null);
-                sentMessageCounter++;
+                try
+                {
+                    // Send exception message
+                    GenericMessage responseMessage = new GenericMessage(message.RequestId, ex);
+                    baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, null);
+                    sentMessageCounter++;
+                }
+                catch (OperationCanceledException)
+                {
+                    logger.Warn($"Could not error respond to request id {message.RequestId} because of session id {session.SessionId} connection loss");
+                }
             }
         }
 

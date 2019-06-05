@@ -217,7 +217,8 @@ namespace BSAG.IOCTalk.Common.Test
 
         public object InvokeMethod(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            return null;
         }
 
         public void RegisterContainerHost(IGenericContainerHost containerHost)
