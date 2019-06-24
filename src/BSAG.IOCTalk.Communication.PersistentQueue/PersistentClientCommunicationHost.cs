@@ -211,15 +211,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 catch (AggregateException aggExc)
                 {
                     // check if AggregateException contains a connection related exception
-                    Exception connectionException = null;
-                    foreach (var innerEx in aggExc.InnerExceptions)
-                    {
-                        if (innerEx is TimeoutException || innerEx is OperationCanceledException)
-                        {
-                            connectionException = innerEx;
-                            break;
-                        }
-                    }
+                    Exception connectionException = GetConnectionException(aggExc);
 
                     if (connectionException != null)
                     {
@@ -243,6 +235,21 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             {
                 throw new OperationCanceledException("Remote connection lost!");
             }
+        }
+
+        private static Exception GetConnectionException(AggregateException aggExc)
+        {
+            Exception connectionException = null;
+            foreach (var innerEx in aggExc.InnerExceptions)
+            {
+                if (innerEx is TimeoutException || innerEx is OperationCanceledException || innerEx is IOException)
+                {
+                    connectionException = innerEx;
+                    break;
+                }
+            }
+
+            return connectionException;
         }
 
         private object PersistOrThrow(IInvokeMethodInfo invokeInfo, object[] parameters, Exception exception)
@@ -364,8 +371,29 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                             }
                             catch (OperationCanceledException)
                             {
-                                Logger.Info("Connection lost during local resend");
+                                Logger.Warn("Connection lost during local resend");
                                 return;
+                            }
+                            catch (TimeoutException timeoutEx)
+                            {
+                                Logger.Warn("Connection lost during local resend (Timeout)");
+                                return;
+                            }
+                            catch (IOException ioExc)
+                            {
+                                Logger.Warn("Connection lost during local resend (IOException)");
+                                return;
+                            }
+                            catch (AggregateException aggExc)
+                            {
+                                // check if AggregateException contains a connection related exception
+                                Exception connectionException = GetConnectionException(aggExc);
+
+                                if (connectionException != null)
+                                {
+                                    Logger.Warn($"Connection lost during local resend ({connectionException.GetType().FullName})");
+                                    return;
+                                }
                             }
                             catch (Exception ex)
                             {
