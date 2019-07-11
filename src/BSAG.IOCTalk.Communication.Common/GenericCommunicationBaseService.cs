@@ -864,12 +864,25 @@ namespace BSAG.IOCTalk.Communication.Common
                 ISession session;
                 if (!sessionDictionary.TryGetValue(sessionId, out session))
                 {
-                    // session terminated -> ignore packets
-                    if (logDataStream)
+                    if (Interlocked.Read(ref pendingSessionCreationCount) > 0)
                     {
-                        dataStreamLogger.LogStreamMessage(sessionId, true, DismissInvalidSessionMessageLogTag + messageString);
+                        // wait for pending session creation
+                        while (Interlocked.Read(ref pendingSessionCreationCount) > 0)
+                            Thread.Sleep(50);
+
+                        // recheck session existance
+                        sessionDictionary.TryGetValue(sessionId, out session);
                     }
-                    return;
+
+                    if (session == null)
+                    {
+                        // session terminated -> ignore packets
+                        if (logDataStream)
+                        {
+                            dataStreamLogger.LogStreamMessage(sessionId, true, DismissInvalidSessionMessageLogTag + messageString);
+                        }
+                        return;
+                    }
                 }
 
                 if (logDataStream)
@@ -899,12 +912,25 @@ namespace BSAG.IOCTalk.Communication.Common
                 ISession session;
                 if (!sessionDictionary.TryGetValue(sessionId, out session))
                 {
-                    // session terminated -> ignore packets
-                    if (logDataStream)
+                    if (Interlocked.Read(ref pendingSessionCreationCount) > 0)
                     {
-                        dataStreamLogger.LogStreamMessage(sessionId, true, DismissInvalidSessionMessageLogTag + Encoding.UTF8.GetString(messageBytes));
+                        // wait for pending session creation
+                        while (Interlocked.Read(ref pendingSessionCreationCount) > 0)
+                            Thread.Sleep(50);
+
+                        // recheck session existance
+                        sessionDictionary.TryGetValue(sessionId, out session);
                     }
-                    return;
+
+                    if (session == null)
+                    {
+                        // session terminated -> ignore packets
+                        if (logDataStream)
+                        {
+                            dataStreamLogger.LogStreamMessage(sessionId, true, DismissInvalidSessionMessageLogTag + Encoding.UTF8.GetString(messageBytes));
+                        }
+                        return;
+                    }
                 }
 
                 if (logDataStream)
