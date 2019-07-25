@@ -118,6 +118,18 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 while (json[endValueIndex - 1] == Structure.CharEscape)
                 {
                     // escaped quotation mark
+
+                    // check if value ends with the escape char
+                    if (json[endValueIndex + 1] == Structure.CharRightBrace
+                        || (json[endValueIndex + 1] == Structure.CharComma
+                            && json.Length > endValueIndex + 3
+                            && json[endValueIndex + 2] == Structure.CharQuotationMark
+                            )
+                       )
+                    {
+                        break;  // end reached skip replacement
+                    }
+
                     // read further to find string ending
                     endValueIndex = json.IndexOf(Structure.QuotationMark, endValueIndex + 1);
 

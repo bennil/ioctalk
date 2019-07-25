@@ -458,7 +458,12 @@ namespace BSAG.IOCTalk.Communication.Common
                     // call session created event
                     if (SessionCreated != null)
                     {
-                        OnSessionCreatedInternal(new SessionEventArgs(newSession, sessionContract));
+                        // event must run async because otherwise if any method call is made by the client within the SessionCreated event
+                        // the code will end in a deadleack because the tcp receiving thread is only started after this method is finished
+                        Task.Run(() =>
+                        {
+                            OnSessionCreatedInternal(new SessionEventArgs(newSession, sessionContract));
+                        });
                     }
 
                     if (HeartbeatIntervalTime.TotalSeconds > 0)
@@ -474,11 +479,10 @@ namespace BSAG.IOCTalk.Communication.Common
         }
 
 
-        private void OnSessionCreatedInternal(object newSessionObj)
+        private void OnSessionCreatedInternal(SessionEventArgs newSessionArgs)
         {
             try
             {
-                SessionEventArgs newSessionArgs = (SessionEventArgs)newSessionObj;
                 if (SessionCreated != null)
                 {
                     SessionCreated(this, newSessionArgs);

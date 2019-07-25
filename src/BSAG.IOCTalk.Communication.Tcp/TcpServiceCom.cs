@@ -173,11 +173,12 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 clientSocket.ReceiveBufferSize = this.ReceiveBufferSize;
                 
                 Client client = new Client(clientSocket, new NetworkStream(clientSocket), new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, clientSocket.RemoteEndPoint, Logger);
-                StartReceivingData(client);
                 clients.Add(client.SessionId, client);
 
                 OnConnectionEstablished(client);
 
+                StartReceivingData(client);
+                
                 listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
             }
             catch (SocketException)

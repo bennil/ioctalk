@@ -701,5 +701,37 @@ namespace BSAG.IOCTalk.Common.Test
             Assert.Equal<long>(testObj.DateTimeValue.Ticks, deserializedTestObj.DateTimeValue.Ticks);
         }
 
+
+        [Fact]
+        public void TestMethodStringEscapePathTest()
+        {
+            JsonObjectSerializer serializer = new JsonObjectSerializer(UnknownTypeResolver, SpecialTypeResolver);
+
+            BaseTestObject testObj = new BaseTestObject();
+            testObj.BaseProperty = @"C:\some\path\ends\with\backslash\";
+            
+            string json = serializer.Serialize(testObj, null);
+
+            BaseTestObject deserializedObj = (BaseTestObject)serializer.Deserialize(json, typeof(BaseTestObject), null);
+
+            Assert.Equal(testObj.BaseProperty, deserializedObj.BaseProperty);
+        }
+
+
+
+        [Fact]
+        public void TestMethodStringEscapePathTestMultiProperty()
+        {
+            JsonObjectSerializer serializer = new JsonObjectSerializer(UnknownTypeResolver, SpecialTypeResolver);
+
+            SubObjectEx testObj = new SubObjectEx();
+            testObj.SubDe = @"C:\some\path\ends\with\backslash\";
+
+            string json = serializer.Serialize(testObj, null);
+
+            SubObjectEx deserializedObj = (SubObjectEx)serializer.Deserialize(json, typeof(SubObjectEx), null);
+
+            Assert.Equal(testObj.SubDe, deserializedObj.SubDe);
+        }
     }
 }
