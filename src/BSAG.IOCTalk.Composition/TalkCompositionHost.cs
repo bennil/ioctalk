@@ -933,11 +933,13 @@ namespace BSAG.IOCTalk.Composition
                         subscr.Invoke(serviceInstance, sessionContract, session);
 
                         // subscription is not needed anymore (local session based service instance is terminated)
+                        subscr.RemoveDelegate(serviceInstance);                        
+                    }
+
+                    // remove created subscription
+                    if (localShare.sessionCreatedSubscriptions.TryGetValue(interfType, out subscr))
+                    {
                         subscr.RemoveDelegate(serviceInstance);
-                        if (localShare.sessionCreatedSubscriptions.TryGetValue(interfType, out subscr))
-                        {
-                            subscr.RemoveDelegate(serviceInstance);
-                        }
                     }
 
                     if (serviceInstance is IDisposable disposableService)
@@ -956,6 +958,13 @@ namespace BSAG.IOCTalk.Composition
                     if (localShare.sessionTerminatedSubscriptions.TryGetValue(interfType, out subscr))
                     {
                         subscr.Invoke(serviceInstance, sessionContract, session);
+                    }
+
+                    // remove created subscriptions as well
+                    if (localShare.sessionCreatedSubscriptions.TryGetValue(interfType, out subscr))
+                    {
+                        // removes all remote interface subscription in this share context
+                        subscr.RemoveAll();
                     }
 
                     if (serviceInstance is IDisposable disposableService)

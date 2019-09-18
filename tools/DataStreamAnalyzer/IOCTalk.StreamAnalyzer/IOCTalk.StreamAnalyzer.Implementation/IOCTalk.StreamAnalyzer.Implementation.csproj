@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{135EE2B6-8D14-4B1A-AEB2-1202F18B65A5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>IOCTalk.StreamAnalyzer.Implementation</RootNamespace>
+    <AssemblyName>IOCTalk.StreamAnalyzer.Implementation</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="BSAG.IOCTalk.Common, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="BSAG.IOCTalk.Communication.Common, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Communication.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="BSAG.IOCTalk.Communication.PersistentQueue, Version=2.0.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Communication.PersistentQueue.dll</HintPath>
+    </Reference>
+    <Reference Include="BSAG.IOCTalk.Communication.Tcp, Version=2.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Communication.Tcp.dll</HintPath>
+    </Reference>
+    <Reference Include="BSAG.IOCTalk.Composition, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Composition.dll</HintPath>
+    </Reference>
+    <Reference Include="BSAG.IOCTalk.Logging, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Logging.dll</HintPath>
+    </Reference>
+    <Reference Include="BSAG.IOCTalk.Serialization.Json, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Serialization.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="FlowRate.cs" />
+    <Compile Include="MethodInvokeRoundtrip.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StreamAnalyzerService.cs" />
+    <Compile Include="StreamSession.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

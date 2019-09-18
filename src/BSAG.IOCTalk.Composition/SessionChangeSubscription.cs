@@ -135,5 +135,10 @@ namespace BSAG.IOCTalk.Composition
                 }
             }
         }
+
+        internal void RemoveAll()
+        {
+            InvokeList.Clear();
+        }
     }
 }
