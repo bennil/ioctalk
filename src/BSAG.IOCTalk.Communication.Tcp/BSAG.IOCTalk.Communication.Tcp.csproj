@@ -1,9 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup Label="Globals">
+    <SccProjectName></SccProjectName>
+    <SccProvider></SccProvider>
+    <SccAuxPath></SccAuxPath>
+    <SccLocalPath></SccLocalPath>
+  </PropertyGroup>
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>2.0.6</Version>
-    <AssemblyVersion>2.0.6.0</AssemblyVersion>
+    <Version>2.0.7</Version>
+    <AssemblyVersion>2.0.7.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
