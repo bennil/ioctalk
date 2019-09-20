@@ -990,6 +990,10 @@ namespace BSAG.IOCTalk.Common.Reflection
             {
                 referenceLocations.Add(runtimeWorkaroundPath);
             }
+            else
+            {
+                Console.WriteLine($"netcore framework directory path not found! path: {runtimeWorkaroundPath}");
+            }
 
             // add given type assemblies
             if (types != null)
