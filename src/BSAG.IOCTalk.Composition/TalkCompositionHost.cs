@@ -963,8 +963,9 @@ namespace BSAG.IOCTalk.Composition
                     // remove created subscriptions as well
                     if (localShare.sessionCreatedSubscriptions.TryGetValue(interfType, out subscr))
                     {
-                        // removes all remote interface subscription in this share context
-                        subscr.RemoveAll();
+                        //todo: remove only session related subscriptions (local session instance subscriptions)
+                        //// removes all remote interface subscription in this share context
+                        //subscr.RemoveAll();
                     }
 
                     if (serviceInstance is IDisposable disposableService)
