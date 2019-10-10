@@ -1,4 +1,5 @@
 ﻿using BSAG.IOCTalk.Common.Interface.Communication;
+using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Common.Session;
 using System;
@@ -205,7 +206,7 @@ namespace BSAG.IOCTalk.Composition
                                 object[] outParams;
                                 ParameterInfo[] outParamsInfo;
                                 var itemInstance = TypeService.CreateInstance(implType, host.DetermineConstructorImportInstance, out outParams, out outParamsInfo);
-                                CheckOutParamsSubscriptions(itemInstance, outParams);
+                                CheckOutParamsSubscriptions(itemInstance, outParams, host, targetInterfaceType);
                                 targetCollection.Add(itemInstance);
 
                                 RegisterSharedConstructorInstances(targetInterfaceType, itemInstance, outParams, outParamsInfo);
@@ -292,7 +293,7 @@ namespace BSAG.IOCTalk.Composition
 
 
 
-        internal void CheckOutParamsSubscriptions(object instance, object[] outParams)
+        internal void CheckOutParamsSubscriptions(object instance, object[] outParams, TalkCompositionHost host, Type targetInterface)
         {
             if (outParams != null)
             {
@@ -331,8 +332,14 @@ namespace BSAG.IOCTalk.Composition
                                 }
                             }
 
-                            subscription.AddDelegate(sessionDelegate, parameters);
-
+                            if (host.IsSessionInstance(targetInterface, out ISession session))
+                            {
+                                subscription.AddDelegate(sessionDelegate, parameters, session);
+                            }
+                            else
+                            {
+                                subscription.AddDelegate(sessionDelegate, parameters, null);
+                            }
                         }
                         else if (methodName.EndsWith("Terminated", false, CultureInfo.InvariantCulture))
                         {
@@ -348,7 +355,14 @@ namespace BSAG.IOCTalk.Composition
                                 }
                             }
 
-                            subscription.AddDelegate(sessionDelegate, parameters);
+                            if (host.IsSessionInstance(targetInterface, out ISession session))
+                            {
+                                subscription.AddDelegate(sessionDelegate, parameters, session);
+                            }
+                            else
+                            {
+                                subscription.AddDelegate(sessionDelegate, parameters, null);
+                            }
                         }
                         else
                         {

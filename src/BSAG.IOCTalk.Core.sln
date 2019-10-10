@@ -25,6 +25,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Test.Interface
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Communication.PersistentQueue", "BSAG.IOCTalk.Communication.PersistentQueue\BSAG.IOCTalk.Communication.PersistentQueue.csproj", "{80D7225D-FE55-491E-B52E-7E838A45231D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BSAG.IOCTalk.Serialization.Binary", "BSAG.IOCTalk.Serialization.Binary\BSAG.IOCTalk.Serialization.Binary.csproj", "{B18E5003-657C-4790-B7AA-142823D2F754}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BSAG.IOCTalk.Serialization.Binary.Test", "BSAG.IOCTalk.Serialization.Binary.Test\BSAG.IOCTalk.Serialization.Binary.Test.csproj", "{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +75,14 @@ Global
 		{80D7225D-FE55-491E-B52E-7E838A45231D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{80D7225D-FE55-491E-B52E-7E838A45231D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{80D7225D-FE55-491E-B52E-7E838A45231D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B18E5003-657C-4790-B7AA-142823D2F754}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B18E5003-657C-4790-B7AA-142823D2F754}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B18E5003-657C-4790-B7AA-142823D2F754}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B18E5003-657C-4790-B7AA-142823D2F754}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -79,6 +91,7 @@ Global
 		{79749AD1-FC19-4E12-A179-53F3055E9A92} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
 		{2B7EAF82-8D99-42EE-9B72-1A03A67A00FA} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
 		{20AD9229-4A46-40FD-A3E4-8A16CF577188} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
+		{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {53870CE6-F9E9-4FC3-A378-8E7A71F1DF33}

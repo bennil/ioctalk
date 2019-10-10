@@ -28,7 +28,18 @@ namespace BSAG.IOCTalk.Common.Interface.Logging
         /// <param name="sessionId">The session id.</param>
         /// <param name="isReceive">if set to <c>true</c> [is receive].</param>
         /// <param name="messageData">The message data.</param>
-        void LogStreamMessage(int sessionId, bool isReceive, byte[] messageData);
+        /// <param name="encodeBase64">if set to <c>true</c> [encode base64].</param>
+        void LogStreamMessage(int sessionId, bool isReceive, byte[] messageData, bool encodeBase64);
+
+
+        /// <summary>
+        /// Logs the stream message.
+        /// </summary>
+        /// <param name="sessionId">The session id.</param>
+        /// <param name="isReceive">if set to <c>true</c> [is receive].</param>
+        /// <param name="messageDataSegement">The message data.</param>
+        /// <param name="encodeBase64">if set to <c>true</c> [encode base64].</param>
+        void LogStreamMessage(int sessionId, bool isReceive, ArraySegment<byte> messageDataSegement, bool encodeBase64);
 
         /// <summary>
         /// Logs the stream message.

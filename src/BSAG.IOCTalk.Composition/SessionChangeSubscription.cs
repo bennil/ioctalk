@@ -116,17 +116,23 @@ namespace BSAG.IOCTalk.Composition
         }
 
 
-        internal void AddDelegate(Delegate sessionDelegate, ParameterInfo[] parameters)
+        internal void AddDelegate(Delegate sessionDelegate, ParameterInfo[] parameters, ISession targetSessionOnlyContext)
         {
-            InvokeList.Add(new SessionChangeSubscriptionItem(sessionDelegate, parameters));
+            InvokeList.Add(new SessionChangeSubscriptionItem(sessionDelegate, parameters, targetSessionOnlyContext));
         }
 
-        internal void RemoveDelegate(object serviceInstance)
+        internal void RemoveDelegate(object serviceInstance, ISession session)
         {
             for (int i = 0; i < InvokeList.Count;)
             {
-                if (InvokeList[i].Callback.Target == serviceInstance)
+                var inv = InvokeList[i];
+                if (inv.Callback.Target == serviceInstance)
                 {
+                    InvokeList.RemoveAt(i);
+                }
+                else if (session != null && session.Equals(inv.TargetSessionOnlyContext))
+                {
+                    // remove session only related local target instance subscription
                     InvokeList.RemoveAt(i);
                 }
                 else
@@ -136,9 +142,5 @@ namespace BSAG.IOCTalk.Composition
             }
         }
 
-        internal void RemoveAll()
-        {
-            InvokeList.Clear();
-        }
     }
 }

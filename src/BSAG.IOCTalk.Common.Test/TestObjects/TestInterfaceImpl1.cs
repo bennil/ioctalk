@@ -7,7 +7,7 @@ using BSAG.IOCTalk.Common.Attributes;
 namespace BSAG.IOCTalk.Test.TestObjects
 {
     [ExposeSubType(Type = typeof(ITestInterfaceBase))]
-    internal class TestInterfaceImpl1 : ITestInterfaceBase
+    public class TestInterfaceImpl1 : ITestInterfaceBase
     {
         public string TestBaseProperty { get; set; }
 

@@ -939,7 +939,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
                 if (logDataStream)
                 {
-                    dataStreamLogger.LogStreamMessage(sessionId, true, messageBytes);
+                    dataStreamLogger.LogStreamMessage(sessionId, true, messageBytes, serializer.MessageFormat != IOCTalk.Common.Interface.Communication.Raw.RawMessageFormat.JSON);
                 }
 
                 IGenericMessage message = serializer.DeserializeFromBytes(messageBytes, session);

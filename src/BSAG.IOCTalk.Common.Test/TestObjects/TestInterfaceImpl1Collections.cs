@@ -7,6 +7,8 @@ namespace BSAG.IOCTalk.Test.TestObjects
 {
     public class TestInterfaceImpl1Collections
     {
+        public object AnyObjectArray { get; set; }
+
         public List<ITestInterfaceBase> List { get; set; }
 
         public ITestInterfaceBase[] Array { get; set; }

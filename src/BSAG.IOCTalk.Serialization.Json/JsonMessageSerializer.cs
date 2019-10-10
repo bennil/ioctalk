@@ -168,6 +168,17 @@ namespace BSAG.IOCTalk.Serialization.Json
         }
 
 
+        /// <summary>
+        /// Deserializes from byte array.
+        /// </summary>
+        /// <param name="messageBytesSegment">The message bytes segment.</param>
+        /// <param name="contextObject">The context object.</param>
+        /// <returns>IGenericMessage.</returns>
+        public IGenericMessage DeserializeFromBytes(ArraySegment<byte> messageBytesSegment, object contextObject)
+        {
+            string jsonString = Encoding.UTF8.GetString(messageBytesSegment.Array, messageBytesSegment.Offset, messageBytesSegment.Count);
+            return (IGenericMessage)serializer.Deserialize(jsonString, typeof(GenericMessage), contextObject);
+        }
 
         private Type UnknownTypeResolver(SerializationContext context)
         {

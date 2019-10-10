@@ -9,5 +9,8 @@ namespace BSAG.IOCTalk.Test.TestObjects
     public class EnumTestObject
     {
         public MessageType Type { get; set; }
+
+
+        public object InObjectEnum { get; set; }
     }
 }

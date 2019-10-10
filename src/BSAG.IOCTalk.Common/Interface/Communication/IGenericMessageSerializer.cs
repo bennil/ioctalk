@@ -52,6 +52,13 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <returns></returns>
         IGenericMessage DeserializeFromBytes(byte[] messageBytes, object contextObject);
 
+        /// <summary>
+        /// Deserializes from byte array.
+        /// </summary>
+        /// <param name="messageBytes">The message bytes.</param>
+        /// <returns></returns>
+        IGenericMessage DeserializeFromBytes(ArraySegment<byte> messageBytesSegment, object contextObject);
+
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance is missing fields in source data allowed.

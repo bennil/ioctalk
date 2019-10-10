@@ -52,10 +52,10 @@ namespace BSAG.IOCTalk.Common.Test
             TestObject deserializedTestObj = (TestObject)serializer.Deserialize(json, typeof(TestObject), null);
 
             Assert.Equal<int>(testObj.ID, deserializedTestObj.ID);
-            Assert.Equal<string>(testObj.Description, deserializedTestObj.Description);
+            Assert.Equal(testObj.Description, deserializedTestObj.Description);
 
             Assert.Equal<int>(testObj.SubObject.SubId, deserializedTestObj.SubObject.SubId);
-            Assert.Equal<string>(testObj.SubObject.SubDescr, deserializedTestObj.SubObject.SubDescr);
+            Assert.Equal(testObj.SubObject.SubDescr, deserializedTestObj.SubObject.SubDescr);
 
             // check list
             for (int i = 0; i < testObj.TestIntList.Count; i++)
@@ -81,7 +81,7 @@ namespace BSAG.IOCTalk.Common.Test
             Assert.Equal<TimeSpan>(testObj.TimeSpanValue, deserializedTestObj.TimeSpanValue);
             Assert.Equal<DateTime>(testObj.DateTimeValue, deserializedTestObj.DateTimeValue);
 
-            Assert.Equal<string>(testObj.BaseProperty, deserializedTestObj.BaseProperty);
+            Assert.Equal(testObj.BaseProperty, deserializedTestObj.BaseProperty);
 
             Assert.Equal<char>(testObj.CharValue, deserializedTestObj.CharValue);
             Assert.Equal<char>(testObj.EmptyCharValue, deserializedTestObj.EmptyCharValue);
@@ -117,13 +117,13 @@ namespace BSAG.IOCTalk.Common.Test
 
             InterfRefObject deserializedObj = (InterfRefObject)serializer.Deserialize(json, typeof(InterfRefObject), null);
 
-            Assert.Equal<string>(interfRef.BaseObject.TestBaseProperty, deserializedObj.BaseObject.TestBaseProperty);
+            Assert.Equal(interfRef.BaseObject.TestBaseProperty, deserializedObj.BaseObject.TestBaseProperty);
 
             TestInterfaceImpl1 implObj = (TestInterfaceImpl1)deserializedObj.BaseObject;
             Assert.Null(implObj.AdditionalProperty);
 
-            Assert.Equal<string>(testObj1.DeepTestProperty1, implObj.DeepTestProperty1);
-            Assert.Equal<string>(testObj1.DeepTestProperty2, implObj.DeepTestProperty2);
+            Assert.Equal(testObj1.DeepTestProperty1, implObj.DeepTestProperty1);
+            Assert.Equal(testObj1.DeepTestProperty2, implObj.DeepTestProperty2);
         }
 
 
@@ -149,13 +149,13 @@ namespace BSAG.IOCTalk.Common.Test
 
             InterfRefObject deserializedObj = (InterfRefObject)serializer.Deserialize(json, typeof(InterfRefObject), null);
 
-            Assert.Equal<string>(((ITestInterfaceBase)interfRef.BaseObjectInstance).TestBaseProperty, ((ITestInterfaceBase)deserializedObj.BaseObjectInstance).TestBaseProperty);
+            Assert.Equal(((ITestInterfaceBase)interfRef.BaseObjectInstance).TestBaseProperty, ((ITestInterfaceBase)deserializedObj.BaseObjectInstance).TestBaseProperty);
 
             TestInterfaceImpl1 implObj = (TestInterfaceImpl1)deserializedObj.BaseObjectInstance;
             Assert.Null(implObj.AdditionalProperty);
 
-            Assert.Equal<string>(testObj1.DeepTestProperty1, implObj.DeepTestProperty1);
-            Assert.Equal<string>(testObj1.DeepTestProperty2, implObj.DeepTestProperty2);
+            Assert.Equal(testObj1.DeepTestProperty1, implObj.DeepTestProperty1);
+            Assert.Equal(testObj1.DeepTestProperty2, implObj.DeepTestProperty2);
         }
 
 
@@ -236,9 +236,9 @@ namespace BSAG.IOCTalk.Common.Test
 
         private static void CheckCollectionItem(ITestInterfaceBase orginalItem, ITestInterfaceBase deserializedItem)
         {
-            Assert.Equal<string>(orginalItem.TestBaseProperty, deserializedItem.TestBaseProperty);
-            Assert.Equal<string>(orginalItem.DeepTestProperty1, deserializedItem.DeepTestProperty1);
-            Assert.Equal<string>(orginalItem.DeepTestProperty2, deserializedItem.DeepTestProperty2);
+            Assert.Equal(orginalItem.TestBaseProperty, deserializedItem.TestBaseProperty);
+            Assert.Equal(orginalItem.DeepTestProperty1, deserializedItem.DeepTestProperty1);
+            Assert.Equal(orginalItem.DeepTestProperty2, deserializedItem.DeepTestProperty2);
 
             TestInterfaceImpl1 implObj = (TestInterfaceImpl1)deserializedItem;
             Assert.Null(implObj.AdditionalProperty);
@@ -350,7 +350,7 @@ namespace BSAG.IOCTalk.Common.Test
                 Assert.Equal<int>(testObj.ObjectArray.Length, deserializedObj.ObjectArray.Length);
                 object[] targetArr = (object[])deserializedObj.ObjectArray[3];
 
-                Assert.Equal<int>(0, targetArr.Length);
+                Assert.Empty(targetArr);
             }
 
             // any object check
@@ -358,7 +358,7 @@ namespace BSAG.IOCTalk.Common.Test
                 Assert.Equal<int>(((object[])testObj.AnyObject).Length, ((object[])deserializedObj.AnyObject).Length);
                 object[] targetArr = (object[])((object[])deserializedObj.AnyObject)[3];
 
-                Assert.Equal<int>(0, targetArr.Length);
+                Assert.Empty(targetArr);
             }
         }
 
@@ -404,7 +404,7 @@ namespace BSAG.IOCTalk.Common.Test
             SubObject subObj = (SubObject)serializer.Deserialize(outOfOrderJson, typeof(SubObject), null);
 
             Assert.Equal<int>(2, subObj.SubId);
-            Assert.Equal<string>("Test String", subObj.SubDescr);
+            Assert.Equal("Test String", subObj.SubDescr);
         }
 
 
@@ -471,7 +471,7 @@ namespace BSAG.IOCTalk.Common.Test
             FeaturedObject deserializedObj = (FeaturedObject)serializer.Deserialize(json, typeof(FeaturedObject), null);
 
             Assert.Equal<int>(fullFeaturedObj.Property1, deserializedObj.Property1);
-            Assert.Equal<string>(fullFeaturedObj.Property2, deserializedObj.Property2);
+            Assert.Equal(fullFeaturedObj.Property2, deserializedObj.Property2);
             Assert.Equal<double>(fullFeaturedObj.Property3, deserializedObj.Property3);
 
             // do the same with different property order
@@ -480,7 +480,7 @@ namespace BSAG.IOCTalk.Common.Test
             deserializedObj = (FeaturedObject)serializer.Deserialize(json, typeof(FeaturedObject), null);
 
             Assert.Equal<int>(fullFeaturedObj.Property1, deserializedObj.Property1);
-            Assert.Equal<string>(fullFeaturedObj.Property2, deserializedObj.Property2);
+            Assert.Equal(fullFeaturedObj.Property2, deserializedObj.Property2);
             Assert.Equal<double>(fullFeaturedObj.Property3, deserializedObj.Property3);
         }
 
@@ -503,7 +503,7 @@ namespace BSAG.IOCTalk.Common.Test
             FeaturedObject deserializedObj = (FeaturedObject)serializer.Deserialize(json, typeof(FeaturedObject), null);
 
             Assert.Equal<int>(fullFeaturedObj.Property1, deserializedObj.Property1);
-            Assert.Equal<string>(fullFeaturedObj.Property2, deserializedObj.Property2);
+            Assert.Equal(fullFeaturedObj.Property2, deserializedObj.Property2);
             Assert.Equal<double>(fullFeaturedObj.Property3, deserializedObj.Property3);
 
             // do the same with different property orders
@@ -512,7 +512,7 @@ namespace BSAG.IOCTalk.Common.Test
             deserializedObj = (FeaturedObject)serializer.Deserialize(json, typeof(FeaturedObject), null);
 
             Assert.Equal<int>(fullFeaturedObj.Property1, deserializedObj.Property1);
-            Assert.Equal<string>(fullFeaturedObj.Property2, deserializedObj.Property2);
+            Assert.Equal(fullFeaturedObj.Property2, deserializedObj.Property2);
             Assert.Equal<double>(fullFeaturedObj.Property3, deserializedObj.Property3);
 
             json = "{\"Property1\":3,\"Property2\":\"2sdfjsalf32p3sdf\",\"Property3\":4.67,\"Property4\":\"Test\",\"Property5\":7,\"SubObjectProperty\":{\"SubId\":1,\"SubDescr\":\"ldsfadsfs\"}}";
@@ -520,7 +520,7 @@ namespace BSAG.IOCTalk.Common.Test
             deserializedObj = (FeaturedObject)serializer.Deserialize(json, typeof(FeaturedObject), null);
 
             Assert.Equal<int>(fullFeaturedObj.Property1, deserializedObj.Property1);
-            Assert.Equal<string>(fullFeaturedObj.Property2, deserializedObj.Property2);
+            Assert.Equal(fullFeaturedObj.Property2, deserializedObj.Property2);
             Assert.Equal<double>(fullFeaturedObj.Property3, deserializedObj.Property3);
         }
 
@@ -545,7 +545,7 @@ namespace BSAG.IOCTalk.Common.Test
             FeaturedObject deserializedObj = (FeaturedObject)serializer.Deserialize(json, typeof(FeaturedObject), null);
 
             Assert.Equal<int>(fullFeaturedObj.Property1, deserializedObj.Property1);
-            Assert.Equal<string>(fullFeaturedObj.Property2, deserializedObj.Property2);
+            Assert.Equal(fullFeaturedObj.Property2, deserializedObj.Property2);
             Assert.Equal<double>(fullFeaturedObj.Property3, deserializedObj.Property3);
 
             // do the same with different property orders
@@ -554,7 +554,7 @@ namespace BSAG.IOCTalk.Common.Test
             deserializedObj = (FeaturedObject)serializer.Deserialize(json, typeof(FeaturedObject), null);
 
             Assert.Equal<int>(fullFeaturedObj.Property1, deserializedObj.Property1);
-            Assert.Equal<string>(fullFeaturedObj.Property2, deserializedObj.Property2);
+            Assert.Equal(fullFeaturedObj.Property2, deserializedObj.Property2);
             Assert.Equal<double>(fullFeaturedObj.Property3, deserializedObj.Property3);
         }
 
@@ -574,7 +574,7 @@ namespace BSAG.IOCTalk.Common.Test
             FullFeaturedObject deserializedObj = (FullFeaturedObject)serializer.Deserialize(json, typeof(FullFeaturedObject), null);
 
             Assert.Equal<int>(featuredObj.Property1, deserializedObj.Property1);
-            Assert.Equal<string>(featuredObj.Property2, deserializedObj.Property2);
+            Assert.Equal(featuredObj.Property2, deserializedObj.Property2);
             Assert.Equal<double>(featuredObj.Property3, deserializedObj.Property3);
 
             Assert.Null(deserializedObj.Property4);
@@ -595,7 +595,7 @@ namespace BSAG.IOCTalk.Common.Test
             NoPropertiesTestHolder deserializedObj = (NoPropertiesTestHolder)serializer.Deserialize(json, typeof(NoPropertiesTestHolder), null);
 
             Assert.NotNull(deserializedObj.NoPropertiesObject);
-            Assert.Equal<string>(noPropertiesHolder.Dummy, deserializedObj.Dummy);
+            Assert.Equal(noPropertiesHolder.Dummy, deserializedObj.Dummy);
         }
 
         [Fact]
@@ -631,7 +631,7 @@ namespace BSAG.IOCTalk.Common.Test
                 string deserializedStr = deserializedObj.ObjectNumberValue.ToString();
                 string expectedValueStr = string.Concat(expectedIntValueStr, CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator, expectedDecimalPlaces);
 
-                Assert.Equal<string>(expectedValueStr, deserializedStr);
+                Assert.Equal(expectedValueStr, deserializedStr);
             }
         }
 
