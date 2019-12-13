@@ -99,14 +99,14 @@ namespace BSAG.IOCTalk.Composition
         /// Interface mapping to export a single session instance in multiple interfaces (TargetAlsoImplements)
         /// </summary>
         internal Dictionary<Type, Type> LocalSessionServiceTypeMappings { get; set; }
-        
+
         public Type[] RemoteServiceInterfaceTypes
         {
             get { return remoteServiceInterfaceTypesResolved; }
         }
 
         public IGenericCommunicationService CommunicationService { get; private set; }
-        
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -794,7 +794,7 @@ namespace BSAG.IOCTalk.Composition
             object[] outParams;
             ParameterInfo[] outParamsInfo;
             instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, out outParams, out outParamsInfo);
-            localShare.CheckOutParamsSubscriptions(instance, outParams);
+            localShare.CheckOutParamsSubscriptions(instance, outParams, this, type);
 
             localShare.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
 
@@ -933,13 +933,13 @@ namespace BSAG.IOCTalk.Composition
                         subscr.Invoke(serviceInstance, sessionContract, session);
 
                         // subscription is not needed anymore (local session based service instance is terminated)
-                        subscr.RemoveDelegate(serviceInstance);                        
+                        subscr.RemoveDelegate(serviceInstance, session);
                     }
 
                     // remove created subscription
                     if (localShare.sessionCreatedSubscriptions.TryGetValue(interfType, out subscr))
                     {
-                        subscr.RemoveDelegate(serviceInstance);
+                        subscr.RemoveDelegate(serviceInstance, session);
                     }
 
                     if (serviceInstance is IDisposable disposableService)
@@ -963,9 +963,8 @@ namespace BSAG.IOCTalk.Composition
                     // remove created subscriptions as well
                     if (localShare.sessionCreatedSubscriptions.TryGetValue(interfType, out subscr))
                     {
-                        //todo: remove only session related subscriptions (local session instance subscriptions)
-                        //// removes all remote interface subscription in this share context
-                        //subscr.RemoveAll();
+                        // remove only session related subscriptions (local session instance subscriptions)
+                        subscr.RemoveDelegate(serviceInstance, session);
                     }
 
                     if (serviceInstance is IDisposable disposableService)
@@ -1024,6 +1023,32 @@ namespace BSAG.IOCTalk.Composition
                 return methods.Contains(methodName);
             }
 
+            return false;
+        }
+
+
+        /// <summary>
+        /// Determines if the given interface (instance) is only valid during session lifetime (one instance per session).
+        /// </summary>
+        /// <param name="interfaceType"></param>
+        /// <param name="session"></param>
+        /// <returns></returns>
+        internal bool IsSessionInstance(Type interfaceType, out ISession session)
+        {
+            if (currentSession != null)
+            {
+                // only if instance is acquired during session creation
+                bool isLocalSessionInstance = localSessionServiceInterfaceTypesResolved.Contains(interfaceType);
+
+                bool isRemoteSessionInstance = remoteServiceInterfaceTypesResolved.Contains(interfaceType);
+
+                if (isLocalSessionInstance || isRemoteSessionInstance)
+                {
+                    session = currentSession;
+                    return true;
+                }
+            }
+            session = null;
             return false;
         }
 

@@ -10,6 +10,7 @@ using BSAG.IOCTalk.Common.Interface.Session;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.IO;
+using BSAG.IOCTalk.Common.Interface.Communication.Raw;
 
 namespace BSAG.IOCTalk.Logging.DataStream
 {
@@ -36,6 +37,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         private string targetFilePath;
         private ILogger log;
         private string targetDir = @"." + Path.DirectorySeparatorChar + "IOCTalk-DataStreamLogs";
+		private RawMessageFormat messageFormat;
 
         #endregion
 
@@ -89,6 +91,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         {
             this.log = source.Logger;
             this.name = loggerName;
+            this.messageFormat = source.Serializer.MessageFormat;
             
             if (dataStreamQueue == null)
             {
@@ -154,9 +157,21 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="sessionId">The session id.</param>
         /// <param name="isReceive">if set to <c>true</c> [is receive].</param>
         /// <param name="messageData">The message data.</param>
-        public void LogStreamMessage(int sessionId, bool isReceive, byte[] messageData)
+        public void LogStreamMessage(int sessionId, bool isReceive, byte[] messageData, bool encodeBase64)
         {
-            dataStreamQueue.Enqueue(new StreamLogItem(sessionId, isReceive, messageData));
+            dataStreamQueue.Enqueue(new StreamLogItem(sessionId, isReceive, messageData, encodeBase64));
+        }
+
+
+        /// <summary>
+        /// Logs the stream message.
+        /// </summary>
+        /// <param name="sessionId">The session id.</param>
+        /// <param name="isReceive">if set to <c>true</c> [is receive].</param>
+        /// <param name="messageDataSegement">The message data segement.</param>
+        public void LogStreamMessage(int sessionId, bool isReceive, ArraySegment<byte> messageDataSegement, bool encodeBase64)
+        {
+            dataStreamQueue.Enqueue(new StreamLogItem(sessionId, isReceive, messageDataSegement, encodeBase64));
         }
 
         /// <summary>
@@ -176,7 +191,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="session"></param>
         public void OnSessionCreated(ISession session)
         {
-            string sessionInfo = string.Format("Session Created - ID: {0}; Description: {1}", session.SessionId, session.Description);
+            string sessionInfo = string.Format("Session Created - ID: {0}; Description: {1}; Format: {2}", session.SessionId, session.Description, this.messageFormat);
 
             dataStreamQueue.Enqueue(new StreamLogItem(session.SessionId, true, sessionInfo));
         }

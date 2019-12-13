@@ -403,11 +403,11 @@ namespace BSAG.IOCTalk.Communication.Tcp
         public void SendMessage(IGenericMessage message, int receiverSessionId, object context)
         {
             byte[] msgBytes = serializer.SerializeToBytes(message, context);
-            byte[] encapsulatedMessageBytes = AbstractTcpCom.CreateMessage(RawMessageFormat.JSON, msgBytes);
+            byte[] encapsulatedMessageBytes = AbstractTcpCom.CreateMessage(serializer.MessageFormat, msgBytes);
 
             if (logDataStream)
             {
-                dataStreamLogger.LogStreamMessage(receiverSessionId, false, msgBytes);
+                dataStreamLogger.LogStreamMessage(receiverSessionId, false, msgBytes, serializer.MessageFormat != RawMessageFormat.JSON);
             }
 
             communication.Send(encapsulatedMessageBytes, receiverSessionId);
