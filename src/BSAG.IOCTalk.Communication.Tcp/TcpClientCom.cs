@@ -167,7 +167,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             }
             catch (Exception ex)
             {
-                errorMsg = ex.ToString();
+                errorMsg = $"Error connect to \"{EndPoint}\" Details: {ex.Message} {ex.GetType().Name}";
 
                 return false;
             }
