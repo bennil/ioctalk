@@ -202,7 +202,8 @@ namespace BSAG.IOCTalk.Serialization.Json
                     {
                         // check if payload contains complex type (ExceptionWrapper)
                         // this check must be done because of backwards compatibility 
-                        if (context.JsonString[context.ValueStartIndex + context.Key.Length + 3] == Structure.CharLeftBrace)
+                        int nextObjectOrValueIndex = context.ValueStartIndex + context.Key.Length + 3;
+                        if (nextObjectOrValueIndex < context.JsonString.Length && context.JsonString[nextObjectOrValueIndex] == Structure.CharLeftBrace)
                         {
                             return typeof(ExceptionWrapper);
                         }
