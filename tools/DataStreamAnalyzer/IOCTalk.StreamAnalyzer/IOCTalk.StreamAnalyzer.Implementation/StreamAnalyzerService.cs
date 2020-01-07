@@ -7,7 +7,7 @@ using System.IO;
 using BSAG.IOCTalk.Communication.Common;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
-//using BSAG.IOCTalk.Serialization.Binary;
+using BSAG.IOCTalk.Serialization.Binary;
 
 namespace IOCTalk.StreamAnalyzer.Implementation
 {
@@ -27,7 +27,7 @@ namespace IOCTalk.StreamAnalyzer.Implementation
         public const string Comma = ",";
         public const char FieldSeparator = '\t';
 
-        //private static BinaryMessageSerializer binarySerializer;
+        private static BinaryMessageSerializer binarySerializer;
 
         #endregion
 
@@ -388,11 +388,10 @@ namespace IOCTalk.StreamAnalyzer.Implementation
             {
                 byte[] binaryData = Convert.FromBase64String(textMsg);
 
-                throw new NotImplementedException();
-                //if (binarySerializer == null)
-                //    binarySerializer = new BinaryMessageSerializer();
+                if (binarySerializer == null)
+                    binarySerializer = new BinaryMessageSerializer();
 
-                //message = binarySerializer.DeserializeFromBytes(binaryData, null);
+                message = binarySerializer.DeserializeFromBytes(binaryData, null);
             }
             else
             {

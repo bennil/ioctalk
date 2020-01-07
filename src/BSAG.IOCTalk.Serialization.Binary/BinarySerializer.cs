@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 using BSAG.IOCTalk.Common.Attributes;
 using BSAG.IOCTalk.Serialization.Binary.Stream;
 using BSAG.IOCTalk.Serialization.Binary.Utils;
+using System.Reflection;
 
 namespace BSAG.IOCTalk.Serialization.Binary
 {
@@ -47,6 +48,10 @@ namespace BSAG.IOCTalk.Serialization.Binary
             deserializeContext = new SerializationContext(this, unknowTypeResolver, true);
         }
 
+
+        public bool AutoCreateMissingTypes { get; set; } = true;
+
+        public Assembly[] CustomLookupAssemblies { get; set; }
 
         private static void RegisterValueTypeMappings()
         {
