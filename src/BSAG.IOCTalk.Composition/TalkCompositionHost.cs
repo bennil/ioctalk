@@ -24,13 +24,9 @@ namespace BSAG.IOCTalk.Composition
         // ----------------------------------------------------------------------------------------
         // TalkCompositionHost fields
         // ----------------------------------------------------------------------------------------
-        private static readonly string[] IgnoreAssemblyStartNames = new string[] { "System", "Microsoft.", "netstandard", "Mono.", "mscorlib", "api-ms-", "hostfxr", "mscor", "hostfxr", "clrcompression", "clretwrc", "clrjit", "coreclr", "dbgshim", "hostpolicy", "sos", "ucrtbase", "PresentationFramework", "WindowsBase", "PresentationCore", "sni.dll" };
 
-        private SessionManagerNeu sessionManager = new SessionManagerNeu();
-        //private SessionExportDescriptorProvider sessionExportProvider = new SessionExportDescriptorProvider();
-        private List<Assembly> assemblies = new List<Assembly>();
-        private List<IDiscoveryCondition> discoveryConditionItems;
-        private static Dictionary<string, Assembly> globalLoadedAssemblies = new Dictionary<string, Assembly>();
+        private SessionManagerNeu sessionManager = new SessionManagerNeu(); // todo: consolidate
+        private List<IDiscoveryCondition> discoveryConditionItems;  // todo: check if needed in Host or only in LocalShareContext
 
         private List<Type> localSessionServiceInterfaceTypes = new List<Type>();
 
@@ -45,7 +41,7 @@ namespace BSAG.IOCTalk.Composition
         private Dictionary<int, SessionContract> sessionIdContractMapping = new Dictionary<int, SessionContract>();
         private LocalShareContext localShare;
         private Dictionary<Type, object> hostSessionsSharedInstances = new Dictionary<Type, object>();
-        private static object syncObj = new object();
+        internal static object syncObj = new object();
         private Dictionary<Type, Type> exposedSubInterfaceTypeMapping;
         private Dictionary<Type, Type> exposedSubInterfaceTypeMappingInterfToClass;
         private Dictionary<Type, List<string>> asyncMethods = null;
@@ -67,13 +63,13 @@ namespace BSAG.IOCTalk.Composition
         {
             // create own local share for remote connection
             localShare = new LocalShareContext();
-            localShare.AssignHost(this);
+            localShare.AddSubContainer(this);
         }
 
         public TalkCompositionHost(LocalShareContext localShareContext)
         {
             this.localShare = localShareContext;
-            localShare.AssignHost(this);
+            localShare.AddSubContainer(this);
         }
 
         // ----------------------------------------------------------------------------------------
@@ -105,7 +101,13 @@ namespace BSAG.IOCTalk.Composition
             get { return remoteServiceInterfaceTypesResolved; }
         }
 
-        public IGenericCommunicationService CommunicationService { get; private set; }
+        public IGenericCommunicationService CommunicationService { get; set; }
+
+        public ITalkContainer ParentContainer
+        {
+            get { return localShare; }
+            set { throw new NotSupportedException("parent container set only by constructor!"); }
+        }
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -155,14 +157,14 @@ namespace BSAG.IOCTalk.Composition
                 Type proxyImplementationType;
                 if (!interfaceTypeProxyImplCache.TryGetValue(interfaceType, out proxyImplementationType))
                 {
-                    if (!TryFindInterfaceImplementation(interfaceType, null, out proxyImplementationType))
+                    if (!localShare.TryFindInterfaceImplementation(interfaceType, null, out proxyImplementationType))
                     {
                         // auto generate proxy
                         proxyImplementationType = TypeService.BuildProxyImplementation(interfaceType); // "[System.Composition.Import]");
                         interfaceTypeProxyImplCache.Add(interfaceType, proxyImplementationType);
                     }
 
-                    AddAssembly(proxyImplementationType.Assembly);
+                    localShare.AddAssembly(proxyImplementationType.Assembly);
                 }
 
                 remoteServiceInterfaceTypes.Add(interfaceType);
@@ -245,6 +247,14 @@ namespace BSAG.IOCTalk.Composition
             localShare.RegisterLocalSharedService(type, instance);
         }
 
+        public void Init(bool createSharedInstances = true)
+        {
+            if (CommunicationService == null)
+                throw new NullReferenceException($"{nameof(CommunicationService)} must be provided!");
+
+            InitGenericCommunication(CommunicationService, createSharedInstances);
+        }
+
         public void InitGenericCommunication(IGenericCommunicationService communicationService)
         {
             this.InitGenericCommunication(communicationService, true);
@@ -262,96 +272,40 @@ namespace BSAG.IOCTalk.Composition
             this.remoteServiceInterfaceTypesResolved = remoteServiceInterfaceTypes.ToArray();
             this.localSessionServiceInterfaceTypesResolved = localSessionServiceInterfaceTypes.ToArray();
 
-            if (communicationService != null)   // todo: check if good solution for local only
-            {
-                communicationService.SessionCreated += OnCommunicationService_SessionCreated;
-                communicationService.SessionTerminated += OnCommunicationService_SessionTerminated;
+            communicationService.SessionCreated += OnCommunicationService_SessionCreated;
+            communicationService.SessionTerminated += OnCommunicationService_SessionTerminated;
 
-                RegisterHostSessionsSharedInstance(communicationService);
+            RegisterHostSessionsSharedInstance(communicationService);
 
-                // init dependency injection
+            // init dependency injection
 
-                // register communication host for response processing
-                communicationService.RegisterContainerHost(this);
+            // register communication host for response processing
+            communicationService.RegisterContainerHost(this);
 
-                // export ILogger
-                RegisterLocalSharedService<ILogger>(communicationService.Logger);
-                this.logger = communicationService.Logger;
-            }
+            // export ILogger
+            RegisterLocalSharedService<ILogger>(communicationService.Logger);
+            this.logger = communicationService.Logger;
 
-            if (createSharedInstances)
-                localShare.CreateLocalSharedServices(this);
+
+            localShare.Init(createSharedInstances);
         }
-
-
 
         public void AddReferencedAssemblies()
         {
-            AddLoadedAssemblies();
-
-            AddAssemblyTree(Assembly.GetExecutingAssembly(), assemblies);
-            AddAssemblyTree(Assembly.GetEntryAssembly(), assemblies);
-            AddAssemblyTree(Assembly.GetCallingAssembly(), assemblies);
+            localShare.AddReferencedAssemblies();
         }
-
         public void AddExecutionDirAssemblies()
         {
-            AddLoadedAssemblies();
-
-            var startAssembly = Assembly.GetEntryAssembly();
-
-            if (startAssembly == null)
-            {
-                // xamarin case
-                startAssembly = Assembly.GetExecutingAssembly();
-            }
-
-            var location = startAssembly.Location;
-            var execDirectory = new DirectoryInfo(System.IO.Path.GetDirectoryName(location));
-
-            foreach (var aFile in execDirectory.GetFiles("*.dll"))
-            {
-                if (IgnoreAssemblyStartNames.Any(startN => aFile.Name.StartsWith(startN)))
-                    continue;
-
-                try
-                {
-                    AssemblyName aName = AssemblyName.GetAssemblyName(aFile.FullName);
-
-                    Assembly assembly;
-                    if (globalLoadedAssemblies.TryGetValue(aName.FullName, out assembly))   // do not load assemblies twice
-                    {
-                        AddAssembly(assembly);
-                    }
-                    else
-                    {
-                        assembly = Assembly.LoadFile(aFile.FullName);
-                        AddAssemblyTree(assembly, assemblies);
-                    }
-                }
-                catch (Exception loadEx)
-                {
-                    string errMsg = "AddExecutionDirAssemblies ignore assembly with load error:\r\n" + loadEx.ToString();
-                    if (logger != null)
-                        logger.Warn(errMsg);
-                    else
-                        Console.WriteLine(errMsg);
-
-                }
-            }
+            localShare.AddExecutionDirAssemblies();
         }
-
         public void AddLoadedAssemblies()
         {
-            var alreadyLoadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            localShare.AddLoadedAssemblies();
+        }
 
-            foreach (var assembly in alreadyLoadedAssemblies)
-            {
-                if (IgnoreAssemblyStartNames.Any(startN => assembly.FullName.StartsWith(startN)))
-                    continue;
-
-                AddAssembly(assembly);
-            }
+        public bool AddAssembly(Assembly assembly)
+        {
+            return localShare.AddAssembly(assembly);
         }
 
         public void AddDiscoveryCondition(IDiscoveryCondition discoveryCondition)
@@ -366,87 +320,6 @@ namespace BSAG.IOCTalk.Composition
             }
         }
 
-        public bool AddAssembly(Assembly assembly)
-        {
-            lock (syncObj)
-            {
-                if (assembly != null)
-                {
-                    string key = assembly.FullName;
-
-                    if (key != null)
-                    {
-                        Assembly alreadyLoaded = null;
-                        if (!globalLoadedAssemblies.TryGetValue(key, out alreadyLoaded))
-                        {
-                            //try   (hangs up if try catch is unommented) (xamarin: only occurs if init is not executed in the main thread - even tough it is locked)
-                            //{
-                            globalLoadedAssemblies.Add(key, assembly);
-                            //}
-                            //catch (NullReferenceException nEx)
-                            //{
-                            //    // ignore undifinably NullReferenceException in Xamarin context
-                            //}
-                        }
-                        else if (!alreadyLoaded.Equals(assembly))
-                        {
-                            // use already loaded assembly because of dynamic load problems (https://github.com/dotnet/corefx/issues/21982)
-                            assembly = alreadyLoaded;
-                        }
-                    }
-
-                    if (!assemblies.Contains(assembly))
-                    {
-                        assemblies.Add(assembly);
-                        return true;    // only the first time
-                    }
-
-                }
-                return false;
-            }
-        }
-
-        private void AddAssemblyTree(Assembly assembly, List<Assembly> assemblies)
-        {
-
-            if (IgnoreAssemblyStartNames.Any(startN => assembly.FullName.StartsWith(startN)))
-                return;
-
-            if (AddAssembly(assembly))
-            {
-                //assemblies.Add(assembly);
-
-                foreach (var assemblyName in assembly.GetReferencedAssemblies())
-                {
-                    if (IgnoreAssemblyStartNames.Any(startN => assemblyName.FullName.StartsWith(startN)))
-                        continue;
-
-                    if (globalLoadedAssemblies.TryGetValue(assemblyName.FullName, out assembly))   // do not load assemblies twice
-                    {
-                        AddAssemblyTree(assembly, assemblies);
-                    }
-                    else
-                    {
-                        Assembly loadAssembly = null;
-                        try
-                        {
-                            loadAssembly = Assembly.Load(assemblyName);
-                        }
-                        catch (Exception ex)
-                        {
-                            // suppress nested assembly load exception
-                            if (logger != null)
-                                logger.Error(ex.ToString());
-                            else
-                                Console.WriteLine(ex.ToString());
-                        }
-
-                        if (loadAssembly != null)
-                            AddAssemblyTree(loadAssembly, assemblies);
-                    }
-                }
-            }
-        }
 
         public IContract CreateSessionContractInstance(ISession session)
         {
@@ -695,7 +568,7 @@ namespace BSAG.IOCTalk.Composition
             object instance;
             if (!TryGetExport(type, injectTargetType, out instance))
             {
-                if (assemblies.Count == 0)
+                if (localShare.Assemblies.Count == 0)
                 {
                     throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! No assemblies loaded. Are you missing a \"AddExecutionDirAssemblies()\" or \"AddReferencedAssemblies()\"?");
                 }
@@ -753,7 +626,7 @@ namespace BSAG.IOCTalk.Composition
                     }
                 }
 
-                if (!TryFindInterfaceImplementation(type, injectTargetType, out targetType))
+                if (!localShare.TryFindInterfaceImplementation(type, injectTargetType, out targetType))
                 {
                     // not found > check if multiple import
                     if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
@@ -798,6 +671,8 @@ namespace BSAG.IOCTalk.Composition
 
             localShare.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
 
+            //todo: parent container handling
+
             return true;
         }
 
@@ -814,28 +689,6 @@ namespace BSAG.IOCTalk.Composition
             }
         }
 
-        private bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, out Type targetType)
-        {
-            if (injectTargetType != null)
-            {
-                // first scan inject assembly
-                targetType = ScanAssembly(interfaceType, injectTargetType.Assembly);
-
-                if (targetType != null && targetType != injectTargetType)
-                    return true;
-            }
-
-            foreach (var a in this.assemblies)
-            {
-                targetType = ScanAssembly(interfaceType, a);
-
-                if (targetType != null && targetType != injectTargetType)
-                    return true;    // todo: choose next implementation to interface hierachy
-            }
-
-            targetType = null;
-            return false;
-        }
 
         private static Type ScanAssembly(Type interfaceType, Assembly assembly)
         {
@@ -860,33 +713,7 @@ namespace BSAG.IOCTalk.Composition
             return targetType;
         }
 
-        internal IEnumerable<Type> FindInterfaceImplementations(Type interfaceType, Type injectTargetType)
-        {
-            foreach (var a in this.assemblies)
-            {
-                Type[] types = null;
-                try
-                {
-                    types = a.GetTypes();
-                }
-                catch (Exception ex)
-                {
-                    // ignore loading error
-                    Console.WriteLine($"Error iterating types for assembly: {a}:\n{ex}");
-                }
 
-                if (types != null)
-                {
-                    foreach (var t in types)
-                    {
-                        if (interfaceType.IsAssignableFrom(t) && !t.IsAbstract)
-                        {
-                            yield return t;
-                        }
-                    }
-                }
-            }
-        }
 
 
 
@@ -1049,6 +876,21 @@ namespace BSAG.IOCTalk.Composition
                 }
             }
             session = null;
+            return false;
+        }
+
+        public bool IsSubscriptionRegistered(Type serviceDelegateType)
+        {
+            if (Array.IndexOf(this.RemoteServiceInterfaceTypes, serviceDelegateType) >= 0)
+            {
+                return true;
+            }
+
+            if (Array.IndexOf(this.LocalServiceInterfaceTypes, serviceDelegateType) >= 0)
+            {
+                return true;
+            }
+
             return false;
         }
 
