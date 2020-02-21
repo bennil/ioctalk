@@ -620,14 +620,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 callerThread.Start();
             }
 
-            if (InvokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.IndividualTask)
-            {
-                methodInfoCache = new ConcurrentDictionary<int, IInvokeMethodInfo>();
-            }
-            else
-            {
-                methodInfoCache = new Dictionary<int, IInvokeMethodInfo>();
-            }
+            methodInfoCache = new ConcurrentDictionary<int, IInvokeMethodInfo>();
 
             this.serializer.RegisterContainerHost(containerHost);
         }

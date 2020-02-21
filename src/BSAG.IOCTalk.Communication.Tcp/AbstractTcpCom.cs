@@ -39,7 +39,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         private int maxReadBufferSize = 3276800;
         private int receiveBufferSize = 32768;
         private int sendBufferSize = 32768;
-        private int socketPollWaitMicroSec = 10000;
+        private int socketPollWaitMicroSec = 100000;    // 100000 = 100 milliseconds
 
         // ----------------------------------------------------------------------------------------
         #endregion
