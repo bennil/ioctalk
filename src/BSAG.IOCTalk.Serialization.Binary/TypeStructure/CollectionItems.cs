@@ -38,10 +38,17 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
         /// Initializes a new instance of the <see cref="CollectionItems"/> class.
         /// </summary>
         /// <param name="type">The type.</param>
-        public CollectionItems(Type type, Func<object, object> getter, Action<object, object> setter, ITypeResolver typeResolver)
+        public CollectionItems(Type type, string name, Func<object, object> getter, Action<object, object> setter, ITypeResolver typeResolver)
         {
             this.type = type;
-            this.Name = type.FullName;
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                this.Name = type.FullName;
+            }
             this.isArray = type.IsArray;
             this.setter = setter;
             this.getter = getter;

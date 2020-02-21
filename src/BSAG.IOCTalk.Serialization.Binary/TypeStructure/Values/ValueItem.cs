@@ -67,7 +67,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             else if (type.IsArray
                || type.GetInterface("IEnumerable") != null)
             {
-                return new CollectionItems(type, getter, setter, ctx);
+                return new CollectionItems(type, name, getter, setter, ctx);
             }
             else if (type.Equals(typeof(Type)))
             {
@@ -75,7 +75,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             }
             else
             {
-                return new ComplexStructure(type, getter, setter, ctx);
+                return new ComplexStructure(type, name, getter, setter, ctx);
             }
         }
 
@@ -160,7 +160,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
                         return typeof(Enum);
 
                     case ItemType.Int16:
-                        return typeof(Int16);                      
+                        return typeof(Int16);
 
                     case ItemType.Int64:
                         return typeof(Int64);
@@ -175,12 +175,54 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
                         return typeof(char);
 
                     case ItemType.Guid:
-                        return typeof(Guid);                        
+                        return typeof(Guid);
 
                 }
 
                 return null;
             }
+        }
+
+        public static Type GetRuntimeType(ItemType itemType)
+        {
+            switch (itemType)
+            {
+                case ItemType.Int32:
+                    return typeof(Int32);
+
+                case ItemType.Bool:
+                    return typeof(bool);
+
+                case ItemType.Double:
+                    return typeof(double);
+
+                case ItemType.Decimal:
+                    return typeof(decimal);
+
+                case ItemType.Enum:
+                    return typeof(Enum);
+
+                case ItemType.Int16:
+                    return typeof(Int16);
+
+                case ItemType.Int64:
+                    return typeof(Int64);
+
+                case ItemType.DateTime:
+                    return typeof(DateTime);
+
+                case ItemType.TimeSpan:
+                    return typeof(TimeSpan);
+
+                case ItemType.Char:
+                    return typeof(char);
+
+                case ItemType.Guid:
+                    return typeof(Guid);
+
+            }
+
+            return null;
         }
 
     }

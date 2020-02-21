@@ -1,4 +1,6 @@
 ﻿using BSAG.IOCTalk.Common.Interface.Communication;
+using BSAG.IOCTalk.Common.Interface.Container;
+using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Common.Session;
@@ -6,13 +8,19 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
 namespace BSAG.IOCTalk.Composition
 {
-    public class LocalShareContext
+    public class LocalShareContext : ITalkContainer, IContainerSharedByType
     {
+        private static readonly string[] IgnoreAssemblyStartNames = new string[] { "System", "Microsoft.", "netstandard", "Mono.", "mscorlib", "api-ms-", "hostfxr", "mscor", "hostfxr", "clrcompression", "clretwrc", "clrjit", "coreclr", "dbgshim", "hostpolicy", "sos", "ucrtbase", "PresentationFramework", "WindowsBase", "PresentationCore", "sni.dll" };
+
+        private static Dictionary<string, Assembly> globalLoadedAssemblies = new Dictionary<string, Assembly>();
+
         private List<Type> localMultipleSharedInterfaceTypes;
         private Dictionary<Type, IList> localSharedMultipleInterfaceInstances;
         private List<Type> manualManagedServiceInterfaceTypes;
@@ -23,15 +31,53 @@ namespace BSAG.IOCTalk.Composition
         internal Dictionary<Type, SessionChangeSubscription> sessionCreatedSubscriptions = new Dictionary<Type, SessionChangeSubscription>();
         internal Dictionary<Type, SessionChangeSubscription> sessionTerminatedSubscriptions = new Dictionary<Type, SessionChangeSubscription>();
 
-        private List<TalkCompositionHost> assignedHosts = new List<TalkCompositionHost>();
+        private List<ITalkContainer> subContainers = new List<ITalkContainer>();
         private Session inMemorySession;
         private SessionContract inMemorySessionContract;
 
-        public Dictionary<Type, object> SharedLocalInstances
+        private List<Assembly> assemblies = new List<Assembly>();
+        private List<IDiscoveryCondition> discoveryConditionItems;
+
+        private ILogger logger;
+        private bool isInitalized = false;
+
+
+        public LocalShareContext()
+        {
+
+        }
+
+
+        public IDictionary<Type, object> SharedLocalInstances
         {
             get
             {
                 return sharedLocalInstances;
+            }
+        }
+
+        /// <summary>
+        /// Gets the container shared local instances and all of the sub containers.
+        /// </summary>
+        public IEnumerable<object> SharedLocalInstanceItemTree
+        {
+            get
+            {
+                foreach (var item in sharedLocalInstances.Values)
+                {
+                    yield return item;
+                }
+
+                foreach (var subContainer in subContainers)
+                {
+                    if (subContainer is IContainerSharedByType sharedByType)
+                    {
+                        foreach (var subItem in sharedByType.SharedLocalInstances.Values)
+                        {
+                            yield return subItem;
+                        }
+                    }
+                }
             }
         }
 
@@ -42,6 +88,189 @@ namespace BSAG.IOCTalk.Composition
                 return localSharedInterfaceTypes;
             }
         }
+
+        public IReadOnlyCollection<Assembly> Assemblies
+        {
+            get
+            {
+                return assemblies.AsReadOnly();
+            }
+        }
+
+        public ITalkContainer ParentContainer { get; set; }
+
+
+
+        #region Assembly management
+
+
+        public void AddReferencedAssemblies()
+        {
+            AddLoadedAssemblies();
+
+            AddAssemblyTree(Assembly.GetExecutingAssembly(), assemblies);
+            AddAssemblyTree(Assembly.GetEntryAssembly(), assemblies);
+            AddAssemblyTree(Assembly.GetCallingAssembly(), assemblies);
+        }
+
+        public void AddExecutionDirAssemblies()
+        {
+            AddLoadedAssemblies();
+
+            var startAssembly = Assembly.GetEntryAssembly();
+
+            if (startAssembly == null)
+            {
+                // xamarin case
+                startAssembly = Assembly.GetExecutingAssembly();
+            }
+
+            var location = startAssembly.Location;
+            var execDirectory = new DirectoryInfo(System.IO.Path.GetDirectoryName(location));
+
+            foreach (var aFile in execDirectory.GetFiles("*.dll"))
+            {
+                if (IgnoreAssemblyStartNames.Any(startN => aFile.Name.StartsWith(startN)))
+                    continue;
+
+                try
+                {
+                    AssemblyName aName = AssemblyName.GetAssemblyName(aFile.FullName);
+
+                    Assembly assembly;
+                    if (globalLoadedAssemblies.TryGetValue(aName.FullName, out assembly))   // do not load assemblies twice
+                    {
+                        AddAssembly(assembly);
+                    }
+                    else
+                    {
+                        assembly = Assembly.LoadFile(aFile.FullName);
+                        AddAssemblyTree(assembly, assemblies);
+                    }
+                }
+                catch (Exception loadEx)
+                {
+                    string errMsg = "AddExecutionDirAssemblies ignore assembly with load error:\r\n" + loadEx.ToString();
+                    if (logger != null)
+                        logger.Warn(errMsg);
+                    else
+                        Console.WriteLine(errMsg);
+
+                }
+            }
+        }
+
+        public void AddLoadedAssemblies()
+        {
+            var alreadyLoadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            foreach (var assembly in alreadyLoadedAssemblies)
+            {
+                if (IgnoreAssemblyStartNames.Any(startN => assembly.FullName.StartsWith(startN)))
+                    continue;
+
+                AddAssembly(assembly);
+            }
+        }
+
+        public void AddDiscoveryCondition(IDiscoveryCondition discoveryCondition)
+        {
+            lock (TalkCompositionHost.syncObj)
+            {
+                if (discoveryConditionItems == null)
+                    discoveryConditionItems = new List<IDiscoveryCondition>();
+
+                if (!discoveryConditionItems.Contains(discoveryCondition))
+                    discoveryConditionItems.Add(discoveryCondition);
+            }
+        }
+
+        public bool AddAssembly(Assembly assembly)
+        {
+            lock (TalkCompositionHost.syncObj)
+            {
+                if (assembly != null)
+                {
+                    string key = assembly.FullName;
+
+                    if (key != null)
+                    {
+                        Assembly alreadyLoaded = null;
+                        if (!globalLoadedAssemblies.TryGetValue(key, out alreadyLoaded))
+                        {
+                            //try   (hangs up if try catch is unommented) (xamarin: only occurs if init is not executed in the main thread - even tough it is locked)
+                            //{
+                            globalLoadedAssemblies.Add(key, assembly);
+                            //}
+                            //catch (NullReferenceException nEx)
+                            //{
+                            //    // ignore undifinably NullReferenceException in Xamarin context
+                            //}
+                        }
+                        else if (!alreadyLoaded.Equals(assembly))
+                        {
+                            // use already loaded assembly because of dynamic load problems (https://github.com/dotnet/corefx/issues/21982)
+                            assembly = alreadyLoaded;
+                        }
+                    }
+
+                    if (!assemblies.Contains(assembly))
+                    {
+                        assemblies.Add(assembly);
+                        return true;    // only the first time
+                    }
+
+                }
+                return false;
+            }
+        }
+
+        private void AddAssemblyTree(Assembly assembly, List<Assembly> assemblies)
+        {
+
+            if (IgnoreAssemblyStartNames.Any(startN => assembly.FullName.StartsWith(startN)))
+                return;
+
+            if (AddAssembly(assembly))
+            {
+                //assemblies.Add(assembly);
+
+                foreach (var assemblyName in assembly.GetReferencedAssemblies())
+                {
+                    if (IgnoreAssemblyStartNames.Any(startN => assemblyName.FullName.StartsWith(startN)))
+                        continue;
+
+                    if (globalLoadedAssemblies.TryGetValue(assemblyName.FullName, out assembly))   // do not load assemblies twice
+                    {
+                        AddAssemblyTree(assembly, assemblies);
+                    }
+                    else
+                    {
+                        Assembly loadAssembly = null;
+                        try
+                        {
+                            loadAssembly = Assembly.Load(assemblyName);
+                        }
+                        catch (Exception ex)
+                        {
+                            // suppress nested assembly load exception
+                            if (logger != null)
+                                logger.Error(ex.ToString());
+                            else
+                                Console.WriteLine(ex.ToString());
+                        }
+
+                        if (loadAssembly != null)
+                            AddAssemblyTree(loadAssembly, assemblies);
+                    }
+                }
+            }
+        }
+
+        #endregion
+
+
+
 
 
         public bool TryGetCachedLocalExport(Type type, out object instance)
@@ -65,86 +294,234 @@ namespace BSAG.IOCTalk.Composition
             return false;
         }
 
-        //todo move to share ctx
-        //public bool TryGetExport(Type type, Type injectTargetType, out object instance)
-        //{
-        //    if (SharedLocalInstances.TryGetValue(type, out instance))
-        //    {
-        //        return true;
-        //    }
-
-        //    //if (hostSessionsSharedInstances.TryGetValue(type, out instance))
-        //    //{
-        //    //    return true;
-        //    //}
-
-        //    Type targetType;
-        //    if (type.IsInterface)
-        //    {
-        //        //var contract = currentContract;
-        //        //if (contract != null)
-        //        //{
-        //        //    if (contract.TryGetSessionInstance(type, out instance))
-        //        //    {
-        //        //        return true;
-        //        //    }
-        //        //}
-
-        //        if (!TryFindInterfaceImplementation(type, injectTargetType, out targetType))
-        //        {
-        //            // not found > check if multiple import
-        //            if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
-        //            {
-        //                var multiImportColl = localShare.CollectLocalMultiImports(this, type, injectTargetType);
-        //                if (multiImportColl != null)
-        //                {
-        //                    instance = multiImportColl;
-        //                    return true;
-        //                }
-        //            }
-        //            else
-        //            {
-        //                instance = null;
-        //                return false;
-        //            }
-        //        }
-        //    }
-        //    else if (type.IsArray)
-        //    {
-        //        var multiImportColl = this.CollectLocalMultiImports(this, type, injectTargetType);
-        //        if (multiImportColl != null)
-        //        {
-        //            instance = multiImportColl;
-        //            return true;
-        //        }
-        //        else
-        //        {
-        //            instance = null;
-        //            return false;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        targetType = type;
-        //    }
-
-        //    object[] outParams;
-        //    ParameterInfo[] outParamsInfo;
-        //    instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, out outParams, out outParamsInfo);
-        //    CheckOutParamsSubscriptions(instance, outParams);
-
-        //    RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
-
-        //    return true;
-        //}
-
-
-
-        internal void AssignHost(TalkCompositionHost host)
+        public T GetExport<T>()
         {
-            if (!assignedHosts.Contains(host))
+            return (T)GetExport(typeof(T));
+        }
+
+        public object GetExport(Type type)
+        {
+            return GetExport(type, null);
+        }
+
+        public object GetExport(Type type, Type injectTargetType)
+        {
+            object instance;
+            if (!TryGetExport(type, injectTargetType, out instance))
             {
-                assignedHosts.Add(host);
+                if (assemblies.Count == 0)
+                {
+                    throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! No assemblies loaded. Are you missing a \"AddExecutionDirAssemblies()\" or \"AddReferencedAssemblies()\"?");
+                }
+                else
+                {
+                    if (injectTargetType != null)
+                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! Inject Target type: {injectTargetType.FullName}");
+                    else
+                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"");
+                }
+            }
+
+            return instance;
+        }
+
+        public bool TryGetExport(Type type, Type injectTargetType, out object instance)
+        {
+            if (discoveryConditionItems != null)
+            {
+                DiscoveryContext ctx = new DiscoveryContext(type, injectTargetType);
+
+                foreach (var cond in discoveryConditionItems)
+                {
+                    if (cond.IsMatching(ctx))
+                    {
+                        return cond.TargetContainer.TryGetExport(type, injectTargetType, out instance);
+                    }
+                }
+            }
+
+            if (this.SharedLocalInstances.TryGetValue(type, out instance))
+            {
+                return true;
+            }
+
+            //if (hostSessionsSharedInstances.TryGetValue(type, out instance))
+            //{
+            //    return true;
+            //}
+
+            if (ParentContainer != null
+                && ParentContainer is IContainerSharedByType parentShared
+                && parentShared.TryGetCachedLocalExport(type, out instance))
+            {
+                return true;
+            }
+
+            // create new instance
+            Type targetType;
+            if (type.IsInterface)
+            {
+                //var contract = currentContract;
+                //if (contract != null)
+                //{
+                //    if (contract.TryGetSessionInstance(type, out instance))
+                //    {
+                //        return true;
+                //    }
+                //}
+
+                if (!TryFindInterfaceImplementation(type, injectTargetType, out targetType))
+                {
+                    // not found > check if multiple import
+                    if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
+                    {
+                        var multiImportColl = this.CollectLocalMultiImports(null, type, injectTargetType);
+                        if (multiImportColl != null)
+                        {
+                            instance = multiImportColl;
+                            return true;
+                        }
+                        // todo: else?
+                    }
+                    else
+                    {
+                        instance = null;
+                        return false;
+                    }
+                }
+            }
+            else if (type.IsArray)
+            {
+                var multiImportColl = this.CollectLocalMultiImports(null, type, injectTargetType);
+                if (multiImportColl != null)
+                {
+                    instance = multiImportColl;
+                    return true;
+                }
+                else
+                {
+                    instance = null;
+                    return false;
+                }
+            }
+            else
+            {
+                targetType = type;
+            }
+
+            object[] outParams;
+            ParameterInfo[] outParamsInfo;
+            instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, out outParams, out outParamsInfo);
+            this.CheckOutParamsSubscriptions(instance, outParams, null, type);
+
+            this.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
+
+            return true;
+        }
+
+        internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, out Type targetType)
+        {
+            if (injectTargetType != null)
+            {
+                // first scan inject assembly
+                targetType = ScanAssembly(interfaceType, injectTargetType.Assembly);
+
+                if (targetType != null && targetType != injectTargetType)
+                    return true;
+            }
+
+            foreach (var a in this.assemblies)
+            {
+                targetType = ScanAssembly(interfaceType, a);
+
+                if (targetType != null && targetType != injectTargetType)
+                    return true;    // todo: choose next implementation to interface hierachy
+            }
+
+            if (ParentContainer is LocalShareContext parentLsc)
+            {
+                return parentLsc.TryFindInterfaceImplementation(interfaceType, injectTargetType, out targetType);
+            }
+            else
+            {
+                targetType = null;
+                return false;
+            }
+        }
+
+        private static Type ScanAssembly(Type interfaceType, Assembly assembly)
+        {
+            Type targetType = null;
+            try
+            {
+                foreach (var t in assembly.GetTypes())
+                {
+                    if (interfaceType.IsAssignableFrom(t) && !t.IsAbstract)
+                    {
+                        targetType = t;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // ignore loading error
+                Console.WriteLine($"Error iterating types for assembly: {assembly}:\n{ex}");
+            }
+
+            return targetType;
+        }
+
+        internal object DetermineConstructorImportInstance(Type type, string parameterName, Type injectTargetType)
+        {
+            return GetExport(type, injectTargetType);
+        }
+
+        internal IEnumerable<Type> FindInterfaceImplementations(Type interfaceType, Type injectTargetType)
+        {
+            foreach (var a in this.assemblies)
+            {
+                Type[] types = null;
+                try
+                {
+                    types = a.GetTypes();
+                }
+                catch (Exception ex)
+                {
+                    // ignore loading error
+                    Console.WriteLine($"Error iterating types for assembly: {a}:\n{ex}");
+                }
+
+                if (types != null)
+                {
+                    foreach (var t in types)
+                    {
+                        if (interfaceType.IsAssignableFrom(t) && !t.IsAbstract)
+                        {
+                            yield return t;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void AddSubContainer(ITalkContainer container)
+        {
+            if (!subContainers.Contains(container))
+            {
+                subContainers.Add(container);
+
+                if (container.ParentContainer != null)
+                {
+                    if (!container.ParentContainer.Equals(this))
+                    {
+                        throw new InvalidOperationException("Different sub container already registered!");
+                    }
+                }
+                else
+                {
+                    container.ParentContainer = this;
+                }
             }
         }
 
@@ -199,13 +576,18 @@ namespace BSAG.IOCTalk.Composition
 
                         // create new instances
                         HashSet<Type> createdTypes = new HashSet<Type>();
-                        foreach (Type implType in host.FindInterfaceImplementations(targetInterfaceType, injectTargetType))
+                        foreach (Type implType in this.FindInterfaceImplementations(targetInterfaceType, injectTargetType))
                         {
                             if (!createdTypes.Contains(implType) && injectTargetType != implType)
                             {
                                 object[] outParams;
                                 ParameterInfo[] outParamsInfo;
-                                var itemInstance = TypeService.CreateInstance(implType, host.DetermineConstructorImportInstance, out outParams, out outParamsInfo);
+                                object itemInstance;
+                                if (host != null)
+                                    itemInstance = TypeService.CreateInstance(implType, host.DetermineConstructorImportInstance, out outParams, out outParamsInfo);
+                                else
+                                    itemInstance = TypeService.CreateInstance(implType, this.DetermineConstructorImportInstance, out outParams, out outParamsInfo);
+
                                 CheckOutParamsSubscriptions(itemInstance, outParams, host, targetInterfaceType);
                                 targetCollection.Add(itemInstance);
 
@@ -332,7 +714,7 @@ namespace BSAG.IOCTalk.Composition
                                 }
                             }
 
-                            if (host.IsSessionInstance(targetInterface, out ISession session))
+                            if (host != null && host.IsSessionInstance(targetInterface, out ISession session))
                             {
                                 subscription.AddDelegate(sessionDelegate, parameters, session);
                             }
@@ -355,7 +737,7 @@ namespace BSAG.IOCTalk.Composition
                                 }
                             }
 
-                            if (host.IsSessionInstance(targetInterface, out ISession session))
+                            if (host != null && host.IsSessionInstance(targetInterface, out ISession session))
                             {
                                 subscription.AddDelegate(sessionDelegate, parameters, session);
                             }
@@ -379,22 +761,27 @@ namespace BSAG.IOCTalk.Composition
 
         private bool CheckIfSubscriptionInterfaceIsRegistered(Type serviceDelegateType)
         {
-            if (localSharedInterfaceTypes?.IndexOf(serviceDelegateType) >= 0)
+            if (IsSubscriptionRegistered(serviceDelegateType))
             {
                 return true;
             }
 
-            foreach (var host in assignedHosts)
+            foreach (var subContainer in subContainers)
             {
-                if (Array.IndexOf(host.RemoteServiceInterfaceTypes, serviceDelegateType) >= 0)
+                if (subContainer.IsSubscriptionRegistered(serviceDelegateType))
                 {
                     return true;
                 }
+            }
 
-                if (Array.IndexOf(host.LocalServiceInterfaceTypes, serviceDelegateType) >= 0)
-                {
-                    return true;
-                }
+            return false;
+        }
+
+        public bool IsSubscriptionRegistered(Type serviceDelegateType)
+        {
+            if (localSharedInterfaceTypes?.IndexOf(serviceDelegateType) >= 0)
+            {
+                return true;
             }
 
             if (manualManagedServiceInterfaceTypes != null
@@ -568,8 +955,29 @@ namespace BSAG.IOCTalk.Composition
         //    CreateLocalSharedServices(assignedHosts[0]);
         //}
 
+        public void Init(bool createSharedInstances = true)
+        {
+            lock (TalkCompositionHost.syncObj)
+            {
+                if (!isInitalized)  // only inialize once
+                {
+                    isInitalized = true;
 
-        public void CreateLocalSharedServices(TalkCompositionHost source)
+                    if (createSharedInstances)
+                        CreateLocalSharedServices();
+
+                    // init sub containers
+                    foreach (var sc in subContainers)
+                    {
+                        sc.Init(createSharedInstances);
+                    }
+                }
+            }
+        }
+
+
+        //private void CreateLocalSharedServices(TalkCompositionHost source)    // todo: check if subscriptions work without composition host
+        private void CreateLocalSharedServices()
         {
             if (this.LocalSharedInterfaceTypes != null)
             {
@@ -579,16 +987,18 @@ namespace BSAG.IOCTalk.Composition
                     if (this.SharedLocalInstances.ContainsKey(servicetype))
                         continue;   // service instance already craeted
 
-                    object sharedinstance = source.GetExport(servicetype);
+                    object sharedinstance = this.GetExport(servicetype);
                     RegisterLocalSharedService(servicetype, sharedinstance);
                 }
 
                 // call in-memory state change callback subscriptions for local global instances
                 foreach (var item in this.SharedLocalInstances)
                 {
-                    this.TryRaiseInMemorySessionCreated(item.Key, item.Value, source, source.CommunicationService);
+                    this.TryRaiseInMemorySessionCreated(item.Key, item.Value);
                 }
             }
         }
+
+
     }
 }

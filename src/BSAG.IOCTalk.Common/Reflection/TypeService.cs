@@ -981,7 +981,13 @@ namespace BSAG.IOCTalk.Common.Reflection
             List<string> referenceLocations = new List<string>();
             var mscorelib = typeof(object).Assembly;
             referenceLocations.Add(mscorelib.Location);
-            referenceLocations.Add(Assembly.Load("netstandard, Version=2.0.0.0").Location);
+
+            if (!System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"))
+            {
+                // only add netstandard if not full framework
+                // on full .net the reference is not found but is working implicit
+                referenceLocations.Add(Assembly.Load("netstandard, Version=2.0.0.0").Location);
+            }
 
             // add System.Runtime workaround
             string fwPath = Path.GetDirectoryName(typeof(object).Assembly.Location);

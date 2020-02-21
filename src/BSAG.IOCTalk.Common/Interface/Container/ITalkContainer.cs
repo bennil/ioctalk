@@ -6,6 +6,12 @@ namespace BSAG.IOCTalk.Common.Interface.Container
 {
     public interface ITalkContainer
     {
+        ITalkContainer ParentContainer { get; set; }
+
+        void Init(bool createSharedInstances);
+
+        bool IsSubscriptionRegistered(Type serviceDelegateType);
+
         bool TryGetExport(Type type, Type injectTargetType, out object instance);
     }
 }

@@ -39,7 +39,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
         /// Initializes a new instance of the <see cref="ComplexStructure"/> class.
         /// </summary>
         /// <param name="type">The type.</param>
-        public ComplexStructure(Type type, Func<object, object> getter, Action<object, object> setter, ISerializeContext ctx)
+        public ComplexStructure(Type type, string name, Func<object, object> getter, Action<object, object> setter, ISerializeContext ctx)
         {
             this.type = type;
             if (type.IsInterface || type.IsAbstract)
@@ -51,7 +51,14 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                 this.concreteTargetType = type;
             }
 
-            this.Name = type.FullName;
+            if (name != null)
+            {
+                this.Name = name;
+            }
+            else
+            {
+                this.Name = type.FullName;
+            }
 
             this.getter = getter;
             this.setter = setter;
@@ -74,7 +81,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
         /// Gets the type identifier (unique type hash code).
         /// </summary>
         /// <value>The type identifier.</value>
-        public uint TypeId { get; private set; }
+        public uint TypeId { get; internal set; }
 
         public IList<IValueItem> Items
         {
