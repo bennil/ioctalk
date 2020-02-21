@@ -1025,6 +1025,12 @@ namespace BSAG.IOCTalk.Common.Reflection
             MetadataReference[] references = referenceLocations.Distinct()/*.Where(fileLoc => File.Exists(fileLoc))*/.Select(loc => MetadataReference.CreateFromFile(loc)).Cast<MetadataReference>().ToArray();
             return references;
         }
+#else
+
+        public static Type ImplementDynamicType(string csharpCode, string targetAssemblyName)
+        {
+            throw new NotSupportedException($"This IOCTalk.Common version is compiled with ahead of time only option.");
+        }
 
 #endif
     }
