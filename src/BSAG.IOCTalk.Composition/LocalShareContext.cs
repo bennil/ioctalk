@@ -144,7 +144,8 @@ namespace BSAG.IOCTalk.Composition
                     }
                     else
                     {
-                        assembly = Assembly.LoadFile(aFile.FullName);
+                        // load assembly in current AppDomain
+                        assembly = Assembly.LoadFrom(aFile.FullName);
                         AddAssemblyTree(assembly, assemblies);
                     }
                 }
@@ -955,7 +956,7 @@ namespace BSAG.IOCTalk.Composition
         //    CreateLocalSharedServices(assignedHosts[0]);
         //}
 
-        public void Init(bool createSharedInstances = true)
+        public void Init(bool initSubContainers = true)
         {
             lock (TalkCompositionHost.syncObj)
             {
@@ -963,13 +964,14 @@ namespace BSAG.IOCTalk.Composition
                 {
                     isInitalized = true;
 
-                    if (createSharedInstances)
-                        CreateLocalSharedServices();
+                    CreateLocalSharedServices();
 
-                    // init sub containers
-                    foreach (var sc in subContainers)
+                    if (initSubContainers)
                     {
-                        sc.Init(createSharedInstances);
+                        foreach (var sc in subContainers)
+                        {
+                            sc.Init(initSubContainers);
+                        }
                     }
                 }
             }

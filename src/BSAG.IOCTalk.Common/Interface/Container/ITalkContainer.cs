@@ -8,7 +8,7 @@ namespace BSAG.IOCTalk.Common.Interface.Container
     {
         ITalkContainer ParentContainer { get; set; }
 
-        void Init(bool createSharedInstances);
+        void Init(bool initSubContainers);
 
         bool IsSubscriptionRegistered(Type serviceDelegateType);
 
