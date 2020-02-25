@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.572
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOCTalk.StreamAnalyzer", "IOCTalk.StreamAnalyzer.csproj", "{544CB086-83FD-4959-906D-E4607F6BDD2B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOCTalk.StreamAnalyzer.Implementation", "IOCTalk.StreamAnalyzer.Implementation\IOCTalk.StreamAnalyzer.Implementation.csproj", "{135EE2B6-8D14-4B1A-AEB2-1202F18B65A5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Serialization.Binary", "..\..\..\src\BSAG.IOCTalk.Serialization.Binary\BSAG.IOCTalk.Serialization.Binary.csproj", "{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,6 +40,18 @@ Global
 		{135EE2B6-8D14-4B1A-AEB2-1202F18B65A5}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{135EE2B6-8D14-4B1A-AEB2-1202F18B65A5}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{135EE2B6-8D14-4B1A-AEB2-1202F18B65A5}.Release|x86.ActiveCfg = Release|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Debug|x86.Build.0 = Debug|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Release|x86.ActiveCfg = Release|Any CPU
+		{40B270C5-EFB0-4B4D-8EE0-5FDCB6F0180B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

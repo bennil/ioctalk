@@ -139,7 +139,7 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// Registers the container host.
         /// </summary>
         /// <param name="containerHost">The container host.</param>
-        void RegisterContainerHost(IGenericContainerHost containerHost);
+        void RegisterContainerHost(IGenericContainerHost containerHost, ILogger logger);
 
 
 

@@ -278,14 +278,25 @@ namespace BSAG.IOCTalk.Composition
             RegisterHostSessionsSharedInstance(communicationService);
 
             // init dependency injection
+            // check if logger is already added to share context
+            bool exportNewLogger = false;
+            if (localShare.TryGetCachedLocalExport(typeof(ILogger), out object loggerObj))
+            {
+                this.logger = (ILogger)loggerObj;
+            }
+            else
+            {
+                exportNewLogger = true;
+            }
 
             // register communication host for response processing
-            communicationService.RegisterContainerHost(this);
+            communicationService.RegisterContainerHost(this, logger);
 
-            // export ILogger
-            RegisterLocalSharedService<ILogger>(communicationService.Logger);
-            this.logger = communicationService.Logger;
-
+            if (exportNewLogger)
+            {
+                RegisterLocalSharedService<ILogger>(communicationService.Logger);
+                this.logger = communicationService.Logger;
+            }
 
             localShare.Init(createSharedInstances);
         }

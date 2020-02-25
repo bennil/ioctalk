@@ -537,12 +537,13 @@ namespace BSAG.IOCTalk.Communication.Common
         /// Registers the container host.
         /// </summary>
         /// <param name="containerHost">The container host.</param>
-        public virtual void RegisterContainerHost(IGenericContainerHost containerHost)
+        public virtual void RegisterContainerHost(IGenericContainerHost containerHost, ILogger logger)
         {
             if (this.containerHost != null)
             {
                 throw new Exception("A container host is already registered.");
             }
+            this.logger = logger;
 
             if (baseCommunicationServiceSupport == null)
             {
