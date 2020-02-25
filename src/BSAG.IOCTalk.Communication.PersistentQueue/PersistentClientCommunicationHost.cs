@@ -427,9 +427,9 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
         }
 
-        public void RegisterContainerHost(IGenericContainerHost containerHost)
+        public void RegisterContainerHost(IGenericContainerHost containerHost, ILogger logger)
         {
-            underlyingCom.RegisterContainerHost(containerHost);
+            underlyingCom.RegisterContainerHost(containerHost, logger);
 
             if (!RedirectSessionEvents)
             {

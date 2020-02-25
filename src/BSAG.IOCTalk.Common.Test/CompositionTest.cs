@@ -221,7 +221,7 @@ namespace BSAG.IOCTalk.Common.Test
             return null;
         }
 
-        public void RegisterContainerHost(IGenericContainerHost containerHost)
+        public void RegisterContainerHost(IGenericContainerHost containerHost, ILogger logger)
         {
         }
 
@@ -263,5 +263,7 @@ namespace BSAG.IOCTalk.Common.Test
             if (SessionTerminated != null)
                 SessionTerminated(this, new SessionEventArgs(session, contract));
         }
+
+
     }
 }

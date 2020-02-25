@@ -257,8 +257,6 @@ namespace BSAG.IOCTalk.Composition
                         throw new NullReferenceException($"{nameof(CommunicationService)} must be provided!");
 
                     InitGenericCommunication(CommunicationService, true, initSubContainers);
-
-                    CommunicationService.Init();
                 }
             }
         }

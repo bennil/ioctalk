@@ -28,7 +28,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
             persistComm.RegisterPersistentMethod<IMyLocalService>(nameof(IMyLocalService.RandomMethod));
-            persistComm.RegisterContainerHost(talkCompositionHost);
+            persistComm.RegisterContainerHost(talkCompositionHost, null);
             persistComm.Init();
 
             InvokeMethodInfo mInfo = new InvokeMethodInfo(typeof(IMyLocalService), nameof(IMyLocalService.RandomMethod));
@@ -100,7 +100,7 @@ namespace BSAG.IOCTalk.Common.Test
                 }
             }
 
-            public void RegisterContainerHost(IGenericContainerHost containerHost)
+            public void RegisterContainerHost(IGenericContainerHost containerHost, ILogger logger)
             {
                 this.containerHost = containerHost;
                 this.Serializer.RegisterContainerHost(containerHost);
