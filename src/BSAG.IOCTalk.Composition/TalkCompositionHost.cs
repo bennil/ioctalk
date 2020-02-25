@@ -48,7 +48,7 @@ namespace BSAG.IOCTalk.Composition
         private ILogger logger;
         private ISession currentSession;
         private IContract currentContract;
-
+        private bool isInitalized = false;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -247,47 +247,57 @@ namespace BSAG.IOCTalk.Composition
             localShare.RegisterLocalSharedService(type, instance);
         }
 
-        public void Init(bool createSharedInstances = true)
+        public void Init(bool initSubContainers = false)
         {
-            if (CommunicationService == null)
-                throw new NullReferenceException($"{nameof(CommunicationService)} must be provided!");
+            lock (TalkCompositionHost.syncObj)
+            {
+                if (!isInitalized)  // only inialize once
+                {
+                    if (CommunicationService == null)
+                        throw new NullReferenceException($"{nameof(CommunicationService)} must be provided!");
 
-            InitGenericCommunication(CommunicationService, createSharedInstances);
+                    InitGenericCommunication(CommunicationService, true, initSubContainers);
+
+                    CommunicationService.Init();
+                }
+            }
         }
 
         public void InitGenericCommunication(IGenericCommunicationService communicationService)
         {
-            this.InitGenericCommunication(communicationService, true);
+            this.InitGenericCommunication(communicationService, true, false);
         }
 
-        public void InitGenericCommunication(IGenericCommunicationService communicationService, bool createSharedInstances)
+        public void InitGenericCommunication(IGenericCommunicationService communicationService, bool initShareContext, bool initSubContainers)
         {
-            if (remoteServiceInterfaceTypesResolved != null)
+            lock (TalkCompositionHost.syncObj)
             {
-                throw new Exception($"{GetType().FullName} is already initialized.");
+                if (!isInitalized)  // only inialize once
+                {
+                    isInitalized = true;
+                    this.CommunicationService = communicationService;
+
+                    this.remoteServiceInterfaceTypesResolved = remoteServiceInterfaceTypes.ToArray();
+                    this.localSessionServiceInterfaceTypesResolved = localSessionServiceInterfaceTypes.ToArray();
+
+                    communicationService.SessionCreated += OnCommunicationService_SessionCreated;
+                    communicationService.SessionTerminated += OnCommunicationService_SessionTerminated;
+
+                    RegisterHostSessionsSharedInstance(communicationService);
+
+                    // init dependency injection
+
+                    // register communication host for response processing
+                    communicationService.RegisterContainerHost(this);
+
+                    // export ILogger
+                    RegisterLocalSharedService<ILogger>(communicationService.Logger);
+                    this.logger = communicationService.Logger;
+
+                    if (initShareContext)
+                        localShare.Init(initSubContainers);
+                }
             }
-
-            this.CommunicationService = communicationService;
-
-            this.remoteServiceInterfaceTypesResolved = remoteServiceInterfaceTypes.ToArray();
-            this.localSessionServiceInterfaceTypesResolved = localSessionServiceInterfaceTypes.ToArray();
-
-            communicationService.SessionCreated += OnCommunicationService_SessionCreated;
-            communicationService.SessionTerminated += OnCommunicationService_SessionTerminated;
-
-            RegisterHostSessionsSharedInstance(communicationService);
-
-            // init dependency injection
-
-            // register communication host for response processing
-            communicationService.RegisterContainerHost(this);
-
-            // export ILogger
-            RegisterLocalSharedService<ILogger>(communicationService.Logger);
-            this.logger = communicationService.Logger;
-
-
-            localShare.Init(createSharedInstances);
         }
 
         public void AddReferencedAssemblies()
@@ -881,12 +891,12 @@ namespace BSAG.IOCTalk.Composition
 
         public bool IsSubscriptionRegistered(Type serviceDelegateType)
         {
-            if (Array.IndexOf(this.RemoteServiceInterfaceTypes, serviceDelegateType) >= 0)
+            if (this.remoteServiceInterfaceTypes.Contains(serviceDelegateType))
             {
                 return true;
             }
 
-            if (Array.IndexOf(this.LocalServiceInterfaceTypes, serviceDelegateType) >= 0)
+            if (this.localSessionServiceInterfaceTypes.Contains(serviceDelegateType))
             {
                 return true;
             }

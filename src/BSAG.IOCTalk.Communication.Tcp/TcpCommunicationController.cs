@@ -15,6 +15,7 @@ using BSAG.IOCTalk.Common.Interface.Config;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
 using BSAG.IOCTalk.Communication.Tcp.Security;
 using BSAG.IOCTalk.Common.Interface.Logging;
+using BSAG.IOCTalk.Communication.Tcp.Config;
 
 namespace BSAG.IOCTalk.Communication.Tcp
 {
@@ -52,6 +53,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
         public const string ConfigAttributeEnabled = "enabled";
 
+        private TcpConfiguration configObject;
+
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -87,12 +90,28 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
 
         /// <summary>
-        /// Gets or sets the config.
+        /// Gets or sets the config as XML.
         /// </summary>
         /// <value>
         /// The config.
         /// </value>
         public XDocument Config { get; set; }
+
+        /// <summary>
+        /// Gets or sets the configuration as object.
+        /// </summary>
+        public TcpConfiguration ConfigObject
+        {
+            get { return configObject; }
+            set
+            {
+                configObject = value;
+
+                // direct updates before init
+                LogDataStream = configObject.LogDataStream;
+            }
+        }
+
 
         /// <summary>
         /// Gets the underlying communication provider.
@@ -125,48 +144,77 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// </summary>
         public override void Init()
         {
-            if (Config == null)
+            if (ConfigObject != null)
             {
-                throw new NullReferenceException("TCP Config XML is not defined!");
-            }
+                //todo: implement TLS
 
-            if (communication != null)
-            {
-                throw new InvalidOperationException(GetType().Name + " already initialized!");
-            }
+                this.LogDataStream = ConfigObject.LogDataStream;
 
-            connectionType = Config.Root.GetConfigParameterValue<ConnectionType>(ConfigParamConnectionType);
-            var securityXml = Config.Root.Element(ConfigElementSecurity);
-            bool isSecurityEnabled = false;
-            if (securityXml != null)
-            {
-                var enabledAttr = securityXml.Attribute(ConfigAttributeEnabled);
-                if (enabledAttr != null)
+                if (ConfigObject.Port <= 0)
+                    throw new InvalidOperationException($"Invalid tcp port number: {ConfigObject.Port} in ConfigObject!");
+
+                switch (ConfigObject.Type)
                 {
-                    isSecurityEnabled = bool.Parse(enabledAttr.Value);
+                    case Tcp.Config.ConnectionType.Client:
+                        if (string.IsNullOrWhiteSpace(ConfigObject.Host))
+                            throw new InvalidOperationException($"Invalid tcp hostname: \"{ConfigObject.Host}\" in ConfigObject!");
+
+                        InitClient(ConfigObject.Host, ConfigObject.Port);
+                        break;
+
+                    case Tcp.Config.ConnectionType.Service:
+                        InitService(ConfigObject.Port);
+                        break;
+
+                    default:
+                        throw new NotSupportedException($"Configuration TCP type {ConfigObject.Type} not suppprted!");
                 }
-            }
-
-            bool? logDataStream = Config.Root.GetConfigParameterValueOrDefault<bool?>(false, ConfigParamLogDataStream);
-            if (logDataStream.HasValue && logDataStream.Value)
-                this.LogDataStream = logDataStream.Value;
-
-            if (connectionType == ConnectionType.Client)
-            {
-                string host = Config.Root.GetConfigParameterValue<string>(ConfigParamHost);
-                int port = Config.Root.GetConfigParameterValue<int>(ConfigParamPort);
-
-                InitClient(securityXml, isSecurityEnabled, host, port);
-            }
-            else if (connectionType == ConnectionType.Service)
-            {
-                int servicePort = Config.Root.GetConfigParameterValue<int>(ConfigParamPort);
-
-                InitService(securityXml, isSecurityEnabled, servicePort);
             }
             else
             {
-                throw new InvalidOperationException("TCP ConnectionType is undefined!");
+                if (Config == null)
+                {
+                    throw new NullReferenceException("TCP Config XML is not defined!");
+                }
+
+                if (communication != null)
+                {
+                    throw new InvalidOperationException(GetType().Name + " already initialized!");
+                }
+
+                connectionType = Config.Root.GetConfigParameterValue<ConnectionType>(ConfigParamConnectionType);
+                var securityXml = Config.Root.Element(ConfigElementSecurity);
+                bool isSecurityEnabled = false;
+                if (securityXml != null)
+                {
+                    var enabledAttr = securityXml.Attribute(ConfigAttributeEnabled);
+                    if (enabledAttr != null)
+                    {
+                        isSecurityEnabled = bool.Parse(enabledAttr.Value);
+                    }
+                }
+
+                bool? logDataStream = Config.Root.GetConfigParameterValueOrDefault<bool?>(false, ConfigParamLogDataStream);
+                if (logDataStream.HasValue && logDataStream.Value)
+                    this.LogDataStream = logDataStream.Value;
+
+                if (connectionType == ConnectionType.Client)
+                {
+                    string host = Config.Root.GetConfigParameterValue<string>(ConfigParamHost);
+                    int port = Config.Root.GetConfigParameterValue<int>(ConfigParamPort);
+
+                    InitClient(securityXml, isSecurityEnabled, host, port);
+                }
+                else if (connectionType == ConnectionType.Service)
+                {
+                    int servicePort = Config.Root.GetConfigParameterValue<int>(ConfigParamPort);
+
+                    InitService(securityXml, isSecurityEnabled, servicePort);
+                }
+                else
+                {
+                    throw new InvalidOperationException("TCP ConnectionType is undefined!");
+                }
             }
         }
 
