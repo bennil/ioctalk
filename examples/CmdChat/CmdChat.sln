@@ -3,15 +3,29 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CmdChat.Server", "CmdChat\CmdChat.Server.csproj", "{10749FB6-B5E8-4939-91AE-907EEA0A6871}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CmdChat.Server", "CmdChat\CmdChat.Server.csproj", "{10749FB6-B5E8-4939-91AE-907EEA0A6871}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CmdChat.Frontend", "CmdChat.Frontend\CmdChat.Frontend.csproj", "{EFDB9520-934F-4367-A31E-3735C7735E31}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CmdChat.Frontend", "CmdChat.Frontend\CmdChat.Frontend.csproj", "{EFDB9520-934F-4367-A31E-3735C7735E31}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CmdChat.Interface", "CmdChat.Interface\CmdChat.Interface.csproj", "{81FDCB49-2EB8-4D40-B585-69E25FCFB5CE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CmdChat.Interface", "CmdChat.Interface\CmdChat.Interface.csproj", "{81FDCB49-2EB8-4D40-B585-69E25FCFB5CE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CmdChat.Server.Implementation", "CmdChat.Server.Implementation\CmdChat.Server.Implementation.csproj", "{B18BDE0C-3ABD-4FEC-99BF-83CE2D7941BA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CmdChat.Server.Implementation", "CmdChat.Server.Implementation\CmdChat.Server.Implementation.csproj", "{B18BDE0C-3ABD-4FEC-99BF-83CE2D7941BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CmdChat.Frontend.Implementation", "CmdChat.Frontend.Implementation\CmdChat.Frontend.Implementation.csproj", "{6ED724F9-54AF-419D-8EF5-9C1F80B86489}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CmdChat.Frontend.Implementation", "CmdChat.Frontend.Implementation\CmdChat.Frontend.Implementation.csproj", "{6ED724F9-54AF-419D-8EF5-9C1F80B86489}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ioctalk", "ioctalk", "{6E1446B3-8957-4423-A1AF-E31C5F1E7224}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Common", "..\..\src\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj", "{1547EB9E-8234-4322-8E04-F18FB515DC1E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Communication.Common", "..\..\src\BSAG.IOCTalk.Communication.Common\BSAG.IOCTalk.Communication.Common.csproj", "{1F242783-FDA9-4FD4-82B1-C586FF8C27E6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Communication.Tcp", "..\..\src\BSAG.IOCTalk.Communication.Tcp\BSAG.IOCTalk.Communication.Tcp.csproj", "{1DDB205D-7A59-493F-9FE0-66B101A0ED56}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Composition", "..\..\src\BSAG.IOCTalk.Composition\BSAG.IOCTalk.Composition.csproj", "{5AF55394-6F24-4D7F-98A0-7BD36E3CB334}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Logging", "..\..\src\BSAG.IOCTalk.Logging\BSAG.IOCTalk.Logging.csproj", "{784E14C1-986D-45BC-AD3C-B83BA75F2108}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Serialization.Json", "..\..\src\BSAG.IOCTalk.Serialization.Json\BSAG.IOCTalk.Serialization.Json.csproj", "{B8A2A43E-8128-4DE2-926E-90B9EF36F370}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,9 +53,41 @@ Global
 		{6ED724F9-54AF-419D-8EF5-9C1F80B86489}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6ED724F9-54AF-419D-8EF5-9C1F80B86489}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6ED724F9-54AF-419D-8EF5-9C1F80B86489}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1547EB9E-8234-4322-8E04-F18FB515DC1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1547EB9E-8234-4322-8E04-F18FB515DC1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1547EB9E-8234-4322-8E04-F18FB515DC1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1547EB9E-8234-4322-8E04-F18FB515DC1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F242783-FDA9-4FD4-82B1-C586FF8C27E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F242783-FDA9-4FD4-82B1-C586FF8C27E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F242783-FDA9-4FD4-82B1-C586FF8C27E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F242783-FDA9-4FD4-82B1-C586FF8C27E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DDB205D-7A59-493F-9FE0-66B101A0ED56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DDB205D-7A59-493F-9FE0-66B101A0ED56}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DDB205D-7A59-493F-9FE0-66B101A0ED56}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DDB205D-7A59-493F-9FE0-66B101A0ED56}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5AF55394-6F24-4D7F-98A0-7BD36E3CB334}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AF55394-6F24-4D7F-98A0-7BD36E3CB334}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AF55394-6F24-4D7F-98A0-7BD36E3CB334}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AF55394-6F24-4D7F-98A0-7BD36E3CB334}.Release|Any CPU.Build.0 = Release|Any CPU
+		{784E14C1-986D-45BC-AD3C-B83BA75F2108}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{784E14C1-986D-45BC-AD3C-B83BA75F2108}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{784E14C1-986D-45BC-AD3C-B83BA75F2108}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{784E14C1-986D-45BC-AD3C-B83BA75F2108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8A2A43E-8128-4DE2-926E-90B9EF36F370}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8A2A43E-8128-4DE2-926E-90B9EF36F370}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8A2A43E-8128-4DE2-926E-90B9EF36F370}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8A2A43E-8128-4DE2-926E-90B9EF36F370}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1547EB9E-8234-4322-8E04-F18FB515DC1E} = {6E1446B3-8957-4423-A1AF-E31C5F1E7224}
+		{1F242783-FDA9-4FD4-82B1-C586FF8C27E6} = {6E1446B3-8957-4423-A1AF-E31C5F1E7224}
+		{1DDB205D-7A59-493F-9FE0-66B101A0ED56} = {6E1446B3-8957-4423-A1AF-E31C5F1E7224}
+		{5AF55394-6F24-4D7F-98A0-7BD36E3CB334} = {6E1446B3-8957-4423-A1AF-E31C5F1E7224}
+		{784E14C1-986D-45BC-AD3C-B83BA75F2108} = {6E1446B3-8957-4423-A1AF-E31C5F1E7224}
+		{B8A2A43E-8128-4DE2-926E-90B9EF36F370} = {6E1446B3-8957-4423-A1AF-E31C5F1E7224}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FFBBA2A1-7125-4DF8-B539-DC03AD249BF9}

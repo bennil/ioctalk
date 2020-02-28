@@ -43,6 +43,7 @@ namespace CmdChat.Frontend.Implementation
             }
             catch (Exception ex)
             {
+                // known error: OperationCancelException on server restart if client is still running (Console.ReadLine blocking problem - no cancelation supported)
                 WriteColorLine(ConsoleColor.Red, ex.ToString());
             }
         }

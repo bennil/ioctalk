@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Threading;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Reflection;
+using BSAG.IOCTalk.Common.Interface.Session;
 
 namespace BSAG.IOCTalk.Communication.Common
 {
@@ -102,6 +103,11 @@ namespace BSAG.IOCTalk.Communication.Common
         /// The method source.
         /// </value>
         public IInvokeMethodInfo MethodSource { get; set; }
+
+        /// <summary>
+        /// Gets or sets the related session.
+        /// </summary>
+        public ISession Session { get; set; }
 
         // ----------------------------------------------------------------------------------------
 

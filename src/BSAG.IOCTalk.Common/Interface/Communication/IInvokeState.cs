@@ -5,6 +5,7 @@ using System.Text;
 using System.Reflection;
 using System.Threading;
 using BSAG.IOCTalk.Common.Interface.Reflection;
+using BSAG.IOCTalk.Common.Interface.Session;
 
 namespace BSAG.IOCTalk.Common.Interface.Communication
 {
@@ -71,5 +72,10 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// The method source.
         /// </value>
         IInvokeMethodInfo MethodSource { get; set; }
+
+        /// <summary>
+        /// Gets or sets the related session.
+        /// </summary>
+        ISession Session { get; set; }
     }
 }

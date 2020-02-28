@@ -3,7 +3,7 @@ using System;
 
 namespace CmdChat.Server.Implementation
 {
-    public class ChatService : IChatService
+    public class ChatService : IChatService, IDisposable
     {
         private string userName;
         private IChatBroker chatBroker;
@@ -22,12 +22,14 @@ namespace CmdChat.Server.Implementation
             if (string.IsNullOrEmpty(userName))
                 throw new ArgumentException("You must specify a name");
 
+            Console.WriteLine($"New user login: {userName}");
+
             chatBroker.NotifyNewClient(sourceClient, userName);
         }
 
         public void Logout()
         {
-            // todo
+            Console.WriteLine($"User \"{userName}\" left");
         }
 
         public void BroadcastMessage(IChatMsg message)
@@ -38,6 +40,9 @@ namespace CmdChat.Server.Implementation
             chatBroker.BroadcastMessage(userName, message);
         }
 
-
+        public void Dispose()
+        {
+            Logout();
+        }
     }
 }

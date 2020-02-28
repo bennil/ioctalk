@@ -28,6 +28,8 @@ namespace CmdChat.Server.Implementation
 
         public void BroadcastMessage(string sourceUser, IChatMsg message)
         {
+            Console.WriteLine($"New message from {sourceUser}: {message.Text}");
+
             for (int i = 0; i < clients.Count; i++)
             {
                 try

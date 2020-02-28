@@ -37,9 +37,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         private event EventHandler<ConnectionStateChangedEventArgs> connectionEstablished;
         private RawMessageReceivedDelegate rawMessageReceivedDelegate;
         private int maxReadBufferSize = 3276800;
-        private int receiveBufferSize = 32768;
-        private int sendBufferSize = 32768;
-        private int socketPollWaitMicroSec = 100000;    // 100000 = 100 milliseconds
+        private int receiveBufferSize = 16384;
+        private int sendBufferSize = 16384;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -157,18 +156,6 @@ namespace BSAG.IOCTalk.Communication.Tcp
         }
 
 
-        /// <summary>
-        /// Gets or sets the max socket poll wait time in micro seconds.
-        /// </summary>
-        /// <value>
-        /// The socket poll wait micro sec.
-        /// </value>
-        public int SocketPollWaitMicroSec
-        {
-            get { return socketPollWaitMicroSec; }
-            set { socketPollWaitMicroSec = value; }
-        }
-
 
         /// <summary>
         /// Gets or sets the logger.
@@ -224,8 +211,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             SocketState state = new SocketState(receiveBufferSize);
             state.Client = client;
 
-            var receiveThread = new Thread(new ParameterizedThreadStart(OnReceiveData));
-            receiveThread.Start(state);
+            Task.Run(() => { _ = this.OnReceiveDataAsync(state); });
 
             return state;
         }
@@ -235,9 +221,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// Called when [receive data].
         /// </summary>
         /// <param name="socketStateObj">The socket state obj.</param>
-        protected void OnReceiveData(object socketStateObj)
+        protected async Task OnReceiveDataAsync(SocketState state)
         {
-            SocketState state = (SocketState)socketStateObj;
             Socket clientSocket = state.Client.socket;
             Stream clientStream = state.Client.stream;
             byte[] readBuffer = state.readBuffer;
@@ -245,54 +230,36 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
             try
             {
-                SpinWait spinWait = new SpinWait();
                 IRawMessage rawMessage = new RawMessage(state.Client.SessionId);
                 IRawMessage pendingMessage = null;
                 IRawMessage receivedMessage;
-                bool pollResult;
                 while (clientSocket.Connected)
                 {
-                    pollResult = clientSocket.Poll(socketPollWaitMicroSec, SelectMode.SelectRead);
-
-                    if (clientSocket.Available > 0)
+                    int bytesReadCount = await clientStream.ReadAsync(readBuffer, 0, readBufferLength);
+                    if (bytesReadCount > 0)
                     {
-                        int bytesReadCount = clientStream.Read(readBuffer, 0, readBufferLength);
-                        if (bytesReadCount > 0)
+                        int readIndex = 0;
+                        while ((receivedMessage = ReadRawMessage(readBuffer, ref readIndex, bytesReadCount, rawMessage, ref pendingMessage)) != null)
                         {
-                            int readIndex = 0;
-                            while ((receivedMessage = ReadRawMessage(readBuffer, ref readIndex, bytesReadCount, rawMessage, ref pendingMessage)) != null)
-                            {
-                                // raw message received
-                                rawMessageReceivedDelegate(receivedMessage);
-                            }
-
-                            if (bytesReadCount == readBuffer.Length
-                                && bytesReadCount < maxReadBufferSize)
-                            {
-                                // auto extend internal read buffer size if complete buffer is filled
-                                int newSize = readBuffer.Length * 2;
-                                state.readBuffer = new byte[newSize];
-                                readBuffer = state.readBuffer;
-                                readBufferLength = newSize;
-                            }
+                            // raw message received
+                            rawMessageReceivedDelegate(receivedMessage);
                         }
-                        else
+
+                        if (bytesReadCount == readBuffer.Length
+                            && bytesReadCount < maxReadBufferSize)
                         {
-                            // Connection closed
-                            Close(state.Client);
-                            return;
+                            // auto extend internal read buffer size if complete buffer is filled
+                            int newSize = readBuffer.Length * 2;
+                            state.readBuffer = new byte[newSize];
+                            readBuffer = state.readBuffer;
+                            readBufferLength = newSize;
                         }
                     }
-                    else if (pollResult)
+                    else
                     {
                         // Connection closed
                         Close(state.Client);
                         return;
-                    }
-                    else
-                    {
-                        // continue to wait for incoming data
-                        spinWait.SpinOnce();
                     }
                 }
 

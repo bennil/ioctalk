@@ -6,11 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ioctalk-standard" Version="2.0.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.8.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.4.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
+    <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Communication.Common\BSAG.IOCTalk.Communication.Common.csproj" />
+    <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Communication.Tcp\BSAG.IOCTalk.Communication.Tcp.csproj" />
+    <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Composition\BSAG.IOCTalk.Composition.csproj" />
+    <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Logging\BSAG.IOCTalk.Logging.csproj" />
+    <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Serialization.Json\BSAG.IOCTalk.Serialization.Json.csproj" />
     <ProjectReference Include="..\CmdChat.Interface\CmdChat.Interface.csproj" />
     <ProjectReference Include="..\CmdChat.Server.Implementation\CmdChat.Server.Implementation.csproj" />
   </ItemGroup>

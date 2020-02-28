@@ -741,7 +741,11 @@ namespace BSAG.IOCTalk.Communication.Common
         {
             if (session == null || !session.IsActive)
             {
-                throw new OperationCanceledException("Remote connction lost");
+                if (session == null)
+                    throw new OperationCanceledException("Remote connction lost");
+                else
+                    throw new OperationCanceledException($"Remote connction lost - Session: {session.SessionId} {session.Description}");
+
             }
 
             long requestId = Interlocked.Increment(ref currentRequestId);
@@ -776,6 +780,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 invokeState.WaitHandle = new ManualResetEventSlim(false);
                 invokeState.Method = invokeInfo.InterfaceMethod;
                 invokeState.MethodSource = invokeInfo;
+                invokeState.Session = session;
 
                 if (invokeInfo.OutParameters != null)
                     invokeState.OutParameterValues = new object[invokeInfo.OutParameters.Length];
@@ -822,7 +827,7 @@ namespace BSAG.IOCTalk.Communication.Common
                     {
                         if (!invokeState.WaitHandle.Wait(timeout))
                         {
-                            throw new TimeoutException(string.Format("Request timeout occured! Request: {0}; timeout time: {1}", invokeState.Method.Name, requestTimeout));
+                            throw new TimeoutException(string.Format("Request timeout occured! Request: {0}; timeout time: {1}; session ID: {2}; request ID: {3}", invokeState.Method.Name, requestTimeout, session.SessionId, requestId));
                         }
                     }
                 }
@@ -1313,7 +1318,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 if (waitForResponse
                     && DateTime.UtcNow.Subtract(waitStartUtcTime) > timeout)
                 {
-                    throw new TimeoutException(string.Format("Request timeout occured! Request: {0}; timeout time: {1}", invokeState.Method.Name, RequestTimeout));
+                    throw new TimeoutException(string.Format("Request timeout occured! Request: {0}; timeout time: {1}; session ID: {2}", invokeState.Method.Name, RequestTimeout, invokeState.Session.SessionId, invokeState.RequestMessage.RequestId));
                 }
 
                 if (!isActive)
