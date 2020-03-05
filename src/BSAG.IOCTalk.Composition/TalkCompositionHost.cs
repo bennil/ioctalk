@@ -135,15 +135,20 @@ namespace BSAG.IOCTalk.Composition
         // TalkCompositionHost methods
         // ----------------------------------------------------------------------------------------
 
-        public RemoteServiceRegistration<InterfaceType> RegisterRemoteService<InterfaceType>()
+        public RemoteServiceRegistration<InterfaceType> RegisterRemoteService<InterfaceType>(bool forceProxyAutoCreation = false)
             where InterfaceType : class
         {
-            RegisterRemoteService(typeof(InterfaceType));
+            RegisterRemoteService(typeof(InterfaceType), forceProxyAutoCreation);
 
             return new RemoteServiceRegistration<InterfaceType>(this);
         }
 
-        public void RegisterRemoteService(Type interfaceType)
+        /// <summary>
+        /// Registers a remote service for the given interface
+        /// </summary>
+        /// <param name="interfaceType"></param>
+        /// <param name="forceProxyAutoCreation">Forces proxy auto creation for interface type. No local implementation lookup.</param>
+        public void RegisterRemoteService(Type interfaceType, bool forceProxyAutoCreation = false)
         {
             if (!interfaceType.IsInterface)
                 throw new ArgumentException("Given service type must be an interface!", nameof(interfaceType));
@@ -157,7 +162,7 @@ namespace BSAG.IOCTalk.Composition
                 Type proxyImplementationType;
                 if (!interfaceTypeProxyImplCache.TryGetValue(interfaceType, out proxyImplementationType))
                 {
-                    if (!localShare.TryFindInterfaceImplementation(interfaceType, null, out proxyImplementationType))
+                    if (forceProxyAutoCreation || !localShare.TryFindInterfaceImplementation(interfaceType, null, out proxyImplementationType))
                     {
                         // auto generate proxy
                         proxyImplementationType = TypeService.BuildProxyImplementation(interfaceType); // "[System.Composition.Import]");

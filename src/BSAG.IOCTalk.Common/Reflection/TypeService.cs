@@ -982,7 +982,7 @@ namespace BSAG.IOCTalk.Common.Reflection
             var mscorelib = typeof(object).Assembly;
             referenceLocations.Add(mscorelib.Location);
 
-            if (!System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"))
+            //if (!System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"))
             {
                 // only add netstandard if not full framework
                 // on full .net the reference is not found but is working implicit
