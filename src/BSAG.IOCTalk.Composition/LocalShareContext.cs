@@ -70,6 +70,9 @@ namespace BSAG.IOCTalk.Composition
 
                 foreach (var subContainer in subContainers)
                 {
+                    // include sub containers as well (for e.g. scanning ILifetimeSerice)
+                    yield return subContainer;
+
                     if (subContainer is IContainerSharedByType sharedByType)
                     {
                         foreach (var subItem in sharedByType.SharedLocalInstances.Values)
