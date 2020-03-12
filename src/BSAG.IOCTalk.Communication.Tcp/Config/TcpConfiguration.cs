@@ -11,5 +11,10 @@ namespace BSAG.IOCTalk.Communication.Tcp.Config
         public int Port { get; set; }
 
         public bool LogDataStream { get; set; }
+
+        /// <summary>
+        /// Gets or sets the client fallback target configuration
+        /// </summary>
+        public IList<TcpTarget> ClientFallbackTargets { get; set; }
     }
 }
