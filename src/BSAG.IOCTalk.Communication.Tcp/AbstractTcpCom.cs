@@ -211,7 +211,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             SocketState state = new SocketState(receiveBufferSize);
             state.Client = client;
 
-            Task.Run(() => { _ = this.OnReceiveDataAsync(state); });
+            Task.Run(async () => { await this.OnReceiveDataAsync(state); });
 
             return state;
         }
@@ -235,7 +235,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 IRawMessage receivedMessage;
                 while (clientSocket.Connected)
                 {
-                    int bytesReadCount = await clientStream.ReadAsync(readBuffer, 0, readBufferLength);
+                    int bytesReadCount = await clientStream.ReadAsync(readBuffer, 0, readBufferLength).ConfigureAwait(false);
                     if (bytesReadCount > 0)
                     {
                         int readIndex = 0;
@@ -290,6 +290,10 @@ namespace BSAG.IOCTalk.Communication.Tcp
                             Close(state.Client);
                             break;
                     }
+                }
+                else if (ioEx.InnerException is ObjectDisposedException)
+                {
+                    Close(state.Client);
                 }
                 else
                 {

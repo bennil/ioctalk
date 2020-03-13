@@ -60,6 +60,25 @@ namespace BSAG.IOCTalk.Common.Reflection
 
             if (interfaceMethod == null)
             {
+                // try get method from sub interface
+                foreach (var subInterface in interfaceType.GetInterfaces())
+                {
+                    if (parameterTypes != null)
+                    {
+                        this.interfaceMethod = subInterface.GetMethod(methodName, parameterTypes);
+                    }
+                    else
+                    {
+                        this.interfaceMethod = TypeService.GetMethodByName(subInterface, methodName);
+                    }
+
+                    if (interfaceType != null)
+                        break;
+                }
+            }
+
+            if (interfaceMethod == null)
+            {
                 throw new MissingMethodException(interfaceType.FullName, methodName);
             }
 

@@ -612,17 +612,34 @@ namespace BSAG.IOCTalk.Common.Reflection
         /// <returns></returns>
         public static IList<MethodInfo> GetMethodsByType(Type type)
         {
-            return type.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+            var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Public)
                 .Where(m => !m.IsSpecialName).ToList<MethodInfo>();
+
+            foreach (var childInterface in type.GetInterfaces())
+            {
+                AddMethodsByTypeInternal(childInterface, methods);
+            }
+
+            return methods;
+        }
+
+        private static void AddMethodsByTypeInternal(Type type, List<MethodInfo> methodList)
+        {
+            var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .Where(m => !m.IsSpecialName);
+
+            var newMethods = methods.Where(m => !methodList.Any(me => me.Name == m.Name && me.GetParameters().Length == m.GetParameters().Length)).ToList();
+
+            methodList.AddRange(newMethods);
         }
 
 
-        /// <summary>
-        /// Gets the method by the given name. The name can contain a qualified parameter list.
-        /// </summary>
-        /// <param name="name">The name.</param>
-        /// <returns></returns>
-        public static MethodInfo GetMethodByName(Type type, string name)
+            /// <summary>
+            /// Gets the method by the given name. The name can contain a qualified parameter list.
+            /// </summary>
+            /// <param name="name">The name.</param>
+            /// <returns></returns>
+            public static MethodInfo GetMethodByName(Type type, string name)
         {
             if (name[name.Length - 1] == ')')
             {

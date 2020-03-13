@@ -13,6 +13,7 @@ using BSAG.IOCTalk.Communication.Common;
 using System.IO;
 using BSAG.IOCTalk.Common.Reflection;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace BSAG.IOCTalk.Communication.PersistentQueue
 {
@@ -27,8 +28,11 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         private EventHandler<SessionEventArgs> fictionalSessionTerminatedEvent;
         private Session fictionalSession;
         private IContract fictionalSessionContract;
+        private DateTime? lastActiveInvokeUtc;
 
         private ISession realUnderlyingSession;
+
+        private int processResendLock = 0;
 
         private const byte NotSendByte = 1;
         private const byte AlreadySentByte = 2;
@@ -104,6 +108,20 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
         }
 
+        public TimeSpan ResendDelay { get; set; } = TimeSpan.FromSeconds(7);
+
+        /// <summary>
+        /// Grace period for resend delay if recent realtime call.
+        /// </summary>
+        public TimeSpan ResendSuspensionGracePeriod { get; set; } = TimeSpan.FromSeconds(3);
+
+        public bool DebugLogResendMessages { get; set; } = false;
+
+        /// <summary>
+        /// Ensures that first all pending calls are processed before the connection created event is readirected for realtime processing
+        /// </summary>
+        public bool ResendInExecOrderBeforeOtherInvokes { get; set; } = false;
+
 
         public void RegisterPersistentMethod<InterfaceT>(string methodName)
         {
@@ -137,7 +155,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 fictionalSessionCreatedEvent(this, new SessionEventArgs(fictionalSession, fictionalSessionContract));
         }
 
-        private void UnderlyingCom_SessionCreated(object sender, SessionEventArgs e)
+        private async void UnderlyingCom_SessionCreated(object sender, SessionEventArgs e)
         {
             try
             {
@@ -158,7 +176,12 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                     this.realUnderlyingSession = e.Session;
                 }
 
-                ResendPendingMethodInvokes(e.Session);
+                var resendTask = Task.Run(() => ResendPendingMethodInvokes(e.Session));
+
+                if (ResendInExecOrderBeforeOtherInvokes)
+                {
+                    await resendTask.ConfigureAwait(false);
+                }
 
                 if (RedirectSessionEvents)
                 {
@@ -194,6 +217,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             {
                 try
                 {
+                    lastActiveInvokeUtc = DateTime.UtcNow;
+
                     return underlyingCom.InvokeMethod(source, invokeInfo, realSession, parameters);
                 }
                 catch (TimeoutException timeoutEx)
@@ -298,119 +323,143 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
         }
 
-        private async void ResendPendingMethodInvokes(ISession newSession)
+        private async Task ResendPendingMethodInvokes(ISession newSession)
         {
-            try
+            if (Interlocked.Exchange(ref processResendLock, 1) == 0)    // do not execute resend parallel
             {
-                string dir = Path.GetFullPath(DirectoryPath);
-
-                Logger.Debug($"Check pending files in directory \"{dir}\"");
-
-                if (Directory.Exists(dir))
+                try
                 {
-                    List<string> files = new List<string>(Directory.GetFiles(dir, "*.pend"));
-
-                    Logger.Debug($"{files.Count} pending file(s) found");
-
-                    if (files.Count > 0)
+                    if (!ResendInExecOrderBeforeOtherInvokes)
                     {
-                        files.Sort();
+                        // pause to allow realtime calls going first
+                        await Task.Delay(ResendDelay);
+                    }
 
-                        for (int i = 0; i < files.Count; i++)
+                    string dir = Path.GetFullPath(DirectoryPath);
+
+                    Logger.Debug($"Check pending files in directory \"{dir}\"");
+
+                    if (Directory.Exists(dir))
+                    {
+                        List<string> files = new List<string>(Directory.GetFiles(dir, "*.pend"));
+
+                        Logger.Debug($"{files.Count} pending file(s) found");
+
+                        if (files.Count > 0)
                         {
-                            string pendFilePath = files[i];
+                            files.Sort();
 
-                            try
+                            for (int i = 0; i < files.Count; i++)
                             {
-                                Logger.Info($"Open pend file: {pendFilePath}");
+                                string pendFilePath = files[i];
 
-                                FileStream stream = new FileStream(pendFilePath, FileMode.Open, FileAccess.ReadWrite);
-
-                                do
+                                try
                                 {
-                                    long indicatorBytePos = stream.Position;
-                                    byte indicator = (byte)stream.ReadByte();
-                                    bool alredySent = indicator == AlreadySentByte;
+                                    Logger.Info($"Open pend file: {pendFilePath}");
 
-                                    byte[] lengthBytes = new byte[4];
-                                    stream.Read(lengthBytes, 0, 4);
-                                    int msgLength = BitConverter.ToInt32(lengthBytes, 0);
-                                    byte[] msgBytes = new byte[msgLength];
-                                    stream.Read(msgBytes, 0, msgLength);
+                                    FileStream stream = new FileStream(pendFilePath, FileMode.Open, FileAccess.ReadWrite);
 
-                                    if (!alredySent
-                                        && msgLength > 0)
+                                    do
                                     {
-                                        Logger.Debug($"Resend local store message: {Encoding.Default.GetString(msgBytes)}");
+                                        long indicatorBytePos = stream.Position;
+                                        byte indicator = (byte)stream.ReadByte();
+                                        bool alredySent = indicator == AlreadySentByte;
 
-                                        IGenericMessage msg = Serializer.DeserializeFromBytes(msgBytes, newSession);
-                                        Type targetType;
-                                        TypeService.TryGetTypeByName(msg.Target, out targetType);
-                                        InvokeMethodInfo invokeInfo = new InvokeMethodInfo(targetType, msg.Name);
-                                        underlyingCom.InvokeMethod(this, invokeInfo, newSession, (object[])msg.Payload);
+                                        byte[] lengthBytes = new byte[4];
+                                        await stream.ReadAsync(lengthBytes, 0, 4).ConfigureAwait(false);
+                                        int msgLength = BitConverter.ToInt32(lengthBytes, 0);
+                                        byte[] msgBytes = new byte[msgLength];
+                                        await stream.ReadAsync(msgBytes, 0, msgLength).ConfigureAwait(false);
 
-                                        // Flag message as sent
-                                        long endNextPos = stream.Position;
-                                        stream.Position = indicatorBytePos;
-                                        stream.Write(AlreadySentByteArr, 0, 1);
-                                        stream.Flush();
+                                        if (!alredySent
+                                            && msgLength > 0)
+                                        {
+                                            // check if resend must be delayed because of recent realtime call
+                                            if (lastActiveInvokeUtc.HasValue && (DateTime.UtcNow - lastActiveInvokeUtc.Value) < ResendSuspensionGracePeriod)
+                                            {
+                                                await Task.Delay(ResendSuspensionGracePeriod);
+                                            }
 
-                                        stream.Position = endNextPos;
+                                            if (DebugLogResendMessages)
+                                                Logger.Debug($"Resend local store message: {Encoding.Default.GetString(msgBytes)}");
+
+                                            IGenericMessage msg = Serializer.DeserializeFromBytes(msgBytes, newSession);
+                                            Type targetType;
+                                            TypeService.TryGetTypeByName(msg.Target, out targetType);
+                                            InvokeMethodInfo invokeInfo = new InvokeMethodInfo(targetType, msg.Name);
+                                            underlyingCom.InvokeMethod(this, invokeInfo, newSession, (object[])msg.Payload);
+
+                                            // Flag message as sent
+                                            long endNextPos = stream.Position;
+                                            stream.Position = indicatorBytePos;
+                                            await stream.WriteAsync(AlreadySentByteArr, 0, 1).ConfigureAwait(false);
+                                            await stream.FlushAsync().ConfigureAwait(false);
+
+                                            stream.Position = endNextPos;
+                                        }
                                     }
+                                    while (stream.Position < stream.Length);
+
+                                    // all messages in pending file sent
+                                    stream.Close();
+                                    stream.Dispose();
+
+                                    // delete file
+                                    File.Delete(pendFilePath);
+
+                                    Logger.Debug("Pending message file deleted");
                                 }
-                                while (stream.Position < stream.Length);
-
-                                // all messages in pending file sent
-                                stream.Close();
-                                stream.Dispose();
-
-                                // delete file
-                                File.Delete(pendFilePath);
-
-                                Logger.Debug("Pending message file deleted");
-                            }
-                            catch (OperationCanceledException)
-                            {
-                                Logger.Warn("Connection lost during local resend");
-                                return;
-                            }
-                            catch (TimeoutException timeoutEx)
-                            {
-                                Logger.Warn("Connection lost during local resend (Timeout)");
-                                return;
-                            }
-                            catch (IOException ioExc)
-                            {
-                                Logger.Warn("Connection lost during local resend (IOException)");
-                                return;
-                            }
-                            catch (AggregateException aggExc)
-                            {
-                                // check if AggregateException contains a connection related exception
-                                Exception connectionException = GetConnectionException(aggExc);
-
-                                if (connectionException != null)
+                                catch (OperationCanceledException)
                                 {
-                                    Logger.Warn($"Connection lost during local resend ({connectionException.GetType().FullName})");
+                                    Logger.Warn("Connection lost during local resend");
                                     return;
                                 }
-                            }
-                            catch (Exception ex)
-                            {
-                                // Log unexpected error
-                                Logger.Error($"Error resending file {pendFilePath}  \nException: {ex}");
+                                catch (TimeoutException timeoutEx)
+                                {
+                                    Logger.Warn("Connection lost during local resend (Timeout)");
+                                    return;
+                                }
+                                catch (IOException ioExc)
+                                {
+                                    Logger.Warn("Connection lost during local resend (IOException)");
+                                    return;
+                                }
+                                catch (AggregateException aggExc)
+                                {
+                                    // check if AggregateException contains a connection related exception
+                                    Exception connectionException = GetConnectionException(aggExc);
+
+                                    if (connectionException != null)
+                                    {
+                                        Logger.Warn($"Connection lost during local resend ({connectionException.GetType().FullName})");
+                                        return;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    // Log unexpected error
+                                    Logger.Error($"Error resending file {pendFilePath}  \nException: {ex}");
+                                }
                             }
                         }
                     }
+                    else
+                    {
+                        Logger.Debug("Pending file directory does not exist");
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Logger.Debug("Pending file directory does not exist");
+                    Logger.Error(ex.ToString());
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref processResendLock, 0);
                 }
             }
-            catch (Exception ex)
+            else
             {
-                Logger.Error(ex.ToString());
+                Logger.Info("Skip resend because other resend in progress");
             }
         }
 

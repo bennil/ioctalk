@@ -14,6 +14,7 @@ using BSAG.IOCTalk.Serialization.Json.TypeStructure;
 using System.Threading;
 using Xunit;
 using BSAG.IOCTalk.Test.Common.Service.Implementation;
+using BSAG.IOCTalk.Common.Test.TestObjects;
 
 namespace BSAG.IOCTalk.Common.Test
 {
@@ -158,6 +159,58 @@ namespace BSAG.IOCTalk.Common.Test
             Assert.Equal(testObj1.DeepTestProperty2, implObj.DeepTestProperty2);
         }
 
+        [Fact]
+        public void TestMethodInterfaceInheritanceExposedSubInterfaceSerialization()
+        {
+            // 1. Serialize and deserialize with exposed sub interface
+            JsonObjectSerializer serializer = new JsonObjectSerializer(UnknownTypeResolver, SubInterfaceExposeTypeResolver);
+
+            TestInterfaceExtendedImple testObjExtended = new TestInterfaceExtendedImple();
+            testObjExtended.TestBaseProperty = "TEST";
+            testObjExtended.TestExtProperty = "Exposed Sub Interface Property";
+
+
+            InterfRefObject interfRef = new InterfRefObject();
+            interfRef.BaseObjectInstance = testObjExtended;
+
+            string json = serializer.Serialize(interfRef, null);
+
+            InterfRefObject deserializedObj = (InterfRefObject)serializer.Deserialize(json, typeof(InterfRefObject), null);
+
+            Assert.Equal(((ITestInterfaceBase)interfRef.BaseObjectInstance).TestBaseProperty, ((ITestInterfaceBase)deserializedObj.BaseObjectInstance).TestBaseProperty);
+            Assert.Equal(((ITestInterfaceExtended)interfRef.BaseObjectInstance).TestExtProperty, ((ITestInterfaceExtended)deserializedObj.BaseObjectInstance).TestExtProperty);
+
+
+            // 2. Serailize and deserialize with base interface
+            TestInterfaceImpl1 testObjBase = new TestInterfaceImpl1();
+            testObjBase.TestBaseProperty = "TEST";
+
+            interfRef.BaseObjectInstance = testObjBase;
+
+            string json2 = serializer.Serialize(interfRef, null);
+
+            //InterfRefObject deserializedObj2 = (InterfRefObject)serializer.Deserialize(json2, typeof(InterfRefObject), null);
+
+            //Assert.Equal(((ITestInterfaceBase)interfRef.BaseObjectInstance).TestBaseProperty, ((ITestInterfaceBase)deserializedObj2.BaseObjectInstance).TestBaseProperty);
+
+            //todo: complete test
+        }
+
+        private Type SubInterfaceExposeTypeResolver(Type sourceType)
+        {
+            if (sourceType.Equals(typeof(ITestInterfaceBase)))
+            {
+                return typeof(ITestInterfaceExtended);
+            }
+
+            if (sourceType.Equals(typeof(TestInterfaceExtendedImple)))
+            {
+                return typeof(ITestInterfaceExtended);
+            }
+
+            return null;
+        }
+
 
         /// <summary>
         /// Tests the method interface inheritance array serialization.
@@ -256,6 +309,10 @@ namespace BSAG.IOCTalk.Common.Test
                 else if (context.InterfaceType.Equals(typeof(ITestInterfaceWithoutSetProperties)))
                 {
                     return typeof(TestImplementationWithoutSetProperties);
+                }
+                else if (context.InterfaceType.Equals(typeof(ITestInterfaceExtended)))
+                {
+                    return typeof(TestInterfaceExtendedImple);
                 }
             }
             else if (context.Key == "BaseObject")
@@ -665,17 +722,18 @@ namespace BSAG.IOCTalk.Common.Test
             CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.999999"), serializer);
             CheckDateTimeSerialisation(DateTime.Parse("2015-10-12 17:24:33.9"), serializer);
 
-            ExplicitCheckTimeDeserialization("17:24:33.1234567");
-            ExplicitCheckTimeDeserialization("17:24:33.123456");
-            ExplicitCheckTimeDeserialization("17:24:33.12345");
-            ExplicitCheckTimeDeserialization("17:24:33.1234");
-            ExplicitCheckTimeDeserialization("17:24:33.123");
-            ExplicitCheckTimeDeserialization("17:24:33.12");
-            ExplicitCheckTimeDeserialization("17:24:33.1");
-            ExplicitCheckTimeDeserialization("17:24:33");
+            ExplicitCheckTimeSpanDeserialization("17:24:33.1234567");
+            ExplicitCheckTimeSpanDeserialization("17:24:33.123456");
+            ExplicitCheckTimeSpanDeserialization("17:24:33.12345");
+            ExplicitCheckTimeSpanDeserialization("17:24:33.1234");
+            ExplicitCheckTimeSpanDeserialization("17:24:33.123");
+            ExplicitCheckTimeSpanDeserialization("17:24:33.12");
+            ExplicitCheckTimeSpanDeserialization("17:24:33.1");
+            ExplicitCheckTimeSpanDeserialization("17:24:33");
+            ExplicitCheckTimeSpanDeserialization("-17:24:33");
         }
 
-        private static void ExplicitCheckTimeDeserialization(string timeStr)
+        private static void ExplicitCheckTimeSpanDeserialization(string timeStr)
         {
             StructureTimeSpan sTimeSpan = new StructureTimeSpan("test", false);
             TimeSpan expectedTime = TimeSpan.Parse(timeStr);

@@ -91,6 +91,14 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         {
             long ticks = 0;
 
+            // check negative sign
+            bool isNegative = false;
+            if (timeStr[offset] == '-')
+            {
+                isNegative = true;
+                offset++;
+            }
+
             // check days
             if (timeStr[offset + 2] != ':')
             {
@@ -112,7 +120,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                     else if (c == '.')
                     {
                         break;
-                    }
+                    }                    
                     else
                     {
                         throw new InvalidCastException("Invalid time string: \"" + timeStr + "\"!");
@@ -182,7 +190,15 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 ticks += (secondPart * ticksMultiplicator);
             }
 
-            return new TimeSpan(ticks);
+            if (isNegative)
+            {
+                ticks *= -1;
+                return new TimeSpan(ticks);
+            }
+            else
+            {
+                return new TimeSpan(ticks);
+            }
         }
 
         // ----------------------------------------------------------------------------------------

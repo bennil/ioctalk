@@ -27,6 +27,7 @@ namespace BSAG.IOCTalk.Common.Test
             dummyCom.RaiseConnectionLost = true;
 
             PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
+            persistComm.ResendDelay = TimeSpan.Zero;
             persistComm.RegisterPersistentMethod<IMyLocalService>(nameof(IMyLocalService.RandomMethod));
             persistComm.RegisterContainerHost(talkCompositionHost, null);
             persistComm.Init();
