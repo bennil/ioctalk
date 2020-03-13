@@ -40,6 +40,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         private int receiveBufferSize = 16384;
         private int sendBufferSize = 16384;
 
+        private CancellationTokenSource cancelTokenSource;
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -194,6 +196,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 && client.socket != null
                 && client.AcquireIsSocketClosedExecuted())
             {
+                cancelTokenSource.Cancel();
+
                 client.socket.Close();
 
                 OnConnectionClosed(client);
@@ -208,6 +212,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// <returns></returns>
         protected SocketState StartReceivingData(Client client)
         {
+            this.cancelTokenSource = new CancellationTokenSource();
+
             SocketState state = new SocketState(receiveBufferSize);
             state.Client = client;
 
@@ -227,6 +233,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             Stream clientStream = state.Client.stream;
             byte[] readBuffer = state.readBuffer;
             int readBufferLength = readBuffer.Length;
+            var cancelToken = cancelTokenSource.Token;
 
             try
             {
@@ -235,7 +242,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 IRawMessage receivedMessage;
                 while (clientSocket.Connected)
                 {
-                    int bytesReadCount = await clientStream.ReadAsync(readBuffer, 0, readBufferLength).ConfigureAwait(false);
+                    int bytesReadCount = await clientStream.ReadAsync(readBuffer, 0, readBufferLength, cancelToken);
                     if (bytesReadCount > 0)
                     {
                         int readIndex = 0;
@@ -275,21 +282,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 {
                     SocketException sockEx = (SocketException)ioEx.InnerException;
 
-                    SocketError errorCode = (SocketError)sockEx.ErrorCode;
-                    switch (errorCode)
-                    {
-                        case SocketError.Shutdown:
-                        case SocketError.ConnectionAborted:
-                        case SocketError.ConnectionReset:
-                        case SocketError.Disconnecting:
-                            Close(state.Client);
-                            break;
-
-                        default:
-                            Logger.Error(ioEx.ToString());
-                            Close(state.Client);
-                            break;
-                    }
+                    CloseOrLogSocketException(state, sockEx);
                 }
                 else if (ioEx.InnerException is ObjectDisposedException)
                 {
@@ -302,7 +295,11 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     Close(state.Client);
                 }
             }
-            catch (SocketException)
+            catch (SocketException socketEx)
+            {
+                CloseOrLogSocketException(state, socketEx);
+            }
+            catch (OperationCanceledException)
             {
                 /* connection closed exception */
                 Close(state.Client);
@@ -317,6 +314,25 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 Logger.Error(ex.ToString());
 
                 Close(state.Client);
+            }
+        }
+
+        private void CloseOrLogSocketException(SocketState state, SocketException sockEx)
+        {
+            SocketError errorCode = (SocketError)sockEx.ErrorCode;
+            switch (errorCode)
+            {
+                case SocketError.Shutdown:
+                case SocketError.ConnectionAborted:
+                case SocketError.ConnectionReset:
+                case SocketError.Disconnecting:
+                    Close(state.Client);
+                    break;
+
+                default:
+                    Logger.Error(sockEx.ToString());
+                    Close(state.Client);
+                    break;
             }
         }
 

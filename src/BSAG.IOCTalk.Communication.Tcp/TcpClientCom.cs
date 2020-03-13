@@ -183,7 +183,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// </summary>
         /// <param name="host">The host.</param>
         /// <param name="port">The port.</param>
-        private void SetEndPoint(string host, int port)
+        internal void SetEndPoint(string host, int port)
         {
             IPAddress ip = null;
             if (IPAddress.TryParse(host, out ip))

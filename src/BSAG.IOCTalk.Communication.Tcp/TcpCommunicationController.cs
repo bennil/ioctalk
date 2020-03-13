@@ -36,6 +36,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         private AbstractTcpCom communication;
         private int clientAutoReconnectLock = 0;
         private ConnectionType connectionType;
+        private int clientConnectCount = 0;
 
         public const string ConfigParamConnectionType = "ConnectionType";
         public const string ConfigParamHost = "Host";
@@ -54,6 +55,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         public const string ConfigAttributeEnabled = "enabled";
 
         private TcpConfiguration configObject;
+        private TcpTarget originalTarget;
 
 
         // ----------------------------------------------------------------------------------------
@@ -268,6 +270,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
             client.Logger = this.logger;
             SubscribeCommunicationEvents(client);
 
+            originalTarget = new TcpTarget() { Host = host, Port = port };
+
             client.Init(host, port);
 
             this.communication = client;
@@ -355,8 +359,11 @@ namespace BSAG.IOCTalk.Communication.Tcp
                             return;
                         }
 
+
                         if (Logger != null)
                             Logger.Info($"Connect to {communication?.EndPoint}...");
+
+                        clientConnectCount++;
 
                         string errMsg;
                         while (!this.communication.Connect(out errMsg))
@@ -365,8 +372,13 @@ namespace BSAG.IOCTalk.Communication.Tcp
                                 Logger.Warn($"Connection refused {communication?.EndPoint}! {errMsg}");
 
                             await Task.Delay(ClientReconnectInterval);
+
+                            clientConnectCount++;
+
+                            RotateFallbackClientTargets();
                         }
 
+                        clientConnectCount = 0;
                     }
                     catch (Exception ex)
                     {
@@ -402,6 +414,45 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     }
                 }));
                 taskClientReconnect.Start();
+            }
+        }
+
+        private void RotateFallbackClientTargets()
+        {
+            if (clientConnectCount > 0
+                    && this.configObject != null
+                    && this.configObject.ClientFallbackTargets != null
+                    && this.configObject.ClientFallbackTargets.Count > 0
+                    && communication is TcpClientCom client)
+            {
+                int targetFallbackIndex = clientConnectCount % configObject.ClientFallbackTargets.Count + 1;
+
+                TcpTarget nextTcpTarget = null;
+                if (targetFallbackIndex == 0 && originalTarget != null)
+                {
+                    nextTcpTarget = originalTarget;
+                }
+                else
+                {
+                    int targetListIndex = targetFallbackIndex - 1;
+                    nextTcpTarget = configObject.ClientFallbackTargets[targetListIndex];
+                }
+
+                if (nextTcpTarget != null)
+                {
+                    try
+                    {
+                        client.SetEndPoint(nextTcpTarget.Host, nextTcpTarget.Port);
+
+                        if (Logger != null)
+                            Logger.Info($"Rotate client fallback endpoint to \"{nextTcpTarget.Host}:{nextTcpTarget.Port}\"");
+                    }
+                    catch (Exception setEndpointEx)
+                    {
+                        if (Logger != null)
+                            Logger.Error($"Could not set fallback endpoint! Host: {nextTcpTarget.Host}; Port: {nextTcpTarget.Port}; Exception: {setEndpointEx}");
+                    }
+                }
             }
         }
 
