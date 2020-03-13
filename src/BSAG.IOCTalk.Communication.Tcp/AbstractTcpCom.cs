@@ -242,7 +242,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 IRawMessage receivedMessage;
                 while (clientSocket.Connected)
                 {
-                    int bytesReadCount = await clientStream.ReadAsync(readBuffer, 0, readBufferLength, cancelToken);
+                    int bytesReadCount = await clientStream.ReadAsync(readBuffer, 0, readBufferLength, cancelToken).ConfigureAwait(false);
                     if (bytesReadCount > 0)
                     {
                         int readIndex = 0;
