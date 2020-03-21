@@ -1002,9 +1002,14 @@ namespace BSAG.IOCTalk.Common.Reflection
 
             //if (!System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"))
             {
-                // only add netstandard if not full framework
-                // on full .net the reference is not found but is working implicit
-                referenceLocations.Add(Assembly.Load("netstandard, Version=2.0.0.0").Location);
+                // try get netstandard 2.0 from loaded assemblies first because of .NET Full Framework reference load problem
+                Assembly netStandardAssembly = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.FullName.StartsWith("netstandard, Version=2.0.0.0")).FirstOrDefault();
+
+                // location based fallback
+                if (netStandardAssembly == null)
+                    netStandardAssembly = Assembly.Load("netstandard, Version=2.0.0.0");
+
+                referenceLocations.Add(netStandardAssembly.Location);
             }
 
             // add System.Runtime workaround

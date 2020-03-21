@@ -36,28 +36,31 @@ namespace BSAG.IOCTalk.Composition
                 Type interfType;
                 if (TypeService.TryGetTypeByName(interfaceType, out interfType))
                 {
-                    // check local services
-                    int foundIndex = Array.IndexOf<Type>(source.LocalServiceInterfaceTypes, interfType);
-                    if (foundIndex >= 0)
+                    if (!TryGetSessionInstanceInternalFunctionalOnly(interfType, out result))
                     {
-                        result = LocalServices[foundIndex];
-                    }
-                    else
-                    {
-                        // check remote services
-                        foundIndex = Array.IndexOf<Type>(source.RemoteServiceInterfaceTypes, interfType);
-                        if (foundIndex >= 0)
+                        //// check local services
+                        //int foundIndex = Array.IndexOf<Type>(source.LocalServiceInterfaceTypes, interfType);
+                        //if (foundIndex >= 0)
+                        //{
+                        //    result = LocalServices[foundIndex];
+                        //}
+                        //else
+                        //{
+                        //    // check remote services
+                        //    foundIndex = Array.IndexOf<Type>(source.RemoteServiceInterfaceTypes, interfType);
+                        //    if (foundIndex >= 0)
+                        //    {
+                        //        result = RemoteServices[foundIndex];
+                        //    }
+                        //    else
+                        //    {
+                        // not found in session context > check if local share instance
+                        if (!source.TryGetExport(interfType, out result))
                         {
-                            result = RemoteServices[foundIndex];
+                            throw new InvalidOperationException($"Can't find implementation for {interfaceType}");
                         }
-                        else
-                        {
-                            // not found in session context > check if local share instance
-                            if (!source.TryGetExport(interfType, out result))
-                            {
-                                throw new InvalidOperationException($"Can't find implementation for {interfaceType}");
-                            }
-                        }
+                        //    }
+                        //}
                     }
 
                     interfaceTypeNameInstanceCache[interfaceType] = result;
@@ -97,46 +100,50 @@ namespace BSAG.IOCTalk.Composition
 
         public bool TryGetSessionInstance(Type interfType, out object instance)
         {
-            instance = null;
-
             if (interfType == typeof(ISession))
             {
                 instance = Session;
+                return true;
             }
             else if (interfType == typeof(IGenericCommunicationService))
             {
                 instance = Session.CommunicationService;
+                return true;
             }
             else
             {
-                // check local services
-                Type alternativeLocalSourceType;
-                int foundIndexAlternative;
-                int foundIndex = Array.IndexOf<Type>(source.LocalServiceInterfaceTypes, interfType);
+                return TryGetSessionInstanceInternalFunctionalOnly(interfType, out instance);
+            }
+        }
+
+        private bool TryGetSessionInstanceInternalFunctionalOnly(Type interfType, out object instance)
+        {
+            // check local services
+            Type alternativeLocalSourceType;
+            int foundIndexAlternative;
+            instance = null;
+            int foundIndex = Array.IndexOf<Type>(source.LocalServiceInterfaceTypes, interfType);
+            if (foundIndex >= 0)
+            {
+                instance = LocalServices[foundIndex];
+            }
+            else if (source.LocalSessionServiceTypeMappings != null
+                && source.LocalSessionServiceTypeMappings.TryGetValue(interfType, out alternativeLocalSourceType)
+                && (foundIndexAlternative = Array.IndexOf<Type>(source.LocalServiceInterfaceTypes, alternativeLocalSourceType)) >= 0)
+            {
+                instance = LocalServices[foundIndexAlternative];
+            }
+            else
+            {
+                // check remote services
+                foundIndex = Array.IndexOf<Type>(source.RemoteServiceInterfaceTypes, interfType);
                 if (foundIndex >= 0)
                 {
-                    instance = LocalServices[foundIndex];
-                }
-                else if (source.LocalSessionServiceTypeMappings != null 
-                    && source.LocalSessionServiceTypeMappings.TryGetValue(interfType, out alternativeLocalSourceType)
-                    && (foundIndexAlternative = Array.IndexOf<Type>(source.LocalServiceInterfaceTypes, alternativeLocalSourceType)) >= 0)
-                {
-                    instance = LocalServices[foundIndexAlternative];
-                }
-                else
-                {
-                    // check remote services
-                    foundIndex = Array.IndexOf<Type>(source.RemoteServiceInterfaceTypes, interfType);
-                    if (foundIndex >= 0)
-                    {
-                        instance = RemoteServices[foundIndex];
-                    }
+                    instance = RemoteServices[foundIndex];
                 }
             }
 
             return instance != null;
         }
-
-
     }
 }

@@ -14,6 +14,8 @@ namespace BSAG.IOCTalk.Logging
         private string path;
         private StreamWriter fileWriter;
 
+        private static object syncObj = new object();
+
         public string LogRootPath { get; set; } = "log";
 
         public int KeepLogPeriodDays { get; set; } = 20;
@@ -27,34 +29,37 @@ namespace BSAG.IOCTalk.Logging
 
         public BasicLogger(string categoryName)
         {
-            string dir = Path.GetFullPath(LogRootPath);
-
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-
-            path = Path.Combine(dir, $"Log_{categoryName}_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-ffff")}.log");
-
-            fileWriter = new StreamWriter(path);
-
-            // delete old logs
-            try
+            lock (syncObj)  // do not create in parallel
             {
-                foreach (string logPath in Directory.GetFiles(dir, "*.log"))
+                string dir = Path.GetFullPath(LogRootPath);
+
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
+                path = Path.Combine(dir, $"Log_{categoryName}_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-ffff")}.log");
+
+                fileWriter = new StreamWriter(path);
+
+                // delete old logs
+                try
                 {
-                    if (logPath == path)
-                        continue;   // ignore current log
-
-                    DateTime creationTime = File.GetLastWriteTime(logPath);
-
-                    if ((DateTime.Now - creationTime).TotalDays > KeepLogPeriodDays)
+                    foreach (string logPath in Directory.GetFiles(dir, "*.log"))
                     {
-                        File.Delete(logPath);
+                        if (logPath == path)
+                            continue;   // ignore current log
+
+                        DateTime creationTime = File.GetLastWriteTime(logPath);
+
+                        if ((DateTime.Now - creationTime).TotalDays > KeepLogPeriodDays)
+                        {
+                            File.Delete(logPath);
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                // ignore delete errors
+                catch (Exception ex)
+                {
+                    // ignore delete errors
+                }
             }
         }
 
