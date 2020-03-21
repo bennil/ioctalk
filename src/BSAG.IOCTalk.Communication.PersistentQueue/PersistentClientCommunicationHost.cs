@@ -33,6 +33,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         private ISession realUnderlyingSession;
 
         private int processResendLock = 0;
+        private int resendTryCount = 0;
+        private DateTime? lastResendTryUtc = null;
 
         private const byte NotSendByte = 1;
         private const byte AlreadySentByte = 2;
@@ -329,11 +331,23 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             {
                 try
                 {
+                    resendTryCount++;
+
+                    if (resendTryCount > 5
+                        && lastResendTryUtc.HasValue
+                        && (DateTime.UtcNow - lastResendTryUtc.Value).TotalSeconds < 30)
+                    {
+                        Logger.Warn("Wait 40 sec. to prevent loop resends because of recent new connection fail!");
+                        await Task.Delay(TimeSpan.FromSeconds(40));
+                    }
+                    lastResendTryUtc = DateTime.UtcNow;
+
                     if (!ResendInExecOrderBeforeOtherInvokes)
                     {
                         // pause to allow realtime calls going first
                         await Task.Delay(ResendDelay);
                     }
+
 
                     string dir = Path.GetFullPath(DirectoryPath);
 
@@ -353,11 +367,12 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                             {
                                 string pendFilePath = files[i];
 
+                                FileStream stream = null;
                                 try
                                 {
                                     Logger.Info($"Open pend file: {pendFilePath}");
 
-                                    FileStream stream = new FileStream(pendFilePath, FileMode.Open, FileAccess.ReadWrite);
+                                    stream = new FileStream(pendFilePath, FileMode.Open, FileAccess.ReadWrite);
 
                                     do
                                     {
@@ -403,6 +418,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                                     // all messages in pending file sent
                                     stream.Close();
                                     stream.Dispose();
+                                    stream = null;
 
                                     // delete file
                                     File.Delete(pendFilePath);
@@ -439,6 +455,18 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                                 {
                                     // Log unexpected error
                                     Logger.Error($"Error resending file {pendFilePath}  \nException: {ex}");
+                                }
+                                finally
+                                {
+                                    if (stream != null)
+                                    {
+                                        try
+                                        {
+                                            stream.Close();
+                                            stream.Dispose();
+                                        }
+                                        catch { /*ignore*/ }
+                                    }
                                 }
                             }
                         }
