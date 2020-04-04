@@ -33,7 +33,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         private ISession realUnderlyingSession;
 
         private int processResendLock = 0;
-        private int resendTryCount = 0;
+        private int resendTryCount = 1;
         private DateTime? lastResendTryUtc = null;
 
         private const byte NotSendByte = 1;
@@ -121,8 +121,9 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
         /// <summary>
         /// Ensures that first all pending calls are processed before the connection created event is readirected for realtime processing
+        /// Default: true (queue behaviour)
         /// </summary>
-        public bool ResendInExecOrderBeforeOtherInvokes { get; set; } = false;
+        public bool ResendInExecOrderBeforeOtherInvokes { get; set; } = true;
 
 
         public void RegisterPersistentMethod<InterfaceT>(string methodName)
@@ -182,6 +183,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
                 if (ResendInExecOrderBeforeOtherInvokes)
                 {
+                    Logger.Debug("Wait for pending file resend");
+
                     await resendTask.ConfigureAwait(false);
                 }
 
@@ -331,22 +334,24 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             {
                 try
                 {
-                    resendTryCount++;
-
-                    if (resendTryCount > 5
-                        && lastResendTryUtc.HasValue
-                        && (DateTime.UtcNow - lastResendTryUtc.Value).TotalSeconds < 30)
+                    if (ResendInExecOrderBeforeOtherInvokes)
                     {
-                        Logger.Warn("Wait 40 sec. to prevent loop resends because of recent new connection fail!");
-                        await Task.Delay(TimeSpan.FromSeconds(40));
+                        if (resendTryCount > 5
+                            && lastResendTryUtc.HasValue
+                            && (DateTime.UtcNow - lastResendTryUtc.Value).TotalSeconds < 30)
+                        {
+                            Logger.Warn("Wait 40 sec. to prevent loop resends because of recent new connection fail!");
+                            await Task.Delay(TimeSpan.FromSeconds(40));
+                        }
                     }
-                    lastResendTryUtc = DateTime.UtcNow;
-
-                    if (!ResendInExecOrderBeforeOtherInvokes)
+                    else
                     {
                         // pause to allow realtime calls going first
                         await Task.Delay(ResendDelay);
                     }
+
+                    lastResendTryUtc = DateTime.UtcNow;
+                    resendTryCount++;
 
 
                     string dir = Path.GetFullPath(DirectoryPath);
