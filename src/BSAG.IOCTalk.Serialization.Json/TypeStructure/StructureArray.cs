@@ -31,8 +31,9 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
         private IJsonTypeStructure itemSerializer;
         private IJsonTypeStructure itemDeSerializer;
-        
+
         private ConcurrentDictionary<Type, MethodInfo> specialCollectionTypeAddMethodCache;
+        private bool isByteArray = false;
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -53,6 +54,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
             if (enumerableType.IsArray)
             {
                 itemType = enumerableType.GetElementType();
+                isByteArray = itemType.Equals(typeof(byte));
             }
             else if (typeof(IEnumerable).IsAssignableFrom(enumerableType))
             {
@@ -165,100 +167,110 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 }
             }
 
-            sb.Append(Structure.CharLeftSquareBrace);
-
-
-            Type collType = obj.GetType();
-
-            // check if own collection implementation exposes special target type // todo: check if possible and required
-            //bool specialTypeAdded = false;
-            //if (!collType.IsArray
-            //    && !IsSystemCollection(collType))
-            //    //&& !checkedSubInterfaceTypes.Contains(collType))
-            //{
-            //    var exposureAttributes = collType.GetCustomAttributes(typeof(ExposeSubTypeAttribute), false);
-            //    if (exposureAttributes.Length > 0)
-            //    {
-            //        // expose specialized sub interface type
-            //        if (this.typeSerializerCache == null)
-            //            this.typeSerializerCache = new Dictionary<Type, IJsonTypeStructure>();
-
-            //        // add typed collection attribute
-            //        sb.Append(Structure.TypeMetaTagJson);
-            //        sb.Append(this.type.FullName);
-            //        sb.Append(Structure.CharQuotationMark);
-
-            //        specialTypeAdded = true;
-            //    }
-            //    //checkedSubInterfaceTypes.Add(collType);
-            //}
-
-            IEnumerable collection = (IEnumerable)obj;
-
-            int count = 0;
-            foreach (var item in collection)
+            if (isByteArray)
             {
-                //if (specialTypeAdded
-                //    && count == 0)
+                // Optimization: add byte array as base64 encoded string
+                sb.Append(Structure.CharQuotationMark);
+                byte[] data = (byte[])obj;
+                sb.Append(Convert.ToBase64String(data));
+                sb.Append(Structure.CharQuotationMark);
+            }
+            else
+            {
+                sb.Append(Structure.CharLeftSquareBrace);
+
+
+                //Type collType = obj.GetType();
+
+                // check if own collection implementation exposes special target type // todo: check if possible and required
+                //bool specialTypeAdded = false;
+                //if (!collType.IsArray
+                //    && !IsSystemCollection(collType))
+                //    //&& !checkedSubInterfaceTypes.Contains(collType))
                 //{
-                //    sb.Append(Structure.CharComma);
+                //    var exposureAttributes = collType.GetCustomAttributes(typeof(ExposeSubTypeAttribute), false);
+                //    if (exposureAttributes.Length > 0)
+                //    {
+                //        // expose specialized sub interface type
+                //        if (this.typeSerializerCache == null)
+                //            this.typeSerializerCache = new Dictionary<Type, IJsonTypeStructure>();
+
+                //        // add typed collection attribute
+                //        sb.Append(Structure.TypeMetaTagJson);
+                //        sb.Append(this.type.FullName);
+                //        sb.Append(Structure.CharQuotationMark);
+
+                //        specialTypeAdded = true;
+                //    }
+                //    //checkedSubInterfaceTypes.Add(collType);
                 //}
 
-                if (item != null)
+                IEnumerable collection = (IEnumerable)obj;
+
+                int count = 0;
+                foreach (var item in collection)
                 {
-                    if (isObject)
+                    //if (specialTypeAdded
+                    //    && count == 0)
+                    //{
+                    //    sb.Append(Structure.CharComma);
+                    //}
+
+                    if (item != null)
                     {
-                        // determine serialize type
-                        Type itemType = item.GetType();
-                        IJsonTypeStructure currentObjectStructure;
-                        if (!typeSerializerCache.TryGetValue(itemType, out currentObjectStructure))
+                        if (isObject)
                         {
-                            Type targetType = null;
-                            if (unknownTypeResolver != null)
+                            // determine serialize type
+                            Type itemType = item.GetType();
+                            IJsonTypeStructure currentObjectStructure;
+                            if (!typeSerializerCache.TryGetValue(itemType, out currentObjectStructure))
                             {
-                                context.Key = this.key;
-                                context.ArrayIndex = count;
+                                Type targetType = null;
+                                if (unknownTypeResolver != null)
+                                {
+                                    context.Key = this.key;
+                                    context.ArrayIndex = count;
 
-                                targetType = unknownTypeResolver(context);
+                                    targetType = unknownTypeResolver(context);
 
-                                context.ArrayIndex = null;
+                                    context.ArrayIndex = null;
+                                }
+                                if (targetType == null)
+                                {
+                                    targetType = itemType;
+                                }
+                                currentObjectStructure = Structure.DetermineStructure(targetType, GetNestedArrayKey(this.key, count), context, true);
+
+                                typeSerializerCache[itemType] = currentObjectStructure;
                             }
-                            if (targetType == null)
-                            {
-                                targetType = itemType;
-                            }
-                            currentObjectStructure = Structure.DetermineStructure(targetType, GetNestedArrayKey(this.key, count), context, true);
 
-                            typeSerializerCache[itemType] = currentObjectStructure;
+                            currentObjectStructure.Serialize(sb, item, context);
                         }
+                        else
+                        {
+                            if (itemSerializer == null)
+                            {
+                                this.itemSerializer = Structure.DetermineStructure(itemType, key, context, true);
+                            }
 
-                        currentObjectStructure.Serialize(sb, item, context);
+                            // use static serialize type
+                            itemSerializer.Serialize(sb, item, context);
+                        }
                     }
                     else
                     {
-                        if (itemSerializer == null)
-                        {
-                            this.itemSerializer = Structure.DetermineStructure(itemType, key, context, true);
-                        }
-
-                        // use static serialize type
-                        itemSerializer.Serialize(sb, item, context);
+                        sb.Append(Structure.NullValue);
                     }
+                    sb.Append(Structure.CharComma);
+                    count++;
                 }
-                else
+                if (count > 0)
                 {
-                    sb.Append(Structure.NullValue);
+                    sb.Length -= 1; // remove last comma
                 }
-                sb.Append(Structure.CharComma);
-                count++;
-            }
-            if (count > 0)
-            {
-                sb.Length -= 1; // remove last comma
-            }
 
-            sb.Append(Structure.CharRightSquareBracet);
-
+                sb.Append(Structure.CharRightSquareBracet);
+            }
         }
 
         /// <summary>
@@ -386,6 +398,26 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
                     }
 
+                }
+            }
+            else if (json[currentReadIndex] == Structure.CharQuotationMark
+                && isByteArray)
+            {
+                // Byte array base64 encoding optimization
+                currentReadIndex++;
+                int endDataIndex = json.IndexOf(Structure.CharQuotationMark, currentReadIndex);
+
+                if (endDataIndex > 0)
+                {
+                    int length = endDataIndex - currentReadIndex;
+                    string base64Data = json.Substring(currentReadIndex, length);
+                    byte[] data = Convert.FromBase64String(base64Data);
+                    currentReadIndex += length + 1;
+                    return data;
+                }
+                else
+                {
+                    throw new InvalidCastException("No end quotation mark for base64 encoding found!");
                 }
             }
             else if (json[currentReadIndex] == 'n'

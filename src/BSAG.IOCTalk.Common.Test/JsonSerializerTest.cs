@@ -791,5 +791,71 @@ namespace BSAG.IOCTalk.Common.Test
 
             Assert.Equal(testObj.SubDe, deserializedObj.SubDe);
         }
+
+
+        [Fact]
+        public void ByteArraySerializationTest()
+        {
+            JsonObjectSerializer serializer = new JsonObjectSerializer();
+
+            ByteArrayTest byteArrayTest = new ByteArrayTest();
+            byteArrayTest.Data = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+
+            string json = serializer.Serialize(byteArrayTest, null);
+            ByteArrayTest deserializedObj = (ByteArrayTest)serializer.Deserialize(json, typeof(ByteArrayTest), null);
+
+            Assert.Equal(byteArrayTest.Data, deserializedObj.Data);
+
+            // check backwards compatibility before optimization
+            string beforeBase64ByteArrayOptimization = "{\"Data\":[0,1,2,3,4,5,6,7,8,9,10,11,12]}";
+
+            ByteArrayTest deserializedObj2 = (ByteArrayTest)serializer.Deserialize(beforeBase64ByteArrayOptimization, typeof(ByteArrayTest), null);
+            Assert.Equal(byteArrayTest.Data, deserializedObj2.Data);
+
+        }
+
+        [Fact]
+        public void ByteArraySerializationTest2()
+        {
+            JsonObjectSerializer serializer = new JsonObjectSerializer();
+
+            ByteArrayTest2 byteArrayTest = new ByteArrayTest2();
+            byteArrayTest.SomePreData = 3823;
+
+            int length = 2048;
+            byte[] data = new byte[length];
+            for (int i = 0; i < length; i++)
+            {
+                data[i] = (byte)(i % 250);
+            }
+            byteArrayTest.Data = data;
+
+            byteArrayTest.SomePostData = "test string";
+
+            string json = serializer.Serialize(byteArrayTest, null);
+            ByteArrayTest2 deserializedObj = (ByteArrayTest2)serializer.Deserialize(json, typeof(ByteArrayTest2), null);
+
+            Assert.Equal(byteArrayTest.Data, deserializedObj.Data);
+            Assert.Equal(byteArrayTest.SomePreData, deserializedObj.SomePreData);
+            Assert.Equal(byteArrayTest.SomePostData, deserializedObj.SomePostData);
+        }
+
+        [Fact]
+        public void EmptyByteArraySerializationTest()
+        {
+            JsonObjectSerializer serializer = new JsonObjectSerializer();
+
+            ByteArrayTest2 byteArrayTest = new ByteArrayTest2();
+            byteArrayTest.SomePreData = 7;
+            byteArrayTest.Data = new byte[0];
+            byteArrayTest.SomePostData = "empty test";
+
+            string json = serializer.Serialize(byteArrayTest, null);
+            ByteArrayTest2 deserializedObj = (ByteArrayTest2)serializer.Deserialize(json, typeof(ByteArrayTest2), null);
+
+            Assert.Equal(byteArrayTest.Data, deserializedObj.Data);
+            Assert.Equal(byteArrayTest.SomePreData, deserializedObj.SomePreData);
+            Assert.Equal(byteArrayTest.SomePostData, deserializedObj.SomePostData);
+        }
     }
 }
