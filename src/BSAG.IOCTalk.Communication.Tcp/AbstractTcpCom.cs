@@ -70,8 +70,12 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// <value>
         /// The end point.
         /// </value>
-        public EndPoint EndPoint { get; set; }
+        public EndPoint EndPoint { get; protected set; }
 
+        /// <summary>
+        /// Gets the end point info
+        /// </summary>
+        public abstract string EndPointInfo { get; }
 
         /// <summary>
         /// Occurs when [connection established].

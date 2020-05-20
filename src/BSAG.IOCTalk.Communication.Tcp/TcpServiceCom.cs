@@ -25,6 +25,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         // ----------------------------------------------------------------------------------------
         protected Dictionary<int, Client> clients = new Dictionary<int, Client>();
         private DateTime connectTime;
+        private string endPointInfo;
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -114,6 +115,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
             }
         }
 
+        public override string EndPointInfo => endPointInfo;
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -128,6 +131,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         public void Init(int servicePort)
         {
             EndPoint = new IPEndPoint(IPAddress.Any, servicePort);
+            endPointInfo = EndPoint.ToString();
 
             this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             this.InitSocketProperties(socket);

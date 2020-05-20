@@ -115,6 +115,11 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// </value>
         InvokeThreadModel InvokeThreadModel { get; set; }
 
+        /// <summary>
+        /// Gets or sets the default request timeout.
+        /// </summary>
+        TimeSpan RequestTimeout { get; set; }
+
         // ----------------------------------------------------------------------------------------
         #endregion
 

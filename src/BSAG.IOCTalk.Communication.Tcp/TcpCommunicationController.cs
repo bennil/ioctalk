@@ -335,7 +335,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// </summary>
         public override void Shutdown()
         {
-            this.communication.Close();
+            this.communication?.Close();
 
             base.Shutdown();
         }
@@ -361,7 +361,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
 
                         if (Logger != null)
-                            Logger.Info($"Connect to {communication?.EndPoint}...");
+                            Logger.Info($"Connect to {communication?.EndPointInfo}...");
 
                         clientConnectCount++;
 
