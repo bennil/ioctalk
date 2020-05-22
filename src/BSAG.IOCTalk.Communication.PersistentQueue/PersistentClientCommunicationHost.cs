@@ -130,6 +130,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         /// </summary>
         public bool IgnoreDeserializeExceptions { get; set; }
 
+        public TimeSpan RequestTimeout { get => underlyingCom.RequestTimeout; set => underlyingCom.RequestTimeout = value; }
 
         public void RegisterPersistentMethod<InterfaceT>(string methodName)
         {

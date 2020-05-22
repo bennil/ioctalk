@@ -138,6 +138,7 @@ namespace BSAG.IOCTalk.Common.Test
             public bool RaiseConnectionLost { get; set; }
 
             public int InvokeCounter { get; set; }
+            public TimeSpan RequestTimeout { get; set; }
 
             public object InvokeMethod(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters)
             {
