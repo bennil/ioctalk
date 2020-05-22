@@ -310,7 +310,16 @@ namespace BSAG.IOCTalk.Serialization.Json
                                     }
                                 }
 
-                                return parameters[context.ArrayIndex.Value].ParameterType;
+                                if (parameters.Length > context.ArrayIndex.Value)
+                                {
+                                    return parameters[context.ArrayIndex.Value].ParameterType;
+                                }
+                                else
+                                {
+                                    // method does not support requested parameter index
+                                    // BL 02.05.2020: happened because of wrong escape json chars
+                                    throw new IndexOutOfRangeException($"Requested method parameter index {context.ArrayIndex.Value} not available in method {message.Target}; {message.Name}");
+                                }
                             }
                             else
                             {

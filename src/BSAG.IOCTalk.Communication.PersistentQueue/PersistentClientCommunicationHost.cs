@@ -125,6 +125,11 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         /// </summary>
         public bool ResendInExecOrderBeforeOtherInvokes { get; set; } = true;
 
+        /// <summary>
+        /// Ignores unexpected deserialize exceptions
+        /// </summary>
+        public bool IgnoreDeserializeExceptions { get; set; }
+
 
         public void RegisterPersistentMethod<InterfaceT>(string methodName)
         {
@@ -403,11 +408,32 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                                             if (DebugLogResendMessages)
                                                 Logger.Debug($"Resend local store message: {Encoding.Default.GetString(msgBytes)}");
 
-                                            IGenericMessage msg = Serializer.DeserializeFromBytes(msgBytes, newSession);
-                                            Type targetType;
-                                            TypeService.TryGetTypeByName(msg.Target, out targetType);
-                                            InvokeMethodInfo invokeInfo = new InvokeMethodInfo(targetType, msg.Name);
-                                            underlyingCom.InvokeMethod(this, invokeInfo, newSession, (object[])msg.Payload);
+                                            // deserialize method call
+                                            IGenericMessage msg = null;
+                                            try
+                                            {
+                                                msg = Serializer.DeserializeFromBytes(msgBytes, newSession);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                if (IgnoreDeserializeExceptions)
+                                                {
+                                                    Logger.Warn($"Ignore deserialize exception: {ex}");
+                                                }
+                                                else
+                                                {
+                                                    throw;
+                                                }
+                                            }
+
+                                            // call method
+                                            if (msg != null)
+                                            {
+                                                Type targetType;
+                                                TypeService.TryGetTypeByName(msg.Target, out targetType);
+                                                InvokeMethodInfo invokeInfo = new InvokeMethodInfo(targetType, msg.Name);
+                                                underlyingCom.InvokeMethod(this, invokeInfo, newSession, (object[])msg.Payload);
+                                            }
 
                                             // Flag message as sent
                                             long endNextPos = stream.Position;

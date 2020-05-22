@@ -128,6 +128,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                        )
                     {
                         break;  // end reached skip replacement
+                        //todo: check deserialize problems -> escape \ as well?
                     }
 
                     // read further to find string ending

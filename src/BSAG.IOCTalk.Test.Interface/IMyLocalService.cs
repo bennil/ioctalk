@@ -7,5 +7,7 @@ namespace BSAG.IOCTalk.Test.Interface
     public interface IMyLocalService
     {
         void RandomMethod();
+
+        void DataMethod(int id, DateTime time, string data);
     }
 }
