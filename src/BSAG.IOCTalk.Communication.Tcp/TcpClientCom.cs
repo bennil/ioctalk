@@ -27,6 +27,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         protected Client client = null;
         private string host;
         private int port;
+        private string endPointInfo;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -114,6 +115,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 return socket.Connected;
             }
         }
+
+        public override string EndPointInfo => endPointInfo;
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -190,6 +194,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             {
                 // IP Adresse setzen
                 EndPoint = new IPEndPoint(ip, port);
+                endPointInfo = EndPoint.ToString();
             }
             else
             {
@@ -198,7 +203,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
                 if (hostEntry.AddressList.Length > 0)
                 {
-                    this.EndPoint = new IPEndPoint(hostEntry.AddressList[0], port);
+                    var resolvedIp = hostEntry.AddressList[0];
+                    this.EndPoint = new IPEndPoint(resolvedIp, port);
+                    endPointInfo = $"{host}:{port} ({resolvedIp})";
                 }
                 else
                 {
