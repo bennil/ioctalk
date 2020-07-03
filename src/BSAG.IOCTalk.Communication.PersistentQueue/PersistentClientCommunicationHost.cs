@@ -14,13 +14,14 @@ using System.IO;
 using BSAG.IOCTalk.Common.Reflection;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Linq;
 
 namespace BSAG.IOCTalk.Communication.PersistentQueue
 {
     public class PersistentClientCommunicationHost : IGenericCommunicationService
     {
         private IGenericCommunicationService underlyingCom;
-        private Dictionary<Type, HashSet<string>> persistentMethods = new Dictionary<Type, HashSet<string>>();
+        private Dictionary<Type, Dictionary<string, PersistentMethod>> persistentMethods = new Dictionary<Type, Dictionary<string, PersistentMethod>>();
         private FileStream persistMsgFile;
         private object syncLock = new object();
         private EventHandler<SessionEventArgs> fictionalSessionCreatedEvent;
@@ -132,21 +133,24 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
         public TimeSpan RequestTimeout { get => underlyingCom.RequestTimeout; set => underlyingCom.RequestTimeout = value; }
 
-        public void RegisterPersistentMethod<InterfaceT>(string methodName)
+        public PersistentMethod RegisterPersistentMethod<InterfaceT>(string methodName)
         {
-            RegisterPersistentMethod(typeof(InterfaceT), methodName);
+            return RegisterPersistentMethod(typeof(InterfaceT), methodName);
         }
 
-        public void RegisterPersistentMethod(Type interfaceType, string methodName)
+        public PersistentMethod RegisterPersistentMethod(Type interfaceType, string methodName)
         {
-            HashSet<string> methods;
+            Dictionary<string, PersistentMethod> methods;
             if (!persistentMethods.TryGetValue(interfaceType, out methods))
             {
-                methods = new HashSet<string>();
+                methods = new Dictionary<string, PersistentMethod>();
                 persistentMethods.Add(interfaceType, methods);
             }
 
-            methods.Add(methodName);
+            var result = new PersistentMethod(interfaceType, methodName);
+            methods.Add(result.MethodName, result);
+
+            return result;
         }
 
 
@@ -263,9 +267,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             {
                 // persist async request in file
                 // continue processing
-                PersistPendingMethodInvoke(invokeInfo, parameters);
-
-                return null;    // only void methods
+                return PersistPendingMethodInvoke(invokeInfo, parameters);
             }
             else
             {
@@ -293,8 +295,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             if (IsPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name))
             {
                 // persist
-                PersistPendingMethodInvoke(invokeInfo, parameters);
-                return null;    // only void methods
+                return PersistPendingMethodInvoke(invokeInfo, parameters);
             }
             else
             {
@@ -302,7 +303,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
         }
 
-        private void PersistPendingMethodInvoke(IInvokeMethodInfo invokeInfo, object[] parameters)
+        private object PersistPendingMethodInvoke(IInvokeMethodInfo invokeInfo, object[] parameters)
         {
             GenericMessage pMsg = new GenericMessage(0, invokeInfo, parameters, false);
 
@@ -331,6 +332,17 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                     persistMsgFile.Write(msgBytes, 0, msgBytes.Length);
                     persistMsgFile.Flush();
                 }
+            }
+
+            var returnType = invokeInfo.InterfaceMethod.ReturnType;
+            if (!returnType.Equals(typeof(void)) && returnType.IsValueType)
+            {
+                object defaultValue = Activator.CreateInstance(returnType);
+                return defaultValue;
+            }
+            else
+            {
+                return null;
             }
         }
 
@@ -433,7 +445,57 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                                                 Type targetType;
                                                 TypeService.TryGetTypeByName(msg.Target, out targetType);
                                                 InvokeMethodInfo invokeInfo = new InvokeMethodInfo(targetType, msg.Name);
-                                                underlyingCom.InvokeMethod(this, invokeInfo, newSession, (object[])msg.Payload);
+
+                                                object[] paramValues = (object[])msg.Payload;
+
+                                                // check transaction
+                                                PersistentMethod persistMethod = null;
+                                                bool commitTransactionAfterInvoke = false;
+                                                if (persistentMethods.TryGetValue(targetType, out Dictionary<string, PersistentMethod> pMethods)
+                                                    && pMethods.TryGetValue(invokeInfo.InterfaceMethod.Name, out persistMethod)
+                                                    && persistMethod.Transaction != null)
+                                                {
+                                                    if (persistMethod.Transaction.BeginTransactionMethod.Equals(persistMethod))
+                                                    {
+                                                        // begin new transaction
+                                                        persistMethod.Transaction.BeginTransaction();
+                                                    }
+                                                    else if (persistMethod.Transaction.CommitTransactionMethod.Equals(persistMethod))
+                                                    {
+                                                        commitTransactionAfterInvoke = true;
+                                                    }
+
+                                                    // check if method parameters must be overriden with current transaction context values
+                                                    if (persistMethod.Transaction.CurrentTransaction != null
+                                                        && persistMethod.Transaction.CurrentTransaction.ContextValues != null)
+                                                    {
+                                                        for (int paramIndex = 0; paramIndex < invokeInfo.ParameterInfos.Length; paramIndex++)
+                                                        {
+                                                            var pi = invokeInfo.ParameterInfos[paramIndex];
+
+                                                            var ctxValue = persistMethod.Transaction.CurrentTransaction.ContextValues.Where(cv => cv.Name == pi.Name && cv.Type == pi.ParameterType).FirstOrDefault();
+                                                            if (ctxValue != null)
+                                                            {
+                                                                // replace with transaction context value
+                                                                paramValues[paramIndex] = ctxValue.Value;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                // call underlying communication layer
+                                                object returnValue = underlyingCom.InvokeMethod(this, invokeInfo, newSession, paramValues);
+
+                                                // post call transaction processing
+                                                if (commitTransactionAfterInvoke)
+                                                {
+                                                    persistMethod.Transaction.CommitTransaction();
+                                                }
+                                                else if (persistMethod != null
+                                                    && persistMethod.TransactionResendAction != null)
+                                                {
+                                                    persistMethod.Transaction.CurrentTransaction.SetTransactionValue(invokeInfo.InterfaceMethod.ReturnType, persistMethod.TransactionResendAction.ApplyToParameterName, returnValue);
+                                                }
                                             }
 
                                             // Flag message as sent
@@ -525,10 +587,10 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
         private bool IsPersistentMethod(Type interfaceType, string methodName)
         {
-            HashSet<string> methods;
+            Dictionary<string, PersistentMethod> methods;
             if (persistentMethods.TryGetValue(interfaceType, out methods))
             {
-                return methods.Contains(methodName);
+                return methods.ContainsKey(methodName);
             }
             else
             {

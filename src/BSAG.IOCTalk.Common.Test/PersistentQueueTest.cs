@@ -14,6 +14,7 @@ using BSAG.IOCTalk.Common.Session;
 using BSAG.IOCTalk.Communication.PersistentQueue;
 using System.Threading;
 using System.IO;
+using BSAG.IOCTalk.Communication.PersistentQueue.Transaction;
 
 namespace BSAG.IOCTalk.Common.Test
 {
@@ -90,6 +91,62 @@ namespace BSAG.IOCTalk.Common.Test
             Assert.Equal(1, dummyCom.InvokeCounter);
         }
 
+
+
+        [Fact]
+        public void TestPersistentTransactionContextValue()
+        {
+            IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
+
+            PersistentTestCommService dummyCom = new PersistentTestCommService();
+            dummyCom.RaiseConnectionLost = true;
+
+            PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
+            persistComm.ResendDelay = TimeSpan.Zero;
+
+            TransactionDefinition trxDef = new TransactionDefinition("Test Transaction");
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.StartTransactionTest))
+                        .RegisterTransactionBegin(trxDef)
+                        .RegisterResendAction(new TrxResendActionUseReturnValue("testSessionId"));
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.PushTrxData))
+                        .RegisterTransaction(trxDef);
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.CompleteTransactionTest))
+                        .RegisterTransactionCommit(trxDef);
+
+            persistComm.RegisterContainerHost(talkCompositionHost, null);
+            persistComm.Init();
+
+            CleanupPeristentDirectory(persistComm);
+
+            InvokeMethodInfo mInfoBeginTrx = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.StartTransactionTest));
+            InvokeMethodInfo mInfoTrxData = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.PushTrxData));
+            InvokeMethodInfo mInfoTrxCommit = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.CompleteTransactionTest));
+
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            Guid startTrxReturn = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
+            persistComm.InvokeMethod(this, mInfoTrxCommit, session, new object[] { startTrxReturn });  // transaction commit
+
+            dummyCom.RaiseConnectionLost = false; 
+            dummyCom.RaiseConnectionCreated();
+
+            // wait until local pending messages are processed
+            Thread.Sleep(500);
+
+            Assert.Equal(3, dummyCom.InvokeCounter);
+
+            Assert.Equal(2, dummyCom.ReceivedParameterList.Count);
+            foreach (var itemArr in dummyCom.ReceivedParameterList)
+            {
+                Assert.Equal(dummyCom.TransactionTestGuid, itemArr[0]);
+            }
+        }
+
+
+
         private static void CleanupPeristentDirectory(PersistentClientCommunicationHost persistComm)
         {
             string persistPath = Path.GetFullPath(persistComm.DirectoryPath);
@@ -140,6 +197,10 @@ namespace BSAG.IOCTalk.Common.Test
             public int InvokeCounter { get; set; }
             public TimeSpan RequestTimeout { get; set; }
 
+            public Guid TransactionTestGuid { get; set; } = Guid.NewGuid();
+
+            public List<object[]> ReceivedParameterList { get; set; } = new List<object[]>();
+
             public object InvokeMethod(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters)
             {
                 if (RaiseConnectionLost)
@@ -149,7 +210,20 @@ namespace BSAG.IOCTalk.Common.Test
                 else
                 {
                     InvokeCounter++;
-                    return null;
+
+                    if (parameters.Length > 0)
+                    {
+                        ReceivedParameterList.Add(parameters);
+                    }
+
+                    if (invokeInfo.InterfaceMethod.ReturnType.Equals(typeof(Guid)))
+                    {
+                        return TransactionTestGuid;
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
             }
 
