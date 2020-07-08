@@ -8,7 +8,7 @@ namespace BSAG.IOCTalk.Test.Common
 {
     public interface IPerformanceMonitorClientNotification
     {
-        [RemoteInvokeBehaviour(IsAsyncRemoteInvoke=true)]
+        //[RemoteInvokeBehaviour(IsAsyncRemoteInvoke=true)] //todo: fluent register async void method
         void OnPerformanceData(IPerformanceData perfData);
 
         void OnPerformanceData(IPerformanceData perfData, string computerName);
