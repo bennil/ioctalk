@@ -751,9 +751,10 @@ namespace BSAG.IOCTalk.Communication.Common
             long requestId = Interlocked.Increment(ref currentRequestId);
 
             bool responseExpected = true;
-            if (invokeInfo.IsAsyncRemoteInvoke)
+            
+            if (invokeInfo.IsVoidReturnMethod && invokeInfo.IsAsyncVoidRemoteInvoke(containerHost))
             {
-                if (baseCommunicationServiceSupport.IsAsyncSendCurrentlyPossible(session))
+                if (baseCommunicationServiceSupport.IsAsyncVoidSendCurrentlyPossible(session))
                 {
                     responseExpected = false;
                 }
@@ -1008,14 +1009,14 @@ namespace BSAG.IOCTalk.Communication.Common
 
                         case InvokeThreadModel.ReceiverThread:
                             // call method directly in this receiver thread
-                            CallMethod(session, message);
+                            CallLocalMethod(session, message);
                             break;
 
                         case InvokeThreadModel.IndividualTask:
                             // invoke in new task
                             Task.Factory.StartNew(() =>
                             {
-                                CallMethod(session, message);
+                                CallLocalMethod(session, message);
                             });
                             break;
                     }
@@ -1112,7 +1113,7 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
-        private void CallMethod(ISession session, IGenericMessage message)
+        private void CallLocalMethod(ISession session, IGenericMessage message)
         {
 
             try
@@ -1143,11 +1144,6 @@ namespace BSAG.IOCTalk.Communication.Common
                 {
                     Type interfaceType = serviceType.GetInterface(message.Target);
                     methodInfo = new InvokeMethodInfo(interfaceType, message.Name, null, serviceType);
-
-                    if (!methodInfo.IsAsyncRemoteInvoke)
-                    {
-                        methodInfo.IsAsyncRemoteInvoke = containerHost.IsAsyncRemoteInvoke(interfaceType, message.Name);
-                    }
 
                     methodInfoCache[invokeInfoCacheKey] = methodInfo;
                 }
@@ -1270,7 +1266,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
                 foreach (var invokeItem in callerQueue.GetConsumingEnumerable())
                 {
-                    CallMethod(invokeItem.Item1, invokeItem.Item2);
+                    CallLocalMethod(invokeItem.Item1, invokeItem.Item2);
                 }
             }
             catch (Exception ex)
@@ -1344,7 +1340,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 Tuple<ISession, IGenericMessage> invokeItem;
                 if (callerQueue.TryDequeue(out invokeItem))
                 {
-                    CallMethod(invokeItem.Item1, invokeItem.Item2);
+                    CallLocalMethod(invokeItem.Item1, invokeItem.Item2);
                     return true;
                 }
             }

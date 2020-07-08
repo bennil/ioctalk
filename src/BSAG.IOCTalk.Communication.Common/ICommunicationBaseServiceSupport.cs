@@ -27,6 +27,6 @@ namespace BSAG.IOCTalk.Communication.Common
         /// <returns>
         ///   <c>true</c> if [is async send currently possible] [the specified session]; otherwise, <c>false</c>.
         /// </returns>
-        bool IsAsyncSendCurrentlyPossible(ISession session);
+        bool IsAsyncVoidSendCurrentlyPossible(ISession session);
     }
 }

@@ -392,7 +392,7 @@ namespace BSAG.IOCTalk.Common.Reflection
             source.AppendFormat(" public class {0} : {1}", name, interfaceType.FullName);
             source.AppendLine(" {");
             referencedAssemblies = new List<string>();
-            CreateProxyInterfaceMethodSourceCode(source, interfaceType, referencedAssemblies);
+            var methodInfoMemberNames = CreateProxyInterfaceMethodSourceCode(source, interfaceType, referencedAssemblies);
 
             // add communication service field
             source.AppendLine();
@@ -406,6 +406,9 @@ namespace BSAG.IOCTalk.Common.Reflection
             source.AppendLine("     {");
             source.AppendLine("         this.communicationService = commService;");
             source.AppendLine("         this.session = session;");
+
+            //todo: determine runtime async invoke state for each method
+
             source.AppendLine("     }");
 
 
@@ -419,8 +422,9 @@ namespace BSAG.IOCTalk.Common.Reflection
             return new Uri(type.Assembly.CodeBase).LocalPath;
         }
 
-        private static void CreateProxyInterfaceMethodSourceCode(StringBuilder mainSource, Type interfaceType, IList<string> referencedAssemblies)
+        private static List<string> CreateProxyInterfaceMethodSourceCode(StringBuilder mainSource, Type interfaceType, IList<string> referencedAssemblies)
         {
+            List<string> methodInfoMemberNames = new List<string>();
             string methodBodyIntention = "\t\t";
             string methodLineIntention = "\t\t\t";
 
@@ -576,7 +580,11 @@ namespace BSAG.IOCTalk.Common.Reflection
                 // add to main source
                 mainSource.Append(sbInvokeInfoMember);
                 mainSource.Append(methodSource);
+
+                methodInfoMemberNames.Add(invokeInfoMemberName);
             }
+
+            return methodInfoMemberNames;
         }
 
 
@@ -825,7 +833,11 @@ namespace BSAG.IOCTalk.Common.Reflection
 
         private static Func<object[], object> CompileConstructorParamDelegate(Type type, out Type[] paramTypes, out string[] paramNames, out ParameterInfo[] outParams, out ParameterInfo[] cParams)
         {
-            var constructor = type.GetConstructors().First();
+            var constructor = type.GetConstructors().FirstOrDefault();
+            if (constructor == null)
+            {
+                throw new TypeAccessException($"Could not find any constructor in type \"{type.FullName}\"; Assembly: {type.AssemblyQualifiedName}");
+            }
             cParams = constructor.GetParameters();
             bool containsOutParams = cParams.Where(p => p.IsOut).Any();
 

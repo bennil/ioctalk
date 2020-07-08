@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
+using BSAG.IOCTalk.Common.Interface.Container;
 
 namespace BSAG.IOCTalk.Common.Interface.Reflection
 {
@@ -15,7 +16,7 @@ namespace BSAG.IOCTalk.Common.Interface.Reflection
         /// Gets the interface method.
         /// </summary>
         MethodInfo InterfaceMethod { get; }
-        
+
         /// <summary>
         /// Gets the parameter infos.
         /// </summary>
@@ -39,15 +40,11 @@ namespace BSAG.IOCTalk.Common.Interface.Reflection
         /// </value>
         string QualifiedMethodName { get; }
 
+
         /// <summary>
-        /// Gets a value indicating whether this instance is async remote invoke.
-        /// If <c>true</c> IOC Talk will call the method non-blocking and activate the automatic message flow control who only expects a response if necessary (buffer full).
-        /// This is only valid on methods with return type "void". It can be specified with the <see cref="RemoteInvokeBehaviourAttribute"/> on the interface method or at the container host.
+        /// Gets a value indicating no return value method
         /// </summary>
-        /// <value>
-        /// 	<c>true</c> if this instance is async remote invoke; otherwise, <c>false</c>.
-        /// </value>
-        bool IsAsyncRemoteInvoke { get; set; }
+        bool IsVoidReturnMethod { get; }
 
         /// <summary>
         /// Gets a custom request timeout
@@ -61,5 +58,16 @@ namespace BSAG.IOCTalk.Common.Interface.Reflection
         /// <param name="parameters">The parameters.</param>
         /// <returns>System.Object.</returns>
         object Invoke(object instance, object[] parameters);
+
+
+        /// <summary>
+        /// Ioctalk will call the remote method without awaiting the response. The method will return immediately without blocking. This can be a great performance gain for mass remote calls.
+        /// To avoid flooding the receiver underlying communication implements a control flow (IsAsyncVoidSendCurrentlyPossible) to issue a sync call if the receiver needs more time to process.
+        /// This is only valid on methods with return type "void".
+        /// Async void calls do not propagate back thrown exceptions. Exceptions will only occur on receiver side (see error logging).        
+        /// </summary>
+        /// <param name="containerHost"></param>
+        /// <returns></returns>
+        bool IsAsyncVoidRemoteInvoke(IGenericContainerHost containerHost);
     }
 }

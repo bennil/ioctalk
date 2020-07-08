@@ -69,6 +69,6 @@ namespace BSAG.IOCTalk.Common.Interface.Container
         void RegisterExposedSubInterfaceForType(Type interfaceType, Type sourceType);
 
 
-        bool IsAsyncRemoteInvoke(Type type, string methodName);
+        bool IsAsyncVoidRemoteInvoke(Type type, string methodName);
     }
 }

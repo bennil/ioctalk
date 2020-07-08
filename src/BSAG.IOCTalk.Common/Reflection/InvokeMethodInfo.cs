@@ -5,6 +5,7 @@ using System.Text;
 using BSAG.IOCTalk.Common.Interface.Reflection;
 using System.Reflection;
 using BSAG.IOCTalk.Common.Attributes;
+using BSAG.IOCTalk.Common.Interface.Container;
 
 namespace BSAG.IOCTalk.Common.Reflection
 {
@@ -30,6 +31,10 @@ namespace BSAG.IOCTalk.Common.Reflection
         private MethodInfo implementationMethod;
         private string qualifiedMethodName;
         private TimeSpan? customTimeout;
+
+        private bool isAsyncVoidRemoteInvoke;
+        private bool isAsyncVoidRemoteInvokeResolved;
+        private bool isVoidReturnMethod;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -105,8 +110,7 @@ namespace BSAG.IOCTalk.Common.Reflection
                 this.outParameters = outParameterInfos.ToArray();
             }
 
-            // determine remote invoke behaviour
-            DetermineRemoteInvokeBehaviour(interfaceMethod);
+            isVoidReturnMethod = interfaceMethod.ReturnType.Equals(typeof(void));
         }
 
         /// <summary>
@@ -169,11 +173,6 @@ namespace BSAG.IOCTalk.Common.Reflection
                     }
                 }
             }
-
-            if (implementationMethod != null)
-            {
-                DetermineRemoteInvokeBehaviour(implementationMethod);
-            }
         }
 
         /// <summary>
@@ -228,20 +227,6 @@ namespace BSAG.IOCTalk.Common.Reflection
         }
 
 
-        /// <summary>
-        /// Gets a value indicating whether this instance is async remote invoke.
-        /// If <c>true</c> IOC Talk will call the method non-blocking and activate the automatic message flow control who only expects a response if necessary (buffer full).
-        /// This is only valid on methods with return type "void". It can be specified with the <see cref="RemoteInvokeBehaviourAttribute"/> on the interface method.
-        /// </summary>
-        /// <value>
-        /// 	<c>true</c> if this instance is async remote invoke; otherwise, <c>false</c>.
-        /// </value>
-        public bool IsAsyncRemoteInvoke
-        {
-            get { return isAsyncRemoteInvoke; }
-            set { isAsyncRemoteInvoke = value; }
-        }
-
 
         /// <summary>
         /// Gets the method name including the type parameters.
@@ -256,6 +241,9 @@ namespace BSAG.IOCTalk.Common.Reflection
 
         public TimeSpan? CustomTimeout => customTimeout;
 
+        public bool IsVoidReturnMethod => isVoidReturnMethod;
+
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -263,45 +251,6 @@ namespace BSAG.IOCTalk.Common.Reflection
         // ----------------------------------------------------------------------------------------
         // InvokeMethodInfo methods
         // ----------------------------------------------------------------------------------------
-
-        private void DetermineRemoteInvokeBehaviour(MethodInfo methodInfo)
-        {
-            object[] invokeBehaviourAttributes = methodInfo.GetCustomAttributes(typeof(RemoteInvokeBehaviourAttribute), true);
-            if (invokeBehaviourAttributes.Length > 0)
-            {
-                RemoteInvokeBehaviourAttribute remoteInvokeBehv = (RemoteInvokeBehaviourAttribute)invokeBehaviourAttributes[0];
-
-                if (methodInfo.ReturnType == typeof(void) && this.outParameters == null)
-                {
-                    this.isAsyncRemoteInvoke = remoteInvokeBehv.IsAsyncRemoteInvoke;
-                }
-            }
-        }
-
-        ///// <summary>
-        ///// Creates a unique key for caching.
-        ///// </summary>
-        ///// <param name="interfaceType">Type of the interface.</param>
-        ///// <param name="methodName">Name of the method.</param>
-        ///// <param name="parameterTypes">The parameter types.</param>
-        ///// <returns></returns>
-        //public static string CreateKey(Type interfaceType, string methodName)
-        //{
-        //    return CreateKey(interfaceType, methodName, null);
-        //}
-
-        ///// <summary>
-        ///// Creates a unique key for caching.
-        ///// </summary>
-        ///// <param name="interfaceType">Type of the interface.</param>
-        ///// <param name="methodName">Name of the method.</param>
-        ///// <param name="parameterTypes">The parameter types.</param>
-        ///// <param name="implementationType">Type of the implementation.</param>
-        ///// <returns></returns>
-        //public static string CreateKey(Type interfaceType, string methodName, Type implementationType)
-        //{
-        //    return CreateKey(interfaceType.FullName, methodName, implementationType);
-        //}
 
         /// <summary>
         ///Creates a unique key for caching.
@@ -328,6 +277,25 @@ namespace BSAG.IOCTalk.Common.Reflection
         public object Invoke(object instance, object[] parameters)
         {
             return interfaceMethodInvoker.Invoke(instance, parameters);
+        }
+
+        /// <summary>
+        /// Ioctalk will call the remote method without awaiting the response. The method will return immediately without blocking. This can be a great performance gain for mass remote calls.
+        /// To avoid flooding the receiver underlying communication implements a control flow (IsAsyncVoidSendCurrentlyPossible) to issue a sync call if the receiver needs more time to process.
+        /// This is only valid on methods with return type "void".
+        /// Async void calls do not propagate back thrown exceptions. Exceptions will only occur on receiver side (see error logging).    
+        /// </summary>
+        /// <param name="containerHost"></param>
+        /// <returns></returns>
+        public bool IsAsyncVoidRemoteInvoke(IGenericContainerHost containerHost)
+        {
+            if (!isAsyncVoidRemoteInvokeResolved)
+            {
+                isAsyncVoidRemoteInvoke = containerHost.IsAsyncVoidRemoteInvoke(InterfaceMethod.DeclaringType, InterfaceMethod.Name);
+                isAsyncVoidRemoteInvokeResolved = true;
+            }
+
+            return isAsyncVoidRemoteInvoke;
         }
 
         // ----------------------------------------------------------------------------------------

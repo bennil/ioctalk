@@ -44,7 +44,7 @@ namespace BSAG.IOCTalk.Composition
         internal static object syncObj = new object();
         private Dictionary<Type, Type> exposedSubInterfaceTypeMapping;
         private Dictionary<Type, Type> exposedSubInterfaceTypeMappingInterfToClass;
-        private Dictionary<Type, List<string>> asyncMethods = null;
+        private Dictionary<Type, List<string>> asyncVoidMethods = null;
         private ILogger logger;
         private ISession currentSession;
         private IContract currentContract;
@@ -843,20 +843,27 @@ namespace BSAG.IOCTalk.Composition
             localShare.RaiseManualServiceCreated<T>(serviceInstance);
         }
 
-        public void RegisterAsyncMethod<InterfaceType>(string methodName)
+        /// <summary>
+        /// Ioctalk will call the remote method without awaiting the response. The method will return immediately without blocking. This can be a great performance gain for mass remote calls.
+        /// To avoid flooding the receiver underlying communication implements a control flow (IsAsyncVoidSendCurrentlyPossible) to issue a sync call if the receiver needs more time to process.
+        /// This is only valid on methods with return type "void".
+        /// Async void calls do not propagate back thrown exceptions. Exceptions will only occur on receiver side (see error logging).
+        /// </summary>
+        /// <typeparam name="InterfaceType">The interface type</typeparam>
+        /// <param name="methodName">The void method name</param>
+        public void RegisterAsyncVoidMethod<InterfaceType>(string methodName)
         {
             lock (syncObj)
             {
-                if (asyncMethods == null)
-                    asyncMethods = new Dictionary<Type, List<string>>();
+                if (asyncVoidMethods == null)
+                    asyncVoidMethods = new Dictionary<Type, List<string>>();
 
-                //todo: handle / include command parameters
 
                 List<string> methods;
-                if (!asyncMethods.TryGetValue(typeof(InterfaceType), out methods))
+                if (!asyncVoidMethods.TryGetValue(typeof(InterfaceType), out methods))
                 {
                     methods = new List<string>();
-                    asyncMethods.Add(typeof(InterfaceType), methods);
+                    asyncVoidMethods.Add(typeof(InterfaceType), methods);
                 }
 
                 if (!methods.Contains(methodName))
@@ -864,13 +871,13 @@ namespace BSAG.IOCTalk.Composition
             }
         }
 
-        public bool IsAsyncRemoteInvoke(Type type, string methodName)
+        public bool IsAsyncVoidRemoteInvoke(Type type, string methodName)
         {
-            if (asyncMethods == null)
+            if (asyncVoidMethods == null)
                 return false;
 
             List<string> methods;
-            if (asyncMethods.TryGetValue(type, out methods))
+            if (asyncVoidMethods.TryGetValue(type, out methods))
             {
                 return methods.Contains(methodName);
             }

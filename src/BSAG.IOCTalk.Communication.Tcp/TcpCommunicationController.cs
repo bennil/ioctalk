@@ -530,7 +530,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// <returns>
         ///   <c>true</c> if [is async send currently possible] [the specified session]; otherwise, <c>false</c>.
         /// </returns>
-        public bool IsAsyncSendCurrentlyPossible(ISession session)
+        public bool IsAsyncVoidSendCurrentlyPossible(ISession session)
         {
             return !communication.IsSendBufferUnderPressure(session.SessionId);
         }
