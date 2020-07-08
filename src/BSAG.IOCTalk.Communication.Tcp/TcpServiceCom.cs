@@ -209,7 +209,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
             foreach (var client in clients.Values)
             {
-                Close(client);
+                Close(client, "Close client");
             }
 
             clients.Clear();

@@ -165,9 +165,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
                 this.client = new Client(this.socket, new NetworkStream(this.socket), new ConcurrentQueue<IGenericMessage>(), socket.LocalEndPoint, socket.RemoteEndPoint, Logger);
 
-                StartReceivingData(client);
-
                 OnConnectionEstablished(client);
+
+                StartReceivingData(client);
             }
             catch (Exception ex)
             {
@@ -222,7 +222,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             if (client != null)
             {
-                this.Close(client);
+                this.Close(client, "Close");
 
                 if (client.queueReceivedPackets != null)
                 {

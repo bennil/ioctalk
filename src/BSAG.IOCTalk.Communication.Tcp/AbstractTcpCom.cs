@@ -194,7 +194,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// <summary>
         /// Closes the TCP Connection.
         /// </summary>
-        public virtual void Close(Client client)
+        public virtual void Close(Client client, string source)
         {
             if (client != null
                 && client.socket != null
@@ -204,7 +204,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
                 client.socket.Close();
 
-                OnConnectionClosed(client);
+                OnConnectionClosed(client, source);
             }
         }
 
@@ -269,14 +269,14 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     else
                     {
                         // Connection closed
-                        Close(state.Client);
+                        Close(state.Client, "OnReceiveDataAsync rc: " + bytesReadCount);
                         return;
                     }
                 }
 
                 if (!state.Client.socket.Connected)
                 {
-                    Close(state.Client);
+                    Close(state.Client, "OnReceiveDataAsync state");
                     return;
                 }
             }
@@ -290,13 +290,13 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 }
                 else if (ioEx.InnerException is ObjectDisposedException)
                 {
-                    Close(state.Client);
+                    Close(state.Client, nameof(ObjectDisposedException));
                 }
                 else
                 {
                     Logger.Error(ioEx.ToString());
 
-                    Close(state.Client);
+                    Close(state.Client, $"{nameof(IOException)} {ioEx.Message}");
                 }
             }
             catch (SocketException socketEx)
@@ -306,18 +306,18 @@ namespace BSAG.IOCTalk.Communication.Tcp
             catch (OperationCanceledException)
             {
                 /* connection closed exception */
-                Close(state.Client);
+                Close(state.Client, nameof(OperationCanceledException));
             }
             catch (ObjectDisposedException)
             {
                 /* connection closed exception */
-                Close(state.Client);
+                Close(state.Client, nameof(ObjectDisposedException));
             }
             catch (Exception ex)
             {
                 Logger.Error(ex.ToString());
 
-                Close(state.Client);
+                Close(state.Client, $"{ex.GetType().Name} {ex.Message}");
             }
         }
 
@@ -330,12 +330,15 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 case SocketError.ConnectionAborted:
                 case SocketError.ConnectionReset:
                 case SocketError.Disconnecting:
-                    Close(state.Client);
+                case SocketError.NetworkDown:
+                case SocketError.NetworkUnreachable:
+                case SocketError.NetworkReset:
+                    Close(state.Client, $"{nameof(SocketException)} ErrorCode: {errorCode}");
                     break;
 
                 default:
                     Logger.Error(sockEx.ToString());
-                    Close(state.Client);
+                    Close(state.Client, $"{nameof(SocketException)} ErrorCode: {errorCode}");
                     break;
             }
         }
@@ -397,9 +400,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// Called when [connection closed].
         /// </summary>
         /// <param name="client">The client.</param>
-        internal void OnConnectionClosed(Client client)
+        internal void OnConnectionClosed(Client client, string source)
         {
-            Logger.Info(string.Format("Tcp client connection \"{0}\" closed", client.RemoteEndPoint.ToString()));
+            Logger.Info($"Tcp client connection \"{client.RemoteEndPoint}\" closed - Source: {source}");
 
             if (connectionClosed != null)
             {

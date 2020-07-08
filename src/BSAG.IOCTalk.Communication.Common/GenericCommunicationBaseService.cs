@@ -875,15 +875,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 ISession session;
                 if (!sessionDictionary.TryGetValue(sessionId, out session))
                 {
-                    if (Interlocked.Read(ref pendingSessionCreationCount) > 0)
-                    {
-                        // wait for pending session creation
-                        while (Interlocked.Read(ref pendingSessionCreationCount) > 0)
-                            Thread.Sleep(50);
-
-                        // recheck session existance
-                        sessionDictionary.TryGetValue(sessionId, out session);
-                    }
+                    WaitForPendingSessionById(sessionId, out session);
 
                     if (session == null)
                     {
@@ -911,6 +903,8 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
+
+
         /// <summary>
         /// Processes the received message bytes.
         /// </summary>
@@ -923,15 +917,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 ISession session;
                 if (!sessionDictionary.TryGetValue(sessionId, out session))
                 {
-                    if (Interlocked.Read(ref pendingSessionCreationCount) > 0)
-                    {
-                        // wait for pending session creation
-                        while (Interlocked.Read(ref pendingSessionCreationCount) > 0)
-                            Thread.Sleep(50);
-
-                        // recheck session existance
-                        sessionDictionary.TryGetValue(sessionId, out session);
-                    }
+                    WaitForPendingSessionById(sessionId, out session);
 
                     if (session == null)
                     {
@@ -967,9 +953,11 @@ namespace BSAG.IOCTalk.Communication.Common
                     logger.Debug($"Wait for pending session {session.SessionId}");
 
                 DateTime startWaitTime = DateTime.UtcNow;
+                bool warnLogged = false;
                 while (!session.IsInitialized)
                 {
-                    if ((DateTime.UtcNow - startWaitTime).TotalSeconds > 20)
+                    var timeDiff = (DateTime.UtcNow - startWaitTime);
+                    if (timeDiff.TotalSeconds > 20)
                     {
                         if (session.PendingRequests.Count > 0)
                         {
@@ -980,9 +968,54 @@ namespace BSAG.IOCTalk.Communication.Common
                             throw new TimeoutException("Session creation wait timeout occured!");
                         }
                     }
+                    else if (timeDiff.TotalSeconds > 3
+                        && !warnLogged)
+                    {
+                        logger.Warn($"Long waiting for session initialization! Session Id {session.SessionId}");
+                        warnLogged = true;
+                    }
 
                     Thread.Sleep(50);
                 }
+
+                if (warnLogged)
+                {
+                    logger.Info($"Pending session creation (SID: {session.SessionId}) initialization completed. Continue processing");
+                }
+            }
+        }
+
+        private void WaitForPendingSessionById(int sessionId, out ISession session)
+        {
+            if (Interlocked.Read(ref pendingSessionCreationCount) > 0)
+            {
+                DateTime startUtc = DateTime.UtcNow;
+                bool warnLogged = false;
+
+                // wait for pending session creation
+                while (Interlocked.Read(ref pendingSessionCreationCount) > 0)
+                {
+                    Thread.Sleep(50);
+
+                    if ((DateTime.UtcNow - startUtc).TotalSeconds > 3
+                        && !warnLogged)
+                    {
+                        logger.Warn($"Long pending session creation! Waiting for session Id {sessionId}");
+                        warnLogged = true;
+                    }
+                }
+
+                if (warnLogged)
+                {
+                    logger.Info($"Pending session creation completed. Continue processing");
+                }
+
+                // recheck session existance
+                sessionDictionary.TryGetValue(sessionId, out session);
+            }
+            else
+            {
+                session = null;
             }
         }
 
@@ -1009,14 +1042,14 @@ namespace BSAG.IOCTalk.Communication.Common
 
                         case InvokeThreadModel.ReceiverThread:
                             // call method directly in this receiver thread
-                            CallLocalMethod(session, message);
+                            CallReceivedMethod(session, message);
                             break;
 
                         case InvokeThreadModel.IndividualTask:
                             // invoke in new task
-                            Task.Factory.StartNew(() =>
+                            Task.Run(() =>
                             {
-                                CallLocalMethod(session, message);
+                                CallReceivedMethod(session, message);
                             });
                             break;
                     }
@@ -1113,7 +1146,7 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
-        private void CallLocalMethod(ISession session, IGenericMessage message)
+        private void CallReceivedMethod(ISession session, IGenericMessage message)
         {
 
             try
@@ -1227,6 +1260,10 @@ namespace BSAG.IOCTalk.Communication.Common
                 {
                     logger.Warn($"Could not error respond to request id {message.RequestId} because of session id {session.SessionId} connection loss");
                 }
+                catch (Exception exSendEx)
+                {
+                    logger.Warn($"Exception during send response exception back to client! Details: {exSendEx}");
+                }
             }
         }
 
@@ -1266,7 +1303,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
                 foreach (var invokeItem in callerQueue.GetConsumingEnumerable())
                 {
-                    CallLocalMethod(invokeItem.Item1, invokeItem.Item2);
+                    CallReceivedMethod(invokeItem.Item1, invokeItem.Item2);
                 }
             }
             catch (Exception ex)
@@ -1340,7 +1377,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 Tuple<ISession, IGenericMessage> invokeItem;
                 if (callerQueue.TryDequeue(out invokeItem))
                 {
-                    CallLocalMethod(invokeItem.Item1, invokeItem.Item2);
+                    CallReceivedMethod(invokeItem.Item1, invokeItem.Item2);
                     return true;
                 }
             }

@@ -14,6 +14,11 @@ namespace BSAG.IOCTalk.Test.Common.Service
 
         public static int InstanceCount { get; set; }
 
+        public void DataMethod(int id, DateTime time, string data)
+        {
+            throw new NotImplementedException();
+        }
+
         public void RandomMethod()
         {
             throw new NotImplementedException();

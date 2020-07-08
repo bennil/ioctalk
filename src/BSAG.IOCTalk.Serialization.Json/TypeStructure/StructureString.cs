@@ -120,8 +120,8 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                     // escaped quotation mark
 
                     // check if value ends with the escape char
-                    if (json[endValueIndex + 1] == Structure.CharRightBrace
-                        || (json[endValueIndex + 1] == Structure.CharComma
+                    if (//json[endValueIndex + 1] == Structure.CharRightBrace || // removed because of false end recognition in case of escaped json string
+                        (json[endValueIndex + 1] == Structure.CharComma
                             && json.Length > endValueIndex + 3
                             && json[endValueIndex + 2] == Structure.CharQuotationMark
                             )

@@ -189,6 +189,7 @@ namespace BSAG.IOCTalk.Common.Test
 
         public CreateSessionHandler CustomCreateSessionHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public InvokeThreadModel InvokeThreadModel { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public TimeSpan RequestTimeout { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public event EventHandler<SessionEventArgs> SessionCreated;
         public event EventHandler<SessionEventArgs> SessionTerminated;
