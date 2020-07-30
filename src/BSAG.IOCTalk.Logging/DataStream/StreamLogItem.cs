@@ -48,7 +48,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="messageDataString">The message data string.</param>
         public StreamLogItem(int sessionId, bool isReceive, string messageDataString)
         {
-            this.Time = DateTime.Now;
+            this.Time = DateTime.UtcNow;
             this.SessionId = sessionId;
             this.IsReceive = isReceive;
             this.MessageDataString = messageDataString;

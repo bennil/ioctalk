@@ -26,6 +26,12 @@ namespace BSAG.IOCTalk.Logging.DataStream
     {
         #region fields
 
+        public const string DataStreamFilenamePrefix = "DataStream_";
+
+        public const string LoggerStoppedTag = "[Logger Stopped]";
+        public const string SessionCreatedTag = "Session Created";
+        public const string SessionTerminatedTag = "Session Terminated";
+
         private string name;
         private bool isProcessingStoreLogData = false;
         private ConcurrentQueue<StreamLogItem> dataStreamQueue = null;
@@ -38,6 +44,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         private ILogger log;
         private string targetDir = @"." + Path.DirectorySeparatorChar + "IOCTalk-DataStreamLogs";
 		private RawMessageFormat messageFormat;
+        private IGenericCommunicationService source;
 
         #endregion
 
@@ -75,6 +82,29 @@ namespace BSAG.IOCTalk.Logging.DataStream
             set { keepStreamLogsDays = value; }
         }
 
+        /// <summary>
+        /// Gets the assigned logger name
+        /// </summary>
+        public string Name
+        {
+            get { return name; }
+        }
+
+        /// <summary>
+        /// Gets the current target file path or null
+        /// </summary>
+        public string CurrentTargetFilePath
+        {
+            get { return targetFilePath; }
+        }
+
+        /// <summary>
+        /// Gets the assigned communication service source
+        /// </summary>
+        public IGenericCommunicationService CommunicationSource
+        {
+            get { return source; }
+        }
 
         #endregion
 
@@ -89,6 +119,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="configXml">The config XML.</param>
         public void Init(IGenericCommunicationService source, string loggerName, XElement configXml)
         {
+            this.source = source;
             this.log = source.Logger;
             this.name = loggerName;
             this.messageFormat = source.Serializer.MessageFormat;
@@ -191,7 +222,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="session"></param>
         public void OnSessionCreated(ISession session)
         {
-            string sessionInfo = string.Format("Session Created - ID: {0}; Description: {1}; Format: {2}", session.SessionId, session.Description, this.messageFormat);
+            string sessionInfo = $"{SessionCreatedTag} - ID: {session.SessionId}; Description: {session.Description}; Format: {this.messageFormat}";
 
             dataStreamQueue.Enqueue(new StreamLogItem(session.SessionId, true, sessionInfo));
         }
@@ -202,7 +233,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="session"></param>
         public void OnSessionTerminated(ISession session)
         {
-            string sessionInfo = string.Format("Session Terminated - ID: {0}", session.SessionId);
+            string sessionInfo = $"{SessionTerminatedTag} - ID: {session.SessionId}";
 
             dataStreamQueue.Enqueue(new StreamLogItem(session.SessionId, true, sessionInfo));
         }
@@ -223,7 +254,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
 
                     DeleteOldLogFiles(targetDir);
 
-                    targetFilePath = Path.Combine(targetDir, string.Concat("DataStream_", name, "_", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-ffff"), ".dlog"));
+                    targetFilePath = Path.Combine(targetDir, string.Concat(DataStreamFilenamePrefix, name, "_", DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss-ffff"), ".dlog"));
 
                     log.Info(string.Format("Log data stream in \"{0}\"", targetFilePath));
 
@@ -251,7 +282,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
                                 if (stopSignal.WaitOne(storeWaitInterval))
                                 {
                                     // stop signal received
-                                    var stopLogger = new StreamLogItem(0, true, "[Logger Stopped]");
+                                    var stopLogger = new StreamLogItem(0, true, LoggerStoppedTag);
                                     sw.WriteLine(stopLogger.CreateLogString());
                                     sw.Flush();
 
@@ -273,6 +304,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
             finally
             {
                 isProcessingStoreLogData = false;
+                targetFilePath = null;
             }
         }
 
@@ -281,7 +313,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         {
             try
             {
-                DateTime deleteTimeLimit = DateTime.Now.AddDays(-keepStreamLogsDays);
+                DateTime deleteTimeLimit = DateTime.UtcNow.AddDays(-keepStreamLogsDays);
 
                 string[] files = Directory.GetFiles(directory, "*.dlog");
 
@@ -289,13 +321,13 @@ namespace BSAG.IOCTalk.Logging.DataStream
                 {
                     string file = files[i];
 
-                    DateTime lastWriteTime = File.GetLastWriteTime(file);
+                    DateTime lastWriteTimeUtc = File.GetLastWriteTimeUtc(file);
 
-                    if (lastWriteTime < deleteTimeLimit)
+                    if (lastWriteTimeUtc < deleteTimeLimit)
                     {
                         File.Delete(file);
 
-                        log.Info(string.Format("Old data stream file \"{0}\" from {1} deleted", file, lastWriteTime));
+                        log.Info(string.Format("Old data stream file \"{0}\" from {1} UTC deleted", file, lastWriteTimeUtc));
                     }
                 }
             }

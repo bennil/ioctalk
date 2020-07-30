@@ -564,7 +564,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                             // check data border byte
                             if (source[startIndex] != DataBorderControlByte)
                             {
-                                throw new InvalidOperationException("Message data end mark not found! Unexpected byte: " + source[startIndex]);
+                                ThrowDataEndMarkException("Append", source, startIndex, msg.Length);
                             }
 
                             return msg;
@@ -604,7 +604,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
                             startIndex = index;
 
-                            if (dataLength > sourceDataLength)
+                            if (dataLength > sourceDataLength
+                                || length == index)    // received byte length ends exactly at payload end (separator byte still expected)
                             {
                                 // first message part read
                                 pendingMessage = unusedSharedMessage;
@@ -619,21 +620,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                                 // check data border byte
                                 if (source[startIndex] != DataBorderControlByte)
                                 {
-                                    if (length == data.Length + StartMessageControlByteCount)
-                                    {
-                                        // end separator not transferred yet > create pending message
-                                        pendingMessage = unusedSharedMessage;
-                                        pendingMessage.MessageFormat = RawMessageFormat.IncompleteControlDataSlice;
-                                        byte[] messageWithoutEndTag = new byte[length];
-                                        Array.Copy(source, oldStartIndex, messageWithoutEndTag, 0, length);
-                                        pendingMessage.Data = messageWithoutEndTag;
-                                        pendingMessage.Length = length;
-                                        return null;    // skip and wait for end tag
-                                    }
-                                    else
-                                    {
-                                        throw new InvalidOperationException("Message data end mark not found! Unexpected byte: " + source[startIndex]);
-                                    }
+                                    ThrowDataEndMarkException($"param length: {length}; data.Length: {data.Length}; source.Length: {source.Length}", source, startIndex, data.Length);
                                 }
                                 startIndex++;
 
@@ -673,6 +660,14 @@ namespace BSAG.IOCTalk.Communication.Tcp
             }
 
             return null;
+        }
+
+        private static void ThrowDataEndMarkException(string additionalInfo, byte[] source, int startIndex, int length)
+        {
+            throw new InvalidOperationException($@"Message data end mark not found! Unexpected byte: {source[startIndex]}; startIndex: {startIndex}; Length: {length}; AdditionalInfo: {additionalInfo}; 
+Msg data hex: {BitConverter.ToString(source, 0, length)}
+
+Msg data utf8: {Encoding.UTF8.GetString(source, 0, length)}");
         }
 
         #endregion
