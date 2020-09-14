@@ -118,6 +118,11 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         /// </summary>
         public TimeSpan ResendSuspensionGracePeriod { get; set; } = TimeSpan.FromSeconds(3);
 
+        /// <summary>
+        /// Delay to allow current realtime calls
+        /// </summary>
+        public TimeSpan ResendSuspensionDelay { get; set; } = TimeSpan.FromMilliseconds(300);
+
         public bool DebugLogResendMessages { get; set; } = false;
 
         /// <summary>
@@ -415,7 +420,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                                             // check if resend must be delayed because of recent realtime call
                                             if (lastActiveInvokeUtc.HasValue && (DateTime.UtcNow - lastActiveInvokeUtc.Value) < ResendSuspensionGracePeriod)
                                             {
-                                                await Task.Delay(ResendSuspensionGracePeriod);
+                                                await Task.Delay(ResendSuspensionDelay);
                                             }
 
                                             if (DebugLogResendMessages)
