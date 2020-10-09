@@ -146,6 +146,150 @@ namespace BSAG.IOCTalk.Common.Test
         }
 
 
+        [Fact]
+        public void TestPersistentTransactionContext_LooseConnDuringSend()
+        {
+            IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
+
+            PersistentTestCommService dummyCom = new PersistentTestCommService();
+            dummyCom.RaiseConnectionLost = true;
+
+            PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
+            persistComm.ResendDelay = TimeSpan.Zero;
+            persistComm.ResendSuspensionDelay = TimeSpan.Zero;
+            persistComm.ResendSuspensionGracePeriod = TimeSpan.Zero;
+
+            
+            TransactionDefinition trxDef = new TransactionDefinition("Test Transaction");
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.StartTransactionTest))
+                        .RegisterTransactionBegin(trxDef)
+                        .RegisterResendAction(new TrxResendActionUseReturnValue("testSessionId"));
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.PushTrxData))
+                        .RegisterTransaction(trxDef);
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.CompleteTransactionTest))
+                        .RegisterTransactionCommit(trxDef);
+
+            persistComm.RegisterContainerHost(talkCompositionHost, null);
+            persistComm.Init();
+
+            CleanupPeristentDirectory(persistComm);
+
+            dummyCom.RaiseConnectionLost = false;
+            dummyCom.RaiseConnectionCreated();
+
+            InvokeMethodInfo mInfoBeginTrx = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.StartTransactionTest));
+            InvokeMethodInfo mInfoTrxData = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.PushTrxData));
+            InvokeMethodInfo mInfoTrxCommit = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.CompleteTransactionTest));
+
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            Guid startTrxReturn = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
+
+            // loose connection
+            persistComm.RealUnderlyingSession.Close();
+
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
+            persistComm.InvokeMethod(this, mInfoTrxCommit, session, new object[] { startTrxReturn });  // transaction commit
+
+            // raise connection again
+            var firstOnlineCallGuid = dummyCom.TransactionTestGuid;
+            dummyCom.TransactionTestGuid = Guid.NewGuid(); // set new Guid
+            dummyCom.RaiseConnectionCreated();
+
+            // wait until local pending messages are processed
+            Thread.Sleep(500);
+
+            // 8 calls = 3 online transaction till first conn lost + 5 calls on complete transaction resend
+            Assert.Equal(8, dummyCom.InvokeCounter);
+
+            // expect 6 parameter valus (8 - 2 x Start method)
+            Assert.Equal(6, dummyCom.ReceivedParameterList.Count);
+            for (int i = 0; i < dummyCom.ReceivedParameterList.Count; i++)
+            {
+                var itemArr = dummyCom.ReceivedParameterList[i];
+
+                if (i <= 1)
+                {
+                    Assert.Equal(firstOnlineCallGuid, itemArr[0]);
+                }
+                else
+                {
+                    // expect new guid for complete transaction resend
+                    Assert.Equal(dummyCom.TransactionTestGuid, itemArr[0]);
+                }
+            }
+        }
+
+
+
+        [Fact]
+        public void TestPersistentTransactionContext_CompleteOnlineTransactionCalls_NoResendExpected()
+        {
+            IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
+
+            PersistentTestCommService dummyCom = new PersistentTestCommService();
+            dummyCom.RaiseConnectionLost = true;
+
+            PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
+            persistComm.ResendDelay = TimeSpan.Zero;
+            persistComm.ResendSuspensionDelay = TimeSpan.Zero;
+            persistComm.ResendSuspensionGracePeriod = TimeSpan.Zero;
+
+
+            TransactionDefinition trxDef = new TransactionDefinition("Test Transaction");
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.StartTransactionTest))
+                        .RegisterTransactionBegin(trxDef)
+                        .RegisterResendAction(new TrxResendActionUseReturnValue("testSessionId"));
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.PushTrxData))
+                        .RegisterTransaction(trxDef);
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.CompleteTransactionTest))
+                        .RegisterTransactionCommit(trxDef);
+
+            persistComm.RegisterContainerHost(talkCompositionHost, null);
+            persistComm.Init();
+
+            CleanupPeristentDirectory(persistComm);
+
+            dummyCom.RaiseConnectionLost = false;
+            dummyCom.RaiseConnectionCreated();
+
+            InvokeMethodInfo mInfoBeginTrx = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.StartTransactionTest));
+            InvokeMethodInfo mInfoTrxData = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.PushTrxData));
+            InvokeMethodInfo mInfoTrxCommit = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.CompleteTransactionTest));
+
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            Guid startTrxReturn = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
+            persistComm.InvokeMethod(this, mInfoTrxCommit, session, new object[] { startTrxReturn });  // transaction commit
+
+            // loose connection
+            persistComm.RealUnderlyingSession.Close();
+
+            //Thread.Sleep(100);
+
+            // raise connection again
+            dummyCom.RaiseConnectionCreated();
+
+            // wait until local pending messages are processed
+            Thread.Sleep(500);
+
+            // 5 calls = 5 online transaction calls till first conn lost. No resend expected because commit mehtod was successfully executed during active connection.
+            Assert.Equal(5, dummyCom.InvokeCounter);
+
+            // expect 4 parameter values (- start method)
+            Assert.Equal(4, dummyCom.ReceivedParameterList.Count);
+            Assert.Equal(dummyCom.TransactionTestGuid, dummyCom.ReceivedParameterList[0][0]);
+        }
+
 
         private static void CleanupPeristentDirectory(PersistentClientCommunicationHost persistComm)
         {

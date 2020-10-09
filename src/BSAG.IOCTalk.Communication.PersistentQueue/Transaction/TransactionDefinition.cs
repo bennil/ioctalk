@@ -5,7 +5,7 @@ using System.Text;
 namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
 {
     /// <summary>
-    /// todo: incomplete transaction implementation > current implementation only transaction context value focused!
+    /// The transaction definition specifies all methods combined as transaction context.
     /// </summary>
     public class TransactionDefinition
     {
@@ -41,7 +41,6 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
 
         internal void CommitTransaction()
         {
-            // todo: set sent flag in files
             currentTrx.Dispose();
             currentTrx = null;
         }

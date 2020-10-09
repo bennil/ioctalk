@@ -15,6 +15,7 @@ using BSAG.IOCTalk.Common.Reflection;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Linq;
+using BSAG.IOCTalk.Communication.PersistentQueue.Transaction;
 
 namespace BSAG.IOCTalk.Communication.PersistentQueue
 {
@@ -22,8 +23,9 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
     {
         private IGenericCommunicationService underlyingCom;
         private Dictionary<Type, Dictionary<string, PersistentMethod>> persistentMethods = new Dictionary<Type, Dictionary<string, PersistentMethod>>();
+        private string persistMsgFilePath;
         private FileStream persistMsgFile;
-        private object syncLock = new object();
+        internal static object syncLock = new object();
         private EventHandler<SessionEventArgs> fictionalSessionCreatedEvent;
         private EventHandler<SessionEventArgs> sessionCreatedBeforeResendEvent;
         private EventHandler<SessionEventArgs> fictionalSessionTerminatedEvent;
@@ -37,8 +39,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         private int resendTryCount = 1;
         private DateTime? lastResendTryUtc = null;
 
-        private const byte NotSendByte = 1;
-        private const byte AlreadySentByte = 2;
+        internal const byte NotSendByte = 1;
+        internal const byte AlreadySentByte = 2;
 
         private static readonly byte[] AlreadySentByteArr = new byte[] { AlreadySentByte };
 
@@ -138,6 +140,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
         public TimeSpan RequestTimeout { get => underlyingCom.RequestTimeout; set => underlyingCom.RequestTimeout = value; }
 
+        public ISession RealUnderlyingSession => realUnderlyingSession;
+
         public PersistentMethod RegisterPersistentMethod<InterfaceT>(string methodName)
         {
             return RegisterPersistentMethod(typeof(InterfaceT), methodName);
@@ -187,6 +191,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                     {
                         persistMsgFile.Close();
                         persistMsgFile = null;
+                        persistMsgFilePath = null;
 
                         Logger.Debug("Current pending file closed");
                     }
@@ -239,7 +244,31 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 {
                     lastActiveInvokeUtc = DateTime.UtcNow;
 
-                    return underlyingCom.InvokeMethod(source, invokeInfo, realSession, parameters);
+                    if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out PersistentMethod pm))
+                    {
+                        if (pm.Transaction != null)
+                        {
+                            PersistPendingMethodInvoke(invokeInfo, parameters, pm, true);
+                        }
+                    }
+
+                    var returnValue = underlyingCom.InvokeMethod(source, invokeInfo, realSession, parameters);
+
+                    if (pm != null
+                        && pm.Transaction != null
+                        && pm.Transaction.CurrentTransaction != null
+                        && pm.Transaction.CommitTransactionMethod == pm)
+                    {
+                        // all methods are sent > commit online transaction
+                        if (pm.Transaction.CurrentTransaction.SendIndicatorStreamPositions.Count > 0)
+                        {
+                            // commit succesfully > mark all transaction send flags as sent
+                            pm.Transaction.CurrentTransaction.FlagTransactionMethodsSuccess();
+                        }
+                        pm.Transaction.CommitTransaction();
+                    }
+
+                    return returnValue;
                 }
                 catch (TimeoutException timeoutEx)
                 {
@@ -268,11 +297,11 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                     }
                 }
             }
-            else if (IsPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name))
+            else if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out PersistentMethod persMeth))
             {
                 // persist async request in file
                 // continue processing
-                return PersistPendingMethodInvoke(invokeInfo, parameters);
+                return PersistPendingMethodInvoke(invokeInfo, parameters, persMeth, false);
             }
             else
             {
@@ -297,10 +326,10 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
         private object PersistOrThrow(IInvokeMethodInfo invokeInfo, object[] parameters, Exception exception)
         {
-            if (IsPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name))
+            if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out PersistentMethod pm))
             {
                 // persist
-                return PersistPendingMethodInvoke(invokeInfo, parameters);
+                return PersistPendingMethodInvoke(invokeInfo, parameters, pm, false);
             }
             else
             {
@@ -308,8 +337,20 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
         }
 
-        private object PersistPendingMethodInvoke(IInvokeMethodInfo invokeInfo, object[] parameters)
+
+        private object PersistPendingMethodInvoke(IInvokeMethodInfo invokeInfo, object[] parameters, PersistentMethod persistentMeth, bool isOnlineTry)
         {
+            if (persistentMeth.Transaction != null
+                && isOnlineTry)
+            {
+                // always save persistent transaction methods to replay all methods no matter where it failed
+                if (persistentMeth.Transaction.BeginTransactionMethod == persistentMeth)
+                {
+                    // online transaction start
+                    persistentMeth.Transaction.BeginTransaction();
+                }
+            }
+
             GenericMessage pMsg = new GenericMessage(0, invokeInfo, parameters, false);
 
             byte[] msgBytes = underlyingCom.Serializer.SerializeToBytes(pMsg, this);
@@ -326,17 +367,35 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                         if (!Directory.Exists(dir))
                             Directory.CreateDirectory(dir);
 
-                        string path = Path.Combine(dir, $"MessageStore-{t.ToString("yyyyMMdd_HHmmss_ffff")}.pend");
+                        this.persistMsgFilePath = Path.Combine(dir, $"MessageStore-{t.ToString("yyyyMMdd_HHmmss_ffff")}.pend");
 
-                        persistMsgFile = new FileStream(path, FileMode.Append, FileAccess.Write);
+                        persistMsgFile = new FileStream(persistMsgFilePath, FileMode.Append, FileAccess.Write);
                     }
 
+                    if (isOnlineTry && persistentMeth.Transaction != null && persistentMeth.Transaction.CurrentTransaction != null)
+                    {
+                        // after succesfully send set "sent indicator" position to flag all if transaction is comitted without connection fails
+                        persistentMeth.Transaction.CurrentTransaction.AddSendIndicatorPosition(persistMsgFile, persistMsgFile.Position);
+                    }
                     persistMsgFile.WriteByte(NotSendByte);    // sent = false
                     byte[] messageLengthBytes = BitConverter.GetBytes(msgBytes.Length);
                     persistMsgFile.Write(messageLengthBytes, 0, messageLengthBytes.Length);  // message length
                     persistMsgFile.Write(msgBytes, 0, msgBytes.Length);
                     persistMsgFile.Flush();
                 }
+            }
+
+            if (isOnlineTry == false
+                    && persistentMeth.Transaction != null
+                    && persistentMeth.Transaction.CurrentTransaction != null
+                    && persistentMeth.Transaction.CommitTransactionMethod == persistentMeth)
+            {
+                // Offline call for commit transaction method
+                
+                // clear previous succesfully performed online calls
+                persistentMeth.Transaction.CurrentTransaction.ClearSendIndicatorPositions();
+
+                persistentMeth.Transaction.CommitTransaction();
             }
 
             var returnType = invokeInfo.InterfaceMethod.ReturnType;
@@ -394,6 +453,13 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                             for (int i = 0; i < files.Count; i++)
                             {
                                 string pendFilePath = files[i];
+
+                                if (pendFilePath == this.persistMsgFilePath)
+                                {
+                                    // always skip active write file resend (should never happen)
+                                    Logger.Warn($"Skip resend of active write file: {pendFilePath}");
+                                    continue;
+                                }
 
                                 FileStream stream = null;
                                 try
@@ -587,6 +653,20 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             else
             {
                 Logger.Info("Skip resend because other resend in progress");
+            }
+        }
+
+        private bool TryGetPersistentMethod(Type interfaceType, string methodName, out PersistentMethod pm)
+        {
+            Dictionary<string, PersistentMethod> methods;
+            if (persistentMethods.TryGetValue(interfaceType, out methods))
+            {
+                return methods.TryGetValue(methodName, out pm);
+            }
+            else
+            {
+                pm = null;
+                return false;
             }
         }
 
