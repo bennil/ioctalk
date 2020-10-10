@@ -517,9 +517,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// Called when [raw message received].
         /// </summary>
         /// <param name="rawMessage">The raw message.</param>
-        public void OnRawMessageReceived(IRawMessage rawMessage)
+        public async ValueTask OnRawMessageReceived(IRawMessage rawMessage)
         {
-            this.ProcessReceivedMessageBytes(rawMessage.SessionId, rawMessage.Data);
+            await this.ProcessReceivedMessageBytes(rawMessage.SessionId, rawMessage.Data).ConfigureAwait(false);
         }
 
 

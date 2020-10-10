@@ -15,6 +15,7 @@ namespace BSAG.IOCTalk.Communication.Common.Collections
     /// created on: 2015-12-16
     /// </remarks>
     /// <typeparam name="T">The queue object type</typeparam>
+    [Obsolete("Use System.Threading.Channels.Channel<T> instead")]
     public class LightBlockConcurrentQueue<T> : ConcurrentQueue<T>
     {
         #region fields

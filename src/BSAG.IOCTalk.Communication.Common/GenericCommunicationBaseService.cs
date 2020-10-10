@@ -17,6 +17,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
@@ -97,14 +98,11 @@ namespace BSAG.IOCTalk.Communication.Common
         private ISession[] sessions = new ISession[0];
         protected Dictionary<int, ISession> sessionDictionary = new Dictionary<int, ISession>();
         private object sessionLockSyncObj = new object();
-        private SpinWait spinWait = new SpinWait();
         private long pendingSessionCreationCount = 0;
         private string serializerTypeName = "BSAG.IOCTalk.Serialization.Json.JsonMessageSerializer, BSAG.IOCTalk.Serialization.Json";
         private InvokeThreadModel invokeThreadModel = InvokeThreadModel.CallerThread;
-        private Thread callerThread;
-        private LightBlockConcurrentQueue<Tuple<ISession, IGenericMessage>> callerQueue;
+        private Channel<Tuple<ISession, IGenericMessage>> callerQueue;
         protected bool isActive = true;
-        private static long globalThreadId = 0;
 
         private long receivedMessageCounter = 0;
         private long sentMessageCounter = 0;
@@ -402,7 +400,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
                 if (callerQueue != null)
                 {
-                    callerQueue.Cancel();   // release caller queue thread
+                    callerQueue.Writer.Complete();   // release caller queue thread
                 }
 
                 if (DataStreamLogger != null)
@@ -614,11 +612,13 @@ namespace BSAG.IOCTalk.Communication.Common
 
             if (InvokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.CallerThread)
             {
-                callerQueue = new LightBlockConcurrentQueue<Tuple<ISession, IGenericMessage>>();
-                callerThread = new Thread(new ThreadStart(CallerThreadProcess));
-                var threadId = Interlocked.Increment(ref globalThreadId);
-                callerThread.Name = "IOCTalkCallerThread" + threadId;
-                callerThread.Start();
+                BoundedChannelOptions channelOptions = new BoundedChannelOptions(2048); // todo: verify max count
+                channelOptions.FullMode = BoundedChannelFullMode.Wait;
+                channelOptions.SingleReader = true;
+                channelOptions.SingleWriter = true;
+
+                callerQueue = Channel.CreateBounded<Tuple<ISession, IGenericMessage>>(channelOptions);
+                Task.Run(CallerThreadProcess);
             }
 
             if (InvokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.IndividualTask)
@@ -751,7 +751,7 @@ namespace BSAG.IOCTalk.Communication.Common
             long requestId = Interlocked.Increment(ref currentRequestId);
 
             bool responseExpected = true;
-            
+
             if (invokeInfo.IsVoidReturnMethod && invokeInfo.IsAsyncVoidRemoteInvoke(containerHost))
             {
                 if (baseCommunicationServiceSupport.IsAsyncVoidSendCurrentlyPossible(session))
@@ -868,7 +868,7 @@ namespace BSAG.IOCTalk.Communication.Common
         /// </summary>
         /// <param name="sessionId">The session id.</param>
         /// <param name="messageString">The message string.</param>
-        public void ProcessReceivedMessageString(int sessionId, string messageString)
+        public async ValueTask ProcessReceivedMessageString(int sessionId, string messageString)
         {
             try
             {
@@ -895,7 +895,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
                 IGenericMessage message = serializer.DeserializeFromString(messageString, session);
 
-                ProcessReceivedMessage(session, message);
+                await ProcessReceivedMessage(session, message).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -910,7 +910,7 @@ namespace BSAG.IOCTalk.Communication.Common
         /// </summary>
         /// <param name="sessionId">The session id.</param>
         /// <param name="messageBytes">The message bytes.</param>
-        public void ProcessReceivedMessageBytes(int sessionId, byte[] messageBytes)
+        public async ValueTask ProcessReceivedMessageBytes(int sessionId, byte[] messageBytes)
         {
             try
             {
@@ -937,7 +937,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
                 IGenericMessage message = serializer.DeserializeFromBytes(messageBytes, session);
 
-                ProcessReceivedMessage(session, message);
+                await ProcessReceivedMessage(session, message).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -1024,7 +1024,7 @@ namespace BSAG.IOCTalk.Communication.Common
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="message">The message.</param>
-        public void ProcessReceivedMessage(ISession session, IGenericMessage message)
+        public async ValueTask ProcessReceivedMessage(ISession session, IGenericMessage message)
         {
             receivedMessageCounter++;
 
@@ -1037,7 +1037,11 @@ namespace BSAG.IOCTalk.Communication.Common
                     {
                         case InvokeThreadModel.CallerThread:
                             // enqueue caller thread invoke
-                            callerQueue.Enqueue(new Tuple<ISession, IGenericMessage>(session, message));
+                            var containerItem = new Tuple<ISession, IGenericMessage>(session, message);
+                            if (!callerQueue.Writer.TryWrite(containerItem))
+                            {
+                                await callerQueue.Writer.WriteAsync(containerItem).ConfigureAwait(false);
+                            }
                             break;
 
                         case InvokeThreadModel.ReceiverThread:
@@ -1047,7 +1051,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
                         case InvokeThreadModel.IndividualTask:
                             // invoke in new task
-                            Task.Run(() =>
+                            _ = Task.Run(() =>
                             {
                                 CallReceivedMethod(session, message);
                             });
@@ -1295,24 +1299,30 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
-        private void CallerThreadProcess()
+        private async ValueTask CallerThreadProcess()
         {
             try
             {
-                logger.Info("Caller thread started");
+                logger.Info("Remote caller processing started");
 
-                foreach (var invokeItem in callerQueue.GetConsumingEnumerable())
+                var reader = callerQueue.Reader;
+
+                // todo: change to awat foreach and ReadAllAsync in future .net versions
+                while (await reader.WaitToReadAsync())
                 {
-                    CallReceivedMethod(invokeItem.Item1, invokeItem.Item2);
+                    if (reader.TryRead(out var invokeItem))
+                    {
+                        CallReceivedMethod(invokeItem.Item1, invokeItem.Item2);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                logger.Error("Unexpected error! Caller thread will exit! Details: " + ex.ToString());
+                logger.Error("Unexpected error! Caller processing will exit! Details: " + ex.ToString());
             }
             finally
             {
-                logger.Info("Caller Thread stopped");
+                logger.Info("Caller processing stopped");
             }
         }
 
@@ -1372,14 +1382,11 @@ namespace BSAG.IOCTalk.Communication.Common
         /// </summary>
         private bool ProcessPendingCallerThreadInvokesOnce()
         {
-            if (callerQueue.Count > 0)
+            Tuple<ISession, IGenericMessage> invokeItem;
+            if (callerQueue.Reader.TryRead(out invokeItem))
             {
-                Tuple<ISession, IGenericMessage> invokeItem;
-                if (callerQueue.TryDequeue(out invokeItem))
-                {
-                    CallReceivedMethod(invokeItem.Item1, invokeItem.Item2);
-                    return true;
-                }
+                CallReceivedMethod(invokeItem.Item1, invokeItem.Item2);
+                return true;
             }
 
             return false;

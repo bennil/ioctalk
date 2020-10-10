@@ -231,7 +231,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// Called when [receive data].
         /// </summary>
         /// <param name="socketStateObj">The socket state obj.</param>
-        protected async Task OnReceiveDataAsync(SocketState state)
+        protected async ValueTask OnReceiveDataAsync(SocketState state)
         {
             Socket clientSocket = state.Client.socket;
             Stream clientStream = state.Client.stream;
@@ -253,7 +253,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                         while ((receivedMessage = ReadRawMessage(readBuffer, ref readIndex, bytesReadCount, rawMessage, ref pendingMessage)) != null)
                         {
                             // raw message received
-                            rawMessageReceivedDelegate(receivedMessage);
+                            await rawMessageReceivedDelegate(receivedMessage);
                         }
 
                         if (bytesReadCount == readBuffer.Length

@@ -11,6 +11,8 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.IO;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace BSAG.IOCTalk.Logging.DataStream
 {
@@ -33,17 +35,15 @@ namespace BSAG.IOCTalk.Logging.DataStream
         public const string SessionTerminatedTag = "Session Terminated";
 
         private string name;
-        private bool isProcessingStoreLogData = false;
-        private ConcurrentQueue<StreamLogItem> dataStreamQueue = null;
+        private Channel<StreamLogItem> dataStreamQueue = null;
+        private ChannelWriter<StreamLogItem> queueWriter;
         private int keepStreamLogsDays = 10;
-        private TimeSpan storeWaitInterval = new TimeSpan(0, 0, 10);
+        private TimeSpan storeWaitInterval = new TimeSpan(0, 0, 5);
 
-        private Thread storeLogItemsThread = null;
-        private ManualResetEvent stopSignal;
         private string targetFilePath;
         private ILogger log;
         private string targetDir = @"." + Path.DirectorySeparatorChar + "IOCTalk-DataStreamLogs";
-		private RawMessageFormat messageFormat;
+        private RawMessageFormat messageFormat;
         private IGenericCommunicationService source;
 
         #endregion
@@ -123,10 +123,15 @@ namespace BSAG.IOCTalk.Logging.DataStream
             this.log = source.Logger;
             this.name = loggerName;
             this.messageFormat = source.Serializer.MessageFormat;
-            
+
             if (dataStreamQueue == null)
             {
-                dataStreamQueue = new ConcurrentQueue<StreamLogItem>();
+                UnboundedChannelOptions channelOptions = new UnboundedChannelOptions();
+                channelOptions.SingleReader = true;
+                channelOptions.SingleWriter = false;
+
+                dataStreamQueue = Channel.CreateUnbounded<StreamLogItem>(channelOptions);
+                queueWriter = dataStreamQueue.Writer;
             }
             else
             {
@@ -159,14 +164,8 @@ namespace BSAG.IOCTalk.Logging.DataStream
                 keepStreamLogsDays = int.Parse(keepStreamLogsDaysElement.Value);
             }
 
-
             // start logging
-            stopSignal = new ManualResetEvent(false);
-            isProcessingStoreLogData = true;
-
-            storeLogItemsThread = new Thread(new ThreadStart(StoreLogItemsThread));
-            storeLogItemsThread.Priority = ThreadPriority.BelowNormal;
-            storeLogItemsThread.Start();
+            Task.Run(StoreLogItemsThread);
         }
 
 
@@ -175,10 +174,9 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// </summary>
         public void Dispose()
         {
-            isProcessingStoreLogData = false;
-            if (stopSignal != null)
+            if (dataStreamQueue != null)
             {
-                stopSignal.Set();
+                dataStreamQueue.Writer.Complete();   // release caller queue
             }
         }
 
@@ -190,7 +188,8 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="messageData">The message data.</param>
         public void LogStreamMessage(int sessionId, bool isReceive, byte[] messageData, bool encodeBase64)
         {
-            dataStreamQueue.Enqueue(new StreamLogItem(sessionId, isReceive, messageData, encodeBase64));
+            if (!queueWriter.TryWrite(new StreamLogItem(sessionId, isReceive, messageData, encodeBase64)))
+                log.Warn("Could not write data stream item to queue!");
         }
 
 
@@ -202,7 +201,8 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="messageDataSegement">The message data segement.</param>
         public void LogStreamMessage(int sessionId, bool isReceive, ArraySegment<byte> messageDataSegement, bool encodeBase64)
         {
-            dataStreamQueue.Enqueue(new StreamLogItem(sessionId, isReceive, messageDataSegement, encodeBase64));
+            if (!queueWriter.TryWrite(new StreamLogItem(sessionId, isReceive, messageDataSegement, encodeBase64)))
+                log.Warn("Could not write data stream item to queue!");
         }
 
         /// <summary>
@@ -213,7 +213,8 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="messageDataString">The message data string.</param>
         public void LogStreamMessage(int sessionId, bool isReceive, string messageDataString)
         {
-            dataStreamQueue.Enqueue(new StreamLogItem(sessionId, isReceive, messageDataString));
+            if (!queueWriter.TryWrite(new StreamLogItem(sessionId, isReceive, messageDataString)))
+                log.Warn("Could not write data stream item to queue!");
         }
 
         /// <summary>
@@ -224,7 +225,8 @@ namespace BSAG.IOCTalk.Logging.DataStream
         {
             string sessionInfo = $"{SessionCreatedTag} - ID: {session.SessionId}; Description: {session.Description}; Format: {this.messageFormat}";
 
-            dataStreamQueue.Enqueue(new StreamLogItem(session.SessionId, true, sessionInfo));
+            if (!queueWriter.TryWrite(new StreamLogItem(session.SessionId, true, sessionInfo)))
+                log.Warn("Could not write session creation to data stream item queue! Session: " + sessionInfo);
         }
 
         /// <summary>
@@ -235,66 +237,55 @@ namespace BSAG.IOCTalk.Logging.DataStream
         {
             string sessionInfo = $"{SessionTerminatedTag} - ID: {session.SessionId}";
 
-            dataStreamQueue.Enqueue(new StreamLogItem(session.SessionId, true, sessionInfo));
+            if (!queueWriter.TryWrite(new StreamLogItem(session.SessionId, true, sessionInfo)))
+                log.Warn("Could not write session termination to data stream item queue! Session: " + sessionInfo);
         }
 
 
-        private void StoreLogItemsThread()
+        private async ValueTask StoreLogItemsThread()
         {
             try
             {
-                if (isProcessingStoreLogData)
+                string targetDir = Path.GetFullPath(TargetDir);
+
+                if (!Directory.Exists(targetDir))
                 {
-                    string targetDir = Path.GetFullPath(TargetDir);
+                    Directory.CreateDirectory(targetDir);
+                }
 
-                    if (!Directory.Exists(targetDir))
+                DeleteOldLogFiles(targetDir);
+
+                targetFilePath = Path.Combine(targetDir, string.Concat(DataStreamFilenamePrefix, name, "_", DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss-ffff"), ".dlog"));
+
+                log.Info(string.Format("Log data stream in \"{0}\"", targetFilePath));
+
+                var reader = dataStreamQueue.Reader;
+
+                using (StreamWriter sw = new StreamWriter(targetFilePath))
+                {
+                    while (await reader.WaitToReadAsync())
                     {
-                        Directory.CreateDirectory(targetDir);
-                    }
-
-                    DeleteOldLogFiles(targetDir);
-
-                    targetFilePath = Path.Combine(targetDir, string.Concat(DataStreamFilenamePrefix, name, "_", DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss-ffff"), ".dlog"));
-
-                    log.Info(string.Format("Log data stream in \"{0}\"", targetFilePath));
-
-                    using (StreamWriter sw = new StreamWriter(targetFilePath))
-                    {
-                        bool lastFlush = false;
-                        while (isProcessingStoreLogData)
+                        StreamLogItem item;
+                        while (reader.TryRead(out item))
                         {
-                            StreamLogItem item;
-                            if (dataStreamQueue.TryDequeue(out item))
-                            {
-                                string logLine = item.CreateLogString();
-                                sw.WriteLine(logLine);
-
-                                lastFlush = false;
-                            }
-                            else
-                            {
-                                if (!lastFlush)
-                                {
-                                    sw.Flush();
-                                    lastFlush = true;
-                                }
-
-                                if (stopSignal.WaitOne(storeWaitInterval))
-                                {
-                                    // stop signal received
-                                    var stopLogger = new StreamLogItem(0, true, LoggerStoppedTag);
-                                    sw.WriteLine(stopLogger.CreateLogString());
-                                    sw.Flush();
-
-                                    log.Info("Data stream logging stopped");
-
-                                    isProcessingStoreLogData = false;
-                                    break;
-                                }
-                            }
+                            string logLine = item.CreateLogString();
+                            sw.WriteLine(logLine);
                         }
-                        sw.Close();
+
+                        sw.Flush();
+
+                        // minimize execution priority
+                        await Task.Delay(storeWaitInterval);
                     }
+
+                    // stop signal received
+                    sw.Close();
+
+                    var stopLogger = new StreamLogItem(0, true, LoggerStoppedTag);
+                    sw.WriteLine(stopLogger.CreateLogString());
+                    sw.Flush();
+
+                    log.Info("Data stream logging stopped");
                 }
             }
             catch (Exception ex)
@@ -303,7 +294,6 @@ namespace BSAG.IOCTalk.Logging.DataStream
             }
             finally
             {
-                isProcessingStoreLogData = false;
                 targetFilePath = null;
             }
         }
