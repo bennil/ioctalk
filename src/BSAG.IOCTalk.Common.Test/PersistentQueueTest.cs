@@ -15,17 +15,26 @@ using BSAG.IOCTalk.Communication.PersistentQueue;
 using System.Threading;
 using System.IO;
 using BSAG.IOCTalk.Communication.PersistentQueue.Transaction;
+using System.Threading.Tasks;
+using Xunit.Abstractions;
 
 namespace BSAG.IOCTalk.Common.Test
 {
     public class PersistentQueueTest
     {
+        private readonly ITestOutputHelper xUnitLog;
+
+        public PersistentQueueTest(ITestOutputHelper output)
+        {
+            this.xUnitLog = output;
+        }
+
         [Fact]
         public void TestPersistentCall()
         {
             IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
             
-            PersistentTestCommService dummyCom = new PersistentTestCommService();
+            PersistentTestCommService dummyCom = new PersistentTestCommService(xUnitLog);
             dummyCom.RaiseConnectionLost = true;
 
             PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
@@ -57,7 +66,7 @@ namespace BSAG.IOCTalk.Common.Test
         {
             IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
 
-            PersistentTestCommService dummyCom = new PersistentTestCommService();
+            PersistentTestCommService dummyCom = new PersistentTestCommService(xUnitLog);
             dummyCom.RaiseConnectionLost = true;
 
             PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
@@ -98,7 +107,7 @@ namespace BSAG.IOCTalk.Common.Test
         {
             IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
 
-            PersistentTestCommService dummyCom = new PersistentTestCommService();
+            PersistentTestCommService dummyCom = new PersistentTestCommService(xUnitLog);
             dummyCom.RaiseConnectionLost = true;
 
             PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
@@ -151,7 +160,7 @@ namespace BSAG.IOCTalk.Common.Test
         {
             IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
 
-            PersistentTestCommService dummyCom = new PersistentTestCommService();
+            PersistentTestCommService dummyCom = new PersistentTestCommService(xUnitLog);
             dummyCom.RaiseConnectionLost = true;
 
             PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
@@ -231,7 +240,7 @@ namespace BSAG.IOCTalk.Common.Test
         {
             IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
 
-            PersistentTestCommService dummyCom = new PersistentTestCommService();
+            PersistentTestCommService dummyCom = new PersistentTestCommService(xUnitLog);
             dummyCom.RaiseConnectionLost = true;
 
             PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
@@ -290,6 +299,22 @@ namespace BSAG.IOCTalk.Common.Test
             Assert.Equal(dummyCom.TransactionTestGuid, dummyCom.ReceivedParameterList[0][0]);
         }
 
+        //[Fact]
+        //public async Task ResendTempTest()
+        //{
+        //    PersistentTestCommService dummyCom = new PersistentTestCommService();
+        //    dummyCom.RaiseConnectionLost = false;
+
+        //    PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
+        //    persistComm.ResendDelay = TimeSpan.Zero;
+        //    persistComm.ResendSuspensionDelay = TimeSpan.Zero;
+        //    persistComm.ResendSuspensionGracePeriod = TimeSpan.Zero;
+
+        //    BSAG.IOCTalk.Common.Session.Session dummySession = new Session.Session(null, 0, "UnitTest Dummy Session");
+
+        //    await persistComm.ResendFile(@"C:\temp\MessageStore-20201012_143957_8823.pend", dummySession);
+        //}
+
 
         private static void CleanupPeristentDirectory(PersistentClientCommunicationHost persistComm)
         {
@@ -304,6 +329,13 @@ namespace BSAG.IOCTalk.Common.Test
         {
             private IGenericContainerHost containerHost;
             public IGenericContainerHost ContainerHost => containerHost;
+
+            private ITestOutputHelper xUnitLogger;
+
+            public PersistentTestCommService(ITestOutputHelper xUnitLogger)
+            {
+                this.xUnitLogger = xUnitLogger;
+            }
 
             public string SerializerTypeName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
@@ -384,18 +416,22 @@ namespace BSAG.IOCTalk.Common.Test
 
             void ILogger.Debug(string message)
             {
+                xUnitLogger.WriteLine("DEBUG: " + message);
             }
 
             void ILogger.Info(string message)
             {
+                xUnitLogger.WriteLine("INFO: " + message);
             }
 
             void ILogger.Warn(string message)
             {
+                xUnitLogger.WriteLine("WARN: " + message);
             }
 
             void ILogger.Error(string message)
             {
+                xUnitLogger.WriteLine("ERROR: " + message);
                 throw new Exception(message);
             }
         }

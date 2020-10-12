@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Text;
 
@@ -44,9 +45,25 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
         {
             lock (PersistentClientCommunicationHost.syncLock)
             {
+                Stream changedPosStream = null;
+                long changedStreamOldPosition = 0;
                 foreach (var item in sendIndicatorStreamPositions)
                 {
                     var fs = item.FileStream;
+
+                    // pos management
+                    if (changedPosStream == null)
+                    {
+                        changedPosStream = fs;
+                        changedStreamOldPosition = fs.Position;
+                    }
+                    else if (changedPosStream != fs)
+                    {
+                        // reset last stream to old position
+                        changedPosStream.Seek(changedStreamOldPosition, SeekOrigin.Begin);
+                        changedPosStream = fs;
+                        changedStreamOldPosition = fs.Position;
+                    }
 
                     // move file stream to sent flag
                     fs.Seek(item.PositionIndex, SeekOrigin.Begin);
@@ -54,6 +71,12 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
                     // mark transaction method as successfully sent
                     fs.WriteByte(PersistentClientCommunicationHost.AlreadySentByte);    // sent = true
                     fs.Flush();
+                }
+
+                if (changedPosStream != null)
+                {
+                    // reset stream to old position
+                    changedPosStream.Seek(changedStreamOldPosition, SeekOrigin.Begin);
                 }
             }
         }

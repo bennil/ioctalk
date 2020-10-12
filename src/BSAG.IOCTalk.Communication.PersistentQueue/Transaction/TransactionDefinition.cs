@@ -41,6 +41,13 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
 
         internal void CommitTransaction()
         {
+            if (currentTrx.SendIndicatorStreamPositions != null
+                && currentTrx.SendIndicatorStreamPositions.Count > 0)
+            {
+                // commit succesfully > mark all transaction send flags as sent
+                currentTrx.FlagTransactionMethodsSuccess();
+            }
+
             currentTrx.Dispose();
             currentTrx = null;
         }

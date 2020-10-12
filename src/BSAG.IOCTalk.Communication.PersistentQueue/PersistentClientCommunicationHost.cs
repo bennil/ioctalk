@@ -260,11 +260,6 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                         && pm.Transaction.CommitTransactionMethod == pm)
                     {
                         // all methods are sent > commit online transaction
-                        if (pm.Transaction.CurrentTransaction.SendIndicatorStreamPositions.Count > 0)
-                        {
-                            // commit succesfully > mark all transaction send flags as sent
-                            pm.Transaction.CurrentTransaction.FlagTransactionMethodsSuccess();
-                        }
                         pm.Transaction.CommitTransaction();
                     }
 
@@ -369,6 +364,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
                         this.persistMsgFilePath = Path.Combine(dir, $"MessageStore-{t.ToString("yyyyMMdd_HHmmss_ffff")}.pend");
 
+                        Logger.Debug("Create persistent file: " + persistMsgFilePath);
+
                         persistMsgFile = new FileStream(persistMsgFilePath, FileMode.Append, FileAccess.Write);
                     }
 
@@ -377,11 +374,14 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                         // after succesfully send set "sent indicator" position to flag all if transaction is comitted without connection fails
                         persistentMeth.Transaction.CurrentTransaction.AddSendIndicatorPosition(persistMsgFile, persistMsgFile.Position);
                     }
+                    long indicatorPos = persistMsgFile.Position;
                     persistMsgFile.WriteByte(NotSendByte);    // sent = false
                     byte[] messageLengthBytes = BitConverter.GetBytes(msgBytes.Length);
                     persistMsgFile.Write(messageLengthBytes, 0, messageLengthBytes.Length);  // message length
                     persistMsgFile.Write(msgBytes, 0, msgBytes.Length);
                     persistMsgFile.Flush();
+
+                    Logger.Debug($"Write message; Indicator position: {indicatorPos}; dataLength: {msgBytes.Length}");
                 }
             }
 
@@ -461,178 +461,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                                     continue;
                                 }
 
-                                FileStream stream = null;
-                                try
-                                {
-                                    Logger.Info($"Open pend file: {pendFilePath}");
-
-                                    stream = new FileStream(pendFilePath, FileMode.Open, FileAccess.ReadWrite);
-
-                                    do
-                                    {
-                                        long indicatorBytePos = stream.Position;
-                                        byte indicator = (byte)stream.ReadByte();
-                                        bool alredySent = indicator == AlreadySentByte;
-
-                                        byte[] lengthBytes = new byte[4];
-                                        await stream.ReadAsync(lengthBytes, 0, 4).ConfigureAwait(false);
-                                        int msgLength = BitConverter.ToInt32(lengthBytes, 0);
-                                        byte[] msgBytes = new byte[msgLength];
-                                        await stream.ReadAsync(msgBytes, 0, msgLength).ConfigureAwait(false);
-
-                                        if (!alredySent
-                                            && msgLength > 0)
-                                        {
-                                            // check if resend must be delayed because of recent realtime call
-                                            if (lastActiveInvokeUtc.HasValue && (DateTime.UtcNow - lastActiveInvokeUtc.Value) < ResendSuspensionGracePeriod)
-                                            {
-                                                await Task.Delay(ResendSuspensionDelay);
-                                            }
-
-                                            if (DebugLogResendMessages)
-                                                Logger.Debug($"Resend local store message: {Encoding.Default.GetString(msgBytes)}");
-
-                                            // deserialize method call
-                                            IGenericMessage msg = null;
-                                            try
-                                            {
-                                                msg = Serializer.DeserializeFromBytes(msgBytes, newSession);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                if (IgnoreDeserializeExceptions)
-                                                {
-                                                    Logger.Warn($"Ignore deserialize exception: {ex}");
-                                                }
-                                                else
-                                                {
-                                                    throw;
-                                                }
-                                            }
-
-                                            // call method
-                                            if (msg != null)
-                                            {
-                                                Type targetType;
-                                                TypeService.TryGetTypeByName(msg.Target, out targetType);
-                                                InvokeMethodInfo invokeInfo = new InvokeMethodInfo(targetType, msg.Name);
-
-                                                object[] paramValues = (object[])msg.Payload;
-
-                                                // check transaction
-                                                PersistentMethod persistMethod = null;
-                                                bool commitTransactionAfterInvoke = false;
-                                                if (persistentMethods.TryGetValue(targetType, out Dictionary<string, PersistentMethod> pMethods)
-                                                    && pMethods.TryGetValue(invokeInfo.InterfaceMethod.Name, out persistMethod)
-                                                    && persistMethod.Transaction != null)
-                                                {
-                                                    if (persistMethod.Transaction.BeginTransactionMethod.Equals(persistMethod))
-                                                    {
-                                                        // begin new transaction
-                                                        persistMethod.Transaction.BeginTransaction();
-                                                    }
-                                                    else if (persistMethod.Transaction.CommitTransactionMethod.Equals(persistMethod))
-                                                    {
-                                                        commitTransactionAfterInvoke = true;
-                                                    }
-
-                                                    // check if method parameters must be overriden with current transaction context values
-                                                    if (persistMethod.Transaction.CurrentTransaction != null
-                                                        && persistMethod.Transaction.CurrentTransaction.ContextValues != null)
-                                                    {
-                                                        for (int paramIndex = 0; paramIndex < invokeInfo.ParameterInfos.Length; paramIndex++)
-                                                        {
-                                                            var pi = invokeInfo.ParameterInfos[paramIndex];
-
-                                                            var ctxValue = persistMethod.Transaction.CurrentTransaction.ContextValues.Where(cv => cv.Name == pi.Name && cv.Type == pi.ParameterType).FirstOrDefault();
-                                                            if (ctxValue != null)
-                                                            {
-                                                                // replace with transaction context value
-                                                                paramValues[paramIndex] = ctxValue.Value;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                // call underlying communication layer
-                                                object returnValue = underlyingCom.InvokeMethod(this, invokeInfo, newSession, paramValues);
-
-                                                // post call transaction processing
-                                                if (commitTransactionAfterInvoke)
-                                                {
-                                                    persistMethod.Transaction.CommitTransaction();
-                                                }
-                                                else if (persistMethod != null
-                                                    && persistMethod.TransactionResendAction != null)
-                                                {
-                                                    persistMethod.Transaction.CurrentTransaction.SetTransactionValue(invokeInfo.InterfaceMethod.ReturnType, persistMethod.TransactionResendAction.ApplyToParameterName, returnValue);
-                                                }
-                                            }
-
-                                            // Flag message as sent
-                                            long endNextPos = stream.Position;
-                                            stream.Position = indicatorBytePos;
-                                            await stream.WriteAsync(AlreadySentByteArr, 0, 1).ConfigureAwait(false);
-                                            await stream.FlushAsync().ConfigureAwait(false);
-
-                                            stream.Position = endNextPos;
-                                        }
-                                    }
-                                    while (stream.Position < stream.Length);
-
-                                    // all messages in pending file sent
-                                    stream.Close();
-                                    stream.Dispose();
-                                    stream = null;
-
-                                    // delete file
-                                    File.Delete(pendFilePath);
-
-                                    Logger.Debug("Pending message file deleted");
-                                }
-                                catch (OperationCanceledException)
-                                {
-                                    Logger.Warn("Connection lost during local resend");
-                                    return;
-                                }
-                                catch (TimeoutException timeoutEx)
-                                {
-                                    Logger.Warn("Connection lost during local resend (Timeout)");
-                                    return;
-                                }
-                                catch (IOException ioExc)
-                                {
-                                    Logger.Warn("Connection lost during local resend (IOException)");
-                                    return;
-                                }
-                                catch (AggregateException aggExc)
-                                {
-                                    // check if AggregateException contains a connection related exception
-                                    Exception connectionException = GetConnectionException(aggExc);
-
-                                    if (connectionException != null)
-                                    {
-                                        Logger.Warn($"Connection lost during local resend ({connectionException.GetType().FullName})");
-                                        return;
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    // Log unexpected error
-                                    Logger.Error($"Error resending file {pendFilePath}  \nException: {ex}");
-                                }
-                                finally
-                                {
-                                    if (stream != null)
-                                    {
-                                        try
-                                        {
-                                            stream.Close();
-                                            stream.Dispose();
-                                        }
-                                        catch { /*ignore*/ }
-                                    }
-                                }
+                                if (await ResendFile(pendFilePath, newSession) == false)
+                                    return;     // skip on conneciton lost
                             }
                         }
                     }
@@ -653,6 +483,216 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             else
             {
                 Logger.Info("Skip resend because other resend in progress");
+            }
+        }
+
+        /// <summary>
+        /// Resends the given file
+        /// </summary>
+        /// <param name="pendFilePath"></param>
+        /// <param name="newSession"></param>
+        /// <returns>Returns <c>true</c> if no connection lost during resend; otherwise: false</returns>
+        private async Task<bool> ResendFile(string pendFilePath, ISession newSession)
+        {
+            FileStream stream = null;
+            try
+            {
+                Logger.Info($"Open pend file: {pendFilePath}");
+
+                stream = new FileStream(pendFilePath, FileMode.Open, FileAccess.ReadWrite);
+
+                //byte[] msgBytesPrevious = null;
+                int persistentMethodReadCount = 0;
+                do
+                {
+                    long indicatorBytePos = stream.Position;                    
+                    byte indicator = (byte)stream.ReadByte();
+                    bool alredySent = indicator == AlreadySentByte;
+
+                    byte[] lengthBytes = new byte[4];
+                    await stream.ReadAsync(lengthBytes, 0, 4).ConfigureAwait(false);
+                    int msgLength = BitConverter.ToInt32(lengthBytes, 0);
+                    Logger.Debug($"Read message; Indicator position: {indicatorBytePos}; dataLength: {msgLength}");
+
+                    byte[] msgBytes = new byte[msgLength];
+                    await stream.ReadAsync(msgBytes, 0, msgLength).ConfigureAwait(false);
+
+                    //msgBytesPrevious = msgBytes;
+
+                    if (!alredySent
+                        && msgLength > 0)
+                    {
+                        // check if resend must be delayed because of recent realtime call
+                        if (lastActiveInvokeUtc.HasValue && (DateTime.UtcNow - lastActiveInvokeUtc.Value) < ResendSuspensionGracePeriod)
+                        {
+                            await Task.Delay(ResendSuspensionDelay);
+                        }
+
+                        if (DebugLogResendMessages)
+                            Logger.Debug($"Resend local store message: {Encoding.Default.GetString(msgBytes)}");
+
+                        // deserialize method call
+                        IGenericMessage msg = null;
+                        try
+                        {
+                            msg = Serializer.DeserializeFromBytes(msgBytes, newSession);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (IgnoreDeserializeExceptions)
+                            {
+                                Logger.Warn($"Ignore deserialize exception! File: {pendFilePath}; Read Number: {persistentMethodReadCount}; Details: {ex}");
+                            }
+                            else
+                            {
+                                throw;
+                            }
+                        }
+
+                        // call method
+                        if (msg != null)
+                        {
+                            Type targetType;
+                            TypeService.TryGetTypeByName(msg.Target, out targetType);
+                            InvokeMethodInfo invokeInfo = new InvokeMethodInfo(targetType, msg.Name);
+
+                            object[] paramValues = (object[])msg.Payload;
+
+                            // check transaction
+                            PersistentMethod persistMethod = null;
+                            bool commitTransactionAfterInvoke = false;
+                            if (persistentMethods.TryGetValue(targetType, out Dictionary<string, PersistentMethod> pMethods)
+                                && pMethods.TryGetValue(invokeInfo.InterfaceMethod.Name, out persistMethod)
+                                && persistMethod.Transaction != null)
+                            {
+                                if (persistMethod.Transaction.BeginTransactionMethod.Equals(persistMethod))
+                                {
+                                    // begin new transaction
+                                    persistMethod.Transaction.BeginTransaction();
+                                }
+                                else if (persistMethod.Transaction.CommitTransactionMethod.Equals(persistMethod))
+                                {
+                                    commitTransactionAfterInvoke = true;
+                                }
+
+                                // check if method parameters must be overriden with current transaction context values
+                                if (persistMethod.Transaction.CurrentTransaction != null
+                                    && persistMethod.Transaction.CurrentTransaction.ContextValues != null)
+                                {
+                                    for (int paramIndex = 0; paramIndex < invokeInfo.ParameterInfos.Length; paramIndex++)
+                                    {
+                                        var pi = invokeInfo.ParameterInfos[paramIndex];
+
+                                        var ctxValue = persistMethod.Transaction.CurrentTransaction.ContextValues.Where(cv => cv.Name == pi.Name && cv.Type == pi.ParameterType).FirstOrDefault();
+                                        if (ctxValue != null)
+                                        {
+                                            // replace with transaction context value
+                                            paramValues[paramIndex] = ctxValue.Value;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // call underlying communication layer
+                            object returnValue = underlyingCom.InvokeMethod(this, invokeInfo, newSession, paramValues);
+
+                            
+
+                            // post call transaction processing
+                            if (commitTransactionAfterInvoke)
+                            {
+                                persistMethod.Transaction.CommitTransaction();
+                            }
+                            else if (persistMethod != null
+                                && persistMethod.TransactionResendAction != null)
+                            {
+                                persistMethod.Transaction.CurrentTransaction.SetTransactionValue(invokeInfo.InterfaceMethod.ReturnType, persistMethod.TransactionResendAction.ApplyToParameterName, returnValue);
+                                persistMethod.Transaction.CurrentTransaction.AddSendIndicatorPosition(stream, indicatorBytePos);
+                            }
+                            else if (persistMethod != null
+                                && persistMethod.Transaction != null
+                                && persistMethod.Transaction.CurrentTransaction != null)
+                            {
+                                // record current transaction sent positions
+                                persistMethod.Transaction.CurrentTransaction.AddSendIndicatorPosition(stream, indicatorBytePos);
+                            }
+                            else
+                            {
+                                // Flag message as sent
+                                long endNextPos = stream.Position;
+                                stream.Position = indicatorBytePos;
+                                await stream.WriteAsync(AlreadySentByteArr, 0, 1).ConfigureAwait(false);
+                                await stream.FlushAsync().ConfigureAwait(false);
+
+                                stream.Position = endNextPos;
+                            }
+                        }
+                    }
+
+                    persistentMethodReadCount++;
+                }
+                while (stream.Position < stream.Length);
+
+                // all messages in pending file sent
+                stream.Close();
+                stream.Dispose();
+                stream = null;
+
+                // delete file
+                File.Delete(pendFilePath);
+
+                Logger.Debug("Pending message file deleted");
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                Logger.Warn("Connection lost during local resend");
+                return false;
+            }
+            catch (TimeoutException timeoutEx)
+            {
+                Logger.Warn("Connection lost during local resend (Timeout)");
+                return false;
+            }
+            catch (IOException ioExc)
+            {
+                Logger.Warn("Connection lost during local resend (IOException)");
+                return false;
+            }
+            catch (AggregateException aggExc)
+            {
+                // check if AggregateException contains a connection related exception
+                Exception connectionException = GetConnectionException(aggExc);
+
+                if (connectionException != null)
+                {
+                    Logger.Warn($"Connection lost during local resend ({connectionException.GetType().FullName})");
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log unexpected error
+                Logger.Error($"Error resending file {pendFilePath}  \nException: {ex}");
+
+                return false; // no connection lost > continue sending next file
+            }
+            finally
+            {
+                if (stream != null)
+                {
+                    try
+                    {
+                        stream.Close();
+                        stream.Dispose();
+                    }
+                    catch { /*ignore*/ }
+                }
             }
         }
 
