@@ -19,6 +19,10 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
 
         public List<(Stream FileStream, long PositionIndex)> SendIndicatorStreamPositions => sendIndicatorStreamPositions;
 
+        public string CurrentWritePath { get; set; }
+
+        public FileStream CurrentWriteStream { get; set; }
+
         public void SetTransactionValue(Type type, string name, object value)
         {
             if (ContextValues == null)
@@ -38,6 +42,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
 
         public void Dispose()
         {
+            CurrentWriteStream?.Close();
+            CurrentWritePath = null;
             ContextValues = null;
         }
 
@@ -79,6 +85,22 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
                     changedPosStream.Seek(changedStreamOldPosition, SeekOrigin.Begin);
                 }
             }
+        }
+
+        internal void CommitOnlineTransaction()
+        {
+            if (SendIndicatorStreamPositions != null
+                && SendIndicatorStreamPositions.Count > 0)
+            {
+                // commit succesfully > mark all transaction send flags as sent
+                FlagTransactionMethodsSuccess();
+            }
+
+            // close and delete file because all transaction file data are sent
+            CurrentWriteStream.Close();
+            File.Delete(CurrentWritePath);
+
+            Dispose();
         }
 
         internal void ClearSendIndicatorPositions()

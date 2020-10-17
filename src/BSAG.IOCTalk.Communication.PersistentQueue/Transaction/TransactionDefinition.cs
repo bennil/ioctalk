@@ -29,7 +29,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
         {
             get { return currentTrx; }
         }
-        
+
         internal ResendTransaction BeginTransaction()
         {
             if (currentTrx != null)
@@ -50,6 +50,18 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
 
             currentTrx.Dispose();
             currentTrx = null;
+        }
+
+        internal void CommitOnlineTransaction()
+        {
+            currentTrx.CommitOnlineTransaction();
+            currentTrx = null;
+        }
+
+        internal void DismissTransaction()
+        {
+            if (currentTrx != null)
+                CommitTransaction();
         }
     }
 }
