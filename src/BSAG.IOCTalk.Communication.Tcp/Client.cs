@@ -31,7 +31,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         internal Stream stream;
         public ConcurrentQueue<IGenericMessage> queueReceivedPackets;
 
-        private DateTime connectTime;
+        private DateTime connectTimeUtc;
         private long isSocketClosedExecuted = 0;
         private EndPoint localEndPoint = null;
         private EndPoint remoteEndPoint = null;
@@ -64,7 +64,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             this.localEndPoint = localEndPoint;
             this.remoteEndPoint = remoteEndPoint;
             this.queueReceivedPackets = queueReceivedPackets;
-            this.connectTime = DateTime.Now;
+            this.connectTimeUtc = DateTime.UtcNow;
             this.connectionSessionId = AbstractTcpCom.GetNewConnectionSessionId();
         }
 
@@ -80,11 +80,11 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// Gets the connect time.
         /// </summary>
         /// <value>The connect time.</value>
-        public DateTime ConnectTime
+        public DateTime ConnectTimeUtc
         {
             get
             {
-                return connectTime;
+                return connectTimeUtc;
             }
         }
 

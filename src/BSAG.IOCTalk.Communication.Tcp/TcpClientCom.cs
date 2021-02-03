@@ -78,9 +78,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// <summary>
         /// Gets the transfer session connect time.
         /// </summary>
-        public DateTime ConnectTime
+        public override DateTime? ConnectTimeUtc
         {
-            get { return client.ConnectTime; }
+            get { return client?.ConnectTimeUtc; }
         }
 
         /// <summary>

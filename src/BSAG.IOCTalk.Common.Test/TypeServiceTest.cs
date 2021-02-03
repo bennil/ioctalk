@@ -7,6 +7,7 @@ using BSAG.IOCTalk.Common.Reflection;
 using System.IO;
 using Xunit;
 using BSAG.IOCTalk.Test.Common;
+using BSAG.IOCTalk.Common.Test.TestObjects;
 
 namespace BSAG.IOCTalk.Common.Test
 {
@@ -137,6 +138,16 @@ namespace BSAG.IOCTalk.Common.Test
             //data.Unity = "test";
             //data.Value = 2;
             //instance.OnPerformanceData(data);
+        }
+
+        [Fact]
+        public void TestCreateProxyImplementationGuidMethods()
+        {
+            Type result = TypeService.BuildProxyImplementation(typeof(IAutoImplementTestInterface));
+
+            IAutoImplementTestInterface instance = (IAutoImplementTestInterface)Activator.CreateInstance(result, new object[2]);
+
+            Assert.NotNull(instance);
         }
 
 

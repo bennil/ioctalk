@@ -246,6 +246,9 @@ namespace BSAG.IOCTalk.Logging.DataStream
         {
             try
             {
+                // delay file processing
+                await Task.Delay(500);
+
                 string targetDir = Path.GetFullPath(TargetDir);
 
                 if (!Directory.Exists(targetDir))

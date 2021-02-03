@@ -359,6 +359,17 @@ namespace BSAG.IOCTalk.Communication.Tcp
                             return;
                         }
 
+                        if (this.communication.ConnectTimeUtc.HasValue)
+                        {
+                            // only if established connection is immediately reset by the remote host
+                            // sleep to prevent fast endless reconnect loop
+                            var lastConnectDiff = DateTime.UtcNow - this.communication.ConnectTimeUtc.Value;
+
+                            if (lastConnectDiff < ClientReconnectInterval)
+                            {
+                                await Task.Delay(ClientReconnectInterval);
+                            }
+                        }
 
                         if (Logger != null)
                             Logger.Info($"Connect to {communication?.EndPointInfo}...");

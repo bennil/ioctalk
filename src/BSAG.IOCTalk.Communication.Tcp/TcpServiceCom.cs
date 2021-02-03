@@ -24,7 +24,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         // TcpServiceCom fields
         // ----------------------------------------------------------------------------------------
         protected Dictionary<int, Client> clients = new Dictionary<int, Client>();
-        private DateTime connectTime;
+        private DateTime? connectTimeUtc;
         private string endPointInfo;
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -71,9 +71,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// <summary>
         /// Gets the transfer session connect time.
         /// </summary>
-        public DateTime ConnectTime
+        public override DateTime? ConnectTimeUtc
         {
-            get { return connectTime; }
+            get { return connectTimeUtc; }
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 this.socket.Bind(EndPoint);
                 this.socket.Listen(MaxConnectionCount);
 
-                connectTime = DateTime.Now;
+                connectTimeUtc = DateTime.UtcNow;
 
                 // Wait for remote connection
                 this.socket.BeginAccept(new AsyncCallback(AcceptCallback), socket);

@@ -171,6 +171,12 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// </value>
         public ILogger Logger { get; set; }
 
+
+        /// <summary>
+        /// Gets the latest utc connect time
+        /// </summary>
+        public abstract DateTime? ConnectTimeUtc { get; }
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
