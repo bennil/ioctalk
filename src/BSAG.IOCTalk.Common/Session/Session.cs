@@ -63,6 +63,10 @@ namespace BSAG.IOCTalk.Common.Session
             isInitialized = true;
         }
 
+        public override string ToString()
+        {
+            return $"{SessionId} {Description}";
+        }
         // ----------------------------------------------------------------------------------------
         #endregion
     }

@@ -25,8 +25,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         // ----------------------------------------------------------------------------------------
 
         protected Client client = null;
-        private string host;
-        private int port;
+        protected string host;
+        protected int port;
         private string endPointInfo;
 
         // ----------------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             }
         }
 
-        public bool IsConnected
+        public virtual bool IsConnected
         {
             get
             {

@@ -416,6 +416,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             }
         }
 
+
         #region message encapsulation
 
 

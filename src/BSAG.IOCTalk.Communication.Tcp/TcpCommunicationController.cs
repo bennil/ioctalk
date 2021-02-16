@@ -33,9 +33,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
         // TcpCommunicationController fields
         // ----------------------------------------------------------------------------------------
 
-        private AbstractTcpCom communication;
+        protected AbstractTcpCom communication;
         private int clientAutoReconnectLock = 0;
-        private ConnectionType connectionType;
+        protected ConnectionType connectionType;
         private int clientConnectCount = 0;
 
         public const string ConfigParamConnectionType = "ConnectionType";
@@ -55,7 +55,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         public const string ConfigAttributeEnabled = "enabled";
 
         private TcpConfiguration configObject;
-        private TcpTarget originalTarget;
+        protected TcpTarget originalTarget;
 
 
         // ----------------------------------------------------------------------------------------
@@ -341,7 +341,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         }
 
 
-        private void StartAutoReconnectAsync()
+        protected void StartAutoReconnectAsync()
         {
             if (Interlocked.Exchange(ref clientAutoReconnectLock, 1) == 0)    // only start auto reconnect task once
             {
@@ -467,7 +467,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             }
         }
 
-        private void SubscribeCommunicationEvents(AbstractTcpCom tcpComm)
+        protected void SubscribeCommunicationEvents(AbstractTcpCom tcpComm)
         {
             tcpComm.ConnectionEstablished += new EventHandler<ConnectionStateChangedEventArgs>(OnTcpComm_ConnectionEstablished);
             tcpComm.ConnectionClosed += new EventHandler<ConnectionStateChangedEventArgs>(OnTcpComm_ConnectionClosed);
