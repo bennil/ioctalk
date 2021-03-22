@@ -8,6 +8,7 @@ using System.IO;
 using Xunit;
 using BSAG.IOCTalk.Test.Common;
 using BSAG.IOCTalk.Common.Test.TestObjects;
+using BSAG.IOCTalk.Communication.Common;
 
 namespace BSAG.IOCTalk.Common.Test
 {
@@ -94,7 +95,7 @@ namespace BSAG.IOCTalk.Common.Test
                 Type result = TypeService.BuildProxyImplementation(typeof(IPerformanceMonitorService));
 
                 DummyCommunicationService dummyCommService = new DummyCommunicationService();
-                
+
                 var constructorParams = new object[2];
                 constructorParams[0] = dummyCommService;
 
@@ -111,6 +112,30 @@ namespace BSAG.IOCTalk.Common.Test
                 // because of buggy unit test environment
                 throw;
             }
+        }
+
+        [Fact]
+        private void TestAdvancedProxyImplementationOutParams()
+        {
+            Type result = TypeService.BuildProxyImplementation(typeof(ITestServiceSpecialOutPrams));
+
+            DummyCommunicationService dummyCommService = new DummyCommunicationService();
+
+            var constructorParams = new object[2];
+            constructorParams[0] = dummyCommService;
+
+            ITestServiceSpecialOutPrams instance = (ITestServiceSpecialOutPrams)Activator.CreateInstance(result, constructorParams);
+
+            //int? nullableInt;
+            //instance.GetData(out nullableInt);
+
+
+            var invokeMethod = new InvokeMethodInfo(typeof(ITestServiceSpecialOutPrams), nameof(ITestServiceSpecialOutPrams.GetData));
+
+            var invokeMethodDeserialize = new InvokeMethodInfo(invokeMethod.InterfaceMethod.DeclaringType, invokeMethod.QualifiedMethodName);
+
+
+            Assert.NotNull(invokeMethodDeserialize);
         }
 
 

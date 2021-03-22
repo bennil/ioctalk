@@ -254,6 +254,8 @@ namespace BSAG.IOCTalk.Common.Reflection
                                 // make generic type
                                 type = genericMainType.MakeGenericType(genericArgumentTypes);
                             }
+                            if (type != null && typeName.EndsWith("&")) // out method parameter type
+                                type = type.MakeByRefType();
                         }
                     }
                     else
@@ -299,6 +301,8 @@ namespace BSAG.IOCTalk.Common.Reflection
                             // make generic type
                             type = genericMainType.MakeGenericType(genericArgumentTypes);
                         }
+                        if (type != null && typeName.EndsWith("&")) // out method parameter type
+                            type = type.MakeByRefType();
                     }
                 }
             }
@@ -562,7 +566,7 @@ namespace BSAG.IOCTalk.Common.Reflection
                     // assign out parameters
                     foreach (var outParam in outParameters)
                     {
-                        methodSource.AppendFormat("{0}{1} = ({2})parameterValues[{3}];", methodLineIntention, outParam.Name, outParam.ParameterType.GetElementType().FullName, outParam.Position);
+                        methodSource.AppendFormat("{0}{1} = ({2})parameterValues[{3}];", methodLineIntention, outParam.Name, GetSourceCodeTypeName(outParam.ParameterType.GetElementType()), outParam.Position);
                         methodSource.AppendLine();
                     }
                 }
@@ -596,6 +600,13 @@ namespace BSAG.IOCTalk.Common.Reflection
         public static string GetSourceCodeTypeName(Type paramType)
         {
             string parameterTypeString;
+            bool hasElement = false;
+            if (paramType.HasElementType && paramType.IsArray == false)
+            {
+                paramType = paramType.GetElementType();
+                hasElement = true;
+            }
+
             if (paramType.IsGenericType)
             {
                 Type genericType = paramType.GetGenericTypeDefinition();
@@ -607,7 +618,11 @@ namespace BSAG.IOCTalk.Common.Reflection
             {
                 parameterTypeString = paramType.FullName;
             }
-            return parameterTypeString;
+
+            if (hasElement)
+                return parameterTypeString + "&";
+            else
+                return parameterTypeString;
         }
 
 

@@ -6,7 +6,7 @@ using System.Reflection;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Reflection;
 using BSAG.IOCTalk.Common.Exceptions;
-
+using BSAG.IOCTalk.Common.Reflection;
 
 namespace BSAG.IOCTalk.Communication.Common
 {
@@ -62,7 +62,7 @@ namespace BSAG.IOCTalk.Communication.Common
         {
             this.Type = responseExptected ? MessageType.MethodInvokeRequest : MessageType.AsyncMethodInvokeRequest;
             this.RequestId = requestId;
-            this.Target = method.DeclaringType.FullName;
+            this.Target = TypeService.GetSourceCodeTypeName(method.DeclaringType);
             this.Name = method.Name;
             this.Payload = parameters;
         }
@@ -78,7 +78,7 @@ namespace BSAG.IOCTalk.Communication.Common
         {            
             this.Type = responseExptected ? MessageType.MethodInvokeRequest : MessageType.AsyncMethodInvokeRequest;
             this.RequestId = requestId;
-            this.Target = invokeMethodInfo.InterfaceMethod.DeclaringType.FullName;
+            this.Target = TypeService.GetSourceCodeTypeName(invokeMethodInfo.InterfaceMethod.DeclaringType);
 
             this.Name = invokeMethodInfo.QualifiedMethodName;
             this.Payload = parameters;
