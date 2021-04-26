@@ -118,6 +118,31 @@ namespace BSAG.IOCTalk.Common.Test
         }
 
         [Fact]
+        public void TestMethodMutualLocalImportsDifferentOrderCheck()
+        {
+            MyLocalService.InstanceCount = 0;
+            OtherLocalService.InstanceCount = 0;
+
+            DummyCommunicationService dummyComm = new DummyCommunicationService();
+
+            TalkCompositionHost hostContainer = new TalkCompositionHost();
+            hostContainer.RegisterLocalSessionService<IMyLocalService>();
+            hostContainer.RegisterLocalSessionService<IOtherLocalService2>();
+            hostContainer.RegisterLocalSessionService<IOtherLocalService>();
+            hostContainer.AddReferencedAssemblies();
+
+            hostContainer.InitGenericCommunication(dummyComm);
+
+            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session");
+
+            var result = hostContainer.CreateSessionContractInstance(session);
+
+            Assert.Equal(1, MyLocalService.InstanceCount);
+            Assert.Equal(1, OtherLocalService.InstanceCount);
+            Assert.Equal(1, OtherLocalService2.InstanceCount);
+        }
+
+        [Fact]
         public void TestMethodMultipleLocalImports()
         {
             MyLocalService.InstanceCount = 0;

@@ -640,9 +640,9 @@ namespace BSAG.IOCTalk.Composition
             }
 
             Type targetType;
+            var contract = currentContract;
             if (type.IsInterface)
             {
-                var contract = currentContract;
                 if (contract != null)
                 {
                     if (contract.TryGetSessionInstance(type, out instance))
@@ -695,6 +695,14 @@ namespace BSAG.IOCTalk.Composition
             localShare.CheckOutParamsSubscriptions(instance, outParams, this, type);
 
             localShare.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
+
+            if (contract != null
+                && this.localSessionServiceInterfaceTypesResolved.Contains(type))
+            {
+                // update contract service cache here as well to be not dependent on the registration order in nested cases
+                int cachedAtIndex = Array.IndexOf<Type>(this.localSessionServiceInterfaceTypesResolved, type);
+                contract.LocalServices[cachedAtIndex] = instance;
+            }
 
             //todo: parent container handling
 
