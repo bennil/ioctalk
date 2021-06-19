@@ -436,10 +436,10 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     && this.configObject.ClientFallbackTargets.Count > 0
                     && communication is TcpClientCom client)
             {
-                int targetFallbackIndex = clientConnectCount % configObject.ClientFallbackTargets.Count + 1;
+                int targetFallbackIndex = clientConnectCount % (configObject.ClientFallbackTargets.Count + 1);
 
                 TcpTarget nextTcpTarget = null;
-                if (targetFallbackIndex == 0 && originalTarget != null)
+                if (targetFallbackIndex == 0)
                 {
                     nextTcpTarget = originalTarget;
                 }
