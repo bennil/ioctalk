@@ -530,7 +530,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// <param name="rawMessage">The raw message.</param>
         public async ValueTask OnRawMessageReceived(IRawMessage rawMessage)
         {
-            await this.ProcessReceivedMessageBytes(rawMessage.SessionId, rawMessage.Data).ConfigureAwait(false);
+            var tuple = new Tuple<int, byte[]>(rawMessage.SessionId, rawMessage.Data);
+            await receiverQueue.Writer.WriteAsync(tuple);
         }
 
 

@@ -102,6 +102,7 @@ namespace BSAG.IOCTalk.Communication.Common
         private string serializerTypeName = "BSAG.IOCTalk.Serialization.Json.JsonMessageSerializer, BSAG.IOCTalk.Serialization.Json";
         private InvokeThreadModel invokeThreadModel = InvokeThreadModel.CallerThread;
         private Channel<Tuple<ISession, IGenericMessage>> callerQueue;
+        protected Channel<Tuple<int, byte[]>> receiverQueue;
         protected bool isActive = true;
 
         private long receivedMessageCounter = 0;
@@ -398,15 +399,14 @@ namespace BSAG.IOCTalk.Communication.Common
             {
                 isActive = false;
 
+                if (receiverQueue != null)
+                    receiverQueue.Writer.Complete();
+
                 if (callerQueue != null)
-                {
                     callerQueue.Writer.Complete();   // release caller queue thread
-                }
 
                 if (DataStreamLogger != null)
-                {
                     DataStreamLogger.Dispose();
-                }
             }
         }
 
@@ -631,6 +631,14 @@ namespace BSAG.IOCTalk.Communication.Common
             }
 
             this.serializer.RegisterContainerHost(containerHost);
+
+            BoundedChannelOptions receiverChannelOptions = new BoundedChannelOptions(2048); // todo: verify max count
+            receiverChannelOptions.FullMode = BoundedChannelFullMode.Wait;
+            receiverChannelOptions.SingleReader = true;
+            receiverChannelOptions.SingleWriter = true;
+
+            receiverQueue = Channel.CreateBounded<Tuple<int, byte[]>>(receiverChannelOptions);
+            Task.Run(ReceiverProcessTask);
         }
 
 
@@ -1296,6 +1304,33 @@ namespace BSAG.IOCTalk.Communication.Common
             catch (Exception preserveEx)
             {
                 logger.Warn("Can't preserve exception stack trace: " + preserveEx.ToString() + " \n\n Original Exception: " + ex.ToString());
+            }
+        }
+
+        private async ValueTask ReceiverProcessTask()
+        {
+            try
+            {
+                //logger.Info("Remote receiver processing started");
+
+                var reader = receiverQueue.Reader;
+
+                // todo: change to awat foreach and ReadAllAsync in future .net versions
+                while (await reader.WaitToReadAsync())
+                {
+                    if (reader.TryRead(out var invokeItem))
+                    {
+                        await ProcessReceivedMessageBytes(invokeItem.Item1, invokeItem.Item2);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Unexpected error! Receiver processing will exit! Details: " + ex.ToString());
+            }
+            finally
+            {
+                logger.Info("Receiver processing stopped");
             }
         }
 

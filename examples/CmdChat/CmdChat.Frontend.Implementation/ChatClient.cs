@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace CmdChat.Frontend.Implementation
 {
-    public class ChatClient : IChatClient
+    public class ChatClient : IChatClient, IDisposable
     {
         private IChatService chatService;
         private string username;
+        private bool isActive = true;
 
         public ChatClient(IChatService chatService)
         {
@@ -34,6 +35,13 @@ namespace CmdChat.Frontend.Implementation
                 do
                 {
                     message = Console.ReadLine();
+
+                    if (isActive == false)
+                    {
+                        Console.WriteLine("Please retype because of old console hook");
+                        return;
+                    }
+
                     chatService.BroadcastMessage(new ChatMsg() { Text = message });
 
                 } while (message != "exit");
@@ -73,5 +81,9 @@ namespace CmdChat.Frontend.Implementation
             Console.ForegroundColor = oldColor;
         }
 
+        public void Dispose()
+        {
+            isActive = false;
+        }
     }
 }
