@@ -28,6 +28,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         protected string host;
         protected int port;
         private string endPointInfo;
+        private DateTime? dnsResolveTimeUtc = null;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -118,6 +119,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
         public override string EndPointInfo => endPointInfo;
 
+
+        public TimeSpan RenewDnsResolutionTime { get; set; } = TimeSpan.FromMinutes(5);
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -153,7 +157,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             try
             {
-                if (EndPoint == null)
+                if (EndPoint == null 
+                    || (dnsResolveTimeUtc.HasValue && (DateTime.UtcNow - dnsResolveTimeUtc.Value) > RenewDnsResolutionTime))  // renew outdated dns resolution
                 {
                     // try get dns
                     SetEndPoint(this.host, this.port);
@@ -206,6 +211,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     var resolvedIp = hostEntry.AddressList[0];
                     this.EndPoint = new IPEndPoint(resolvedIp, port);
                     endPointInfo = $"{host}:{port} ({resolvedIp})";
+
+                    this.dnsResolveTimeUtc = DateTime.UtcNow;
                 }
                 else
                 {
