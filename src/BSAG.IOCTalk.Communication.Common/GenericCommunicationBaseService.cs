@@ -251,7 +251,7 @@ namespace BSAG.IOCTalk.Communication.Common
         /// <summary>
         /// Gets the data stream logger.
         /// </summary>
-        public IDataStreamLogger DataStreamLogger { get; set; }
+        public IDataStreamLogger DataStreamLogger { get => dataStreamLogger; set => dataStreamLogger = value; }
         
 
         /// <summary>
