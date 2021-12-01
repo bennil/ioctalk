@@ -217,7 +217,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
 
         /// <summary>
-        /// Gets or sets the name of the data stream logger type.
+        /// Gets or sets the name of the default data stream logger type.
         /// </summary>
         /// <value>
         /// The name of the data stream logger type.
@@ -251,10 +251,8 @@ namespace BSAG.IOCTalk.Communication.Common
         /// <summary>
         /// Gets the data stream logger.
         /// </summary>
-        public IDataStreamLogger DataStreamLogger
-        {
-            get { return dataStreamLogger; }
-        }
+        public IDataStreamLogger DataStreamLogger { get; set; }
+        
 
         /// <summary>
         /// Gets the sessions.

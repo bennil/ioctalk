@@ -104,13 +104,37 @@ namespace IOCTalk.StreamAnalyzer
                     flowRateFilter = int.Parse(TextBloxMinFlowRateCount.Text);
                 }
                 string fileName = openFile.FileName;
+
+                //// export test code
+                FileExportFilter fileExport = null;
+                //FileExportFilter fileExport = new FileExportFilter
+                //{
+                //    MessageNames = new string[] { "Post(x)" },
+                //    ExportDirectory = $".{System.IO.Path.DirectorySeparatorChar}FileExportFilter",
+                //    //GroupByKeys = new string[] { "Context", "DevId", "Protocol" },
+                //    GroupByKeys = new string[] { "DevId", "Protocol" },
+                //    IncludeResponse = true,
+                //    Conditions = new FilterItem[]
+                //    {
+                //        new FilterItem
+                //        {
+                //            Key ="Context",
+                //            Value = "x"
+                //        }
+                //    },
+                //    SeparateOnKey = "Message",
+                //    SeparateOnKeyValue = "",
+                //    ExportOnlyKey = "Message",
+                //    ExportWithSpaceSequence = 2
+                //};
+
                 ShowPleaseWait();
                 Task.Factory.StartNew(() =>
                 {
                     try
                     {
                         StringBuilder sbErrors;
-                        streamSessions = analyzer.AnalyzeDataStreamSession(fileName, roundTripTimeFilter, flowRateFilter, OnProgressUpdate, out sbErrors);
+                        streamSessions = analyzer.AnalyzeDataStreamSession(fileName, roundTripTimeFilter, flowRateFilter, OnProgressUpdate, fileExport, out sbErrors);
                         ShowResults(streamSessions, sbErrors);
                     }
                     catch (Exception ex)

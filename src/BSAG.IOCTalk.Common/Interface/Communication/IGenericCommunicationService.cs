@@ -97,9 +97,9 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         string DataStreamLoggerTypeName { get; set; }
 
         /// <summary>
-        /// Gets the data stream logger.
+        /// Gets or sets the data stream logger.
         /// </summary>
-        IDataStreamLogger DataStreamLogger { get; }
+        IDataStreamLogger DataStreamLogger { get; set; }
 
 
         /// <summary>

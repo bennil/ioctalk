@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -93,7 +94,10 @@ namespace IOCTalk.StreamAnalyzer.Implementation
         /// The response time.
         /// </value>
         public TimeSpan? ResponseTime { get; set; }
-                
+
+
+        public StreamWriter ExportFileStream { get; set; }
+
         #endregion
 
         #region methods

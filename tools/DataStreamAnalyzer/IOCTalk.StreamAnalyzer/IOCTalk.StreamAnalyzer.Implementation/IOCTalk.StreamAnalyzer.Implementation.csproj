@@ -103,6 +103,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileExportFilter.cs" />
+    <Compile Include="FilterItem.cs" />
     <Compile Include="FlowRate.cs" />
     <Compile Include="MethodInvokeRoundtrip.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

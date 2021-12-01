@@ -27,10 +27,13 @@ namespace BSAG.IOCTalk.Logging
         {
         }
 
-        public BasicLogger(string categoryName)
+        public BasicLogger(string categoryName, string logRootPath = "log", int keepLogPeriodDays = 20)
         {
             lock (syncObj)  // do not create in parallel
             {
+                this.LogRootPath = logRootPath;
+                this.KeepLogPeriodDays = keepLogPeriodDays;
+
                 string dir = Path.GetFullPath(LogRootPath);
 
                 if (!Directory.Exists(dir))

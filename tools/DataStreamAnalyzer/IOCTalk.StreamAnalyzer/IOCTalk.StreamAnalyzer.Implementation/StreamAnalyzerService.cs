@@ -51,11 +51,12 @@ namespace IOCTalk.StreamAnalyzer.Implementation
 
         #region methods
 
-        public IList<StreamSession> AnalyzeDataStreamSession(string fileName, TimeSpan? roundTripTimeFilter, int? flowRateFilter, Action<int> progressPercentage, out StringBuilder errors)
+        public IList<StreamSession> AnalyzeDataStreamSession(string fileName, TimeSpan? roundTripTimeFilter, int? flowRateFilter, Action<int> progressPercentage, FileExportFilter fileExort, out StringBuilder errors)
         {
             this.LastFilePath = fileName;
             errors = new StringBuilder();
             HashSet<int> ignoreSessions = new HashSet<int>();
+            Dictionary<string, StreamWriter> openFileExportStreams = null;
             using (StreamReader streamReader = new StreamReader(fileName))
             {
                 Dictionary<int, StreamSession> sessions = new Dictionary<int, StreamSession>();
@@ -152,7 +153,10 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                 var pendFlowRate = currentSession.PendingFlowRate;
                                 pendFlowRate.TotalCallCount++;
                                 pendFlowRate.PayloadByteCount += dataPart.Length;
-                                                                
+
+                                // round trip determination
+                                MethodInvokeRoundtrip methodInvokeReq = null;
+                                MethodInvokeRoundtrip methodInvokeResp = null;
                                 switch (message.Type)
                                 {
                                     case MessageType.AsyncMethodInvokeRequest:
@@ -175,15 +179,15 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                         break;
                                     case MessageType.MethodInvokeRequest:
 
-                                        MethodInvokeRoundtrip methodInvoke = new MethodInvokeRoundtrip();
-                                        methodInvoke.IsReceive = isReceive;
-                                        methodInvoke.Request = message;
-                                        methodInvoke.RequestTime = time;
+                                        methodInvokeReq = new MethodInvokeRoundtrip();
+                                        methodInvokeReq.IsReceive = isReceive;
+                                        methodInvokeReq.Request = message;
+                                        methodInvokeReq.RequestTime = time;
 
                                         if (isReceive)
                                         {
                                             currentSession.IncomingSyncCallCount++;
-                                            currentSession.IncomingSyncCalls.Add(message.RequestId, methodInvoke);
+                                            currentSession.IncomingSyncCalls.Add(message.RequestId, methodInvokeReq);
                                             pendFlowRate.IncomingSyncCallCount++;
 
                                             CheckReceiveRequestOrder(errors, currentSession, message);
@@ -191,7 +195,7 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                         else
                                         {
                                             currentSession.OutgoingSyncCallCount++;
-                                            currentSession.OutgoingSyncCalls.Add(message.RequestId, methodInvoke);
+                                            currentSession.OutgoingSyncCalls.Add(message.RequestId, methodInvokeReq);
                                             pendFlowRate.OutgoingSyncCallCount++;
 
                                             CheckSendRequestOrder(errors, currentSession, message);
@@ -204,14 +208,13 @@ namespace IOCTalk.StreamAnalyzer.Implementation
 
                                         if (isReceive)
                                         {
-                                            MethodInvokeRoundtrip mi;
-                                            if (currentSession.OutgoingSyncCalls.TryGetValue(message.RequestId, out mi))
+                                            if (currentSession.OutgoingSyncCalls.TryGetValue(message.RequestId, out methodInvokeResp))
                                             {
-                                                mi.Response = message;
-                                                mi.ResponseTime = time;
+                                                methodInvokeResp.Response = message;
+                                                methodInvokeResp.ResponseTime = time;
 
                                                 if (roundTripTimeFilter.HasValue
-                                                    && mi.RoundTripTime < roundTripTimeFilter)
+                                                    && methodInvokeResp.RoundTripTime < roundTripTimeFilter)
                                                 {
                                                     currentSession.OutgoingSyncCalls.Remove(message.RequestId);
                                                 }
@@ -225,14 +228,13 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                         }
                                         else
                                         {
-                                            MethodInvokeRoundtrip mi;
-                                            if (currentSession.IncomingSyncCalls.TryGetValue(message.RequestId, out mi))
+                                            if (currentSession.IncomingSyncCalls.TryGetValue(message.RequestId, out methodInvokeResp))
                                             {
-                                                mi.Response = message;
-                                                mi.ResponseTime = time;
+                                                methodInvokeResp.Response = message;
+                                                methodInvokeResp.ResponseTime = time;
 
                                                 if (roundTripTimeFilter.HasValue
-                                                    && mi.RoundTripTime < roundTripTimeFilter)
+                                                    && methodInvokeResp.RoundTripTime < roundTripTimeFilter)
                                                 {
                                                     currentSession.IncomingSyncCalls.Remove(message.RequestId);
                                                 }
@@ -248,6 +250,80 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                         break;
                                 }
 
+
+                                // handle file export
+                                if (fileExort != null)
+                                {
+                                    if (openFileExportStreams == null)
+                                        openFileExportStreams = new Dictionary<string, StreamWriter>();
+
+                                    if (fileExort.MessageNames.Where(mn => mn.Equals(message.Name)).Any())
+                                    {
+                                        bool isConditionMatching = true;
+                                        if (fileExort.Conditions != null)
+                                        {
+                                            foreach (var cond in fileExort.Conditions)
+                                            {
+                                                string condValue = GetJsonSimpleStringValue(dataPart, cond.Key);
+
+                                                if (cond.Value != condValue)
+                                                {
+                                                    isConditionMatching = false;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        if (isConditionMatching)
+                                        {
+                                            string fileExportGroupValues = string.Concat(fileExort.GroupByKeys.Select(gk => GetJsonSimpleStringValue(dataPart, gk) + "_"));
+                                            //string fileExportGroupValue = GetJsonSimpleStringValue(dataPart, fileExort.GroupByKey);
+
+                                            StreamWriter currentExportWriter = null;
+                                            if (openFileExportStreams.TryGetValue(fileExportGroupValues, out currentExportWriter) == false)
+                                            {
+                                                if (Directory.Exists(fileExort.ExportDirectory) == false)
+                                                    Directory.CreateDirectory(fileExort.ExportDirectory);
+
+                                                string conditions = string.Concat(fileExort.Conditions?.Select(cd => $"{cd.Key}-{cd.Value}_"));
+                                                string groupKeyValues = string.Concat(fileExort.GroupByKeys?.Select(gk => $"{gk}-{GetJsonSimpleStringValue(dataPart, gk)}_"));
+
+                                                string exportPath = Path.Combine(Path.GetFullPath(fileExort.ExportDirectory), $"{conditions}{groupKeyValues.TrimEnd('_')}.txt");
+
+                                                if (File.Exists(exportPath))
+                                                    File.Delete(exportPath);
+
+                                                currentExportWriter = new StreamWriter(exportPath);
+
+                                                openFileExportStreams.Add(fileExportGroupValues, currentExportWriter);
+                                            }
+
+                                            if (fileExort.SeparateOnKey != null)
+                                            {
+                                                string separateOnKeyValue = GetJsonSimpleStringValue(dataPart, fileExort.SeparateOnKey);
+
+                                                if (separateOnKeyValue == fileExort.SeparateOnKeyValue)
+                                                {
+                                                    currentExportWriter.WriteLine(Environment.NewLine);
+                                                    currentExportWriter.WriteLine(Environment.NewLine);
+                                                }
+                                            }
+
+                                            ExportOnlyHandling(fileExort, line, isReceive, dataPart, currentExportWriter);
+
+                                            if (methodInvokeReq != null && methodInvokeReq.ExportFileStream == null)
+                                                methodInvokeReq.ExportFileStream = currentExportWriter;
+                                        }
+
+                                    }
+                                    else if (methodInvokeResp != null
+                                        && methodInvokeResp.ExportFileStream != null)
+                                    {
+                                        // write response as well
+                                        ExportOnlyHandling(fileExort, line, isReceive, dataPart, methodInvokeResp.ExportFileStream);
+                                        methodInvokeResp.ExportFileStream = null;
+                                    }
+                                }
                             }
                         }
                         else
@@ -270,8 +346,39 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                     }
                 }
 
+                if (openFileExportStreams != null)
+                {
+                    foreach (var fileStream in openFileExportStreams.Values)
+                    {
+                        fileStream.Close();
+                    }
+                }
+
                 return sessions.Values.ToList<StreamSession>();
             }
+        }
+
+        private static void ExportOnlyHandling(FileExportFilter fileExort, string line, bool isReceive, string dataPart, StreamWriter currentExportWriter)
+        {
+            string output;
+            if (fileExort.ExportOnlyKey != null)
+            {
+                string exportOnlyValue = GetJsonSimpleStringValue(dataPart, fileExort.ExportOnlyKey);
+
+                output = (isReceive ? "< " : "> ") + exportOnlyValue;
+            }
+            else
+                output = line;
+
+            if (fileExort.ExportWithSpaceSequence.HasValue)
+            {
+                var list = Enumerable
+                    .Range(0, output.Length / fileExort.ExportWithSpaceSequence.Value)
+                    .Select(i => output.Substring(i * fileExort.ExportWithSpaceSequence.Value, fileExort.ExportWithSpaceSequence.Value));
+                output = string.Join(" ", list);
+            }
+
+            currentExportWriter.WriteLine(output);
         }
 
         private static void CheckSendRequestOrder(StringBuilder errors, StreamSession currentSession, IGenericMessage message)

@@ -69,7 +69,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
         public string DataStreamLoggerTypeName { get => underlyingCom.DataStreamLoggerTypeName; set => underlyingCom.DataStreamLoggerTypeName = value; }
 
-        public IDataStreamLogger DataStreamLogger => underlyingCom.DataStreamLogger;
+        public IDataStreamLogger DataStreamLogger { get => underlyingCom.DataStreamLogger; set => underlyingCom.DataStreamLogger = value; }
 
         public ISession[] ClientSessions => underlyingCom.ClientSessions;
 

@@ -208,7 +208,7 @@ namespace BSAG.IOCTalk.Common.Test
         public bool LogDataStream { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public string DataStreamLoggerTypeName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        public IDataStreamLogger DataStreamLogger => throw new NotImplementedException();
+        public IDataStreamLogger DataStreamLogger { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public ISession[] ClientSessions => throw new NotImplementedException();
 
