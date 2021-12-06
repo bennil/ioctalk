@@ -507,7 +507,29 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                                 }
 
                                 if (await ResendFile(pendFilePath, newSession) == false)
-                                    return;     // skip on conneciton lost
+                                {
+                                    if (newSession.IsActive)
+                                    {
+                                        Logger.Warn($"Resend failed but session still active! Retry once after 10 seconds...");
+
+                                        await Task.Delay(TimeSpan.FromSeconds(10));
+
+                                        if (await ResendFile(pendFilePath, newSession) == false)
+                                        {
+                                            Logger.Info($"Retry resend unseccussfull. Skip until next session. Session: {newSession}; IsActive: {newSession?.IsActive}");
+
+                                            return;     // skip on conneciton lost  
+                                        }
+                                        else
+                                        {
+                                            Logger.Info($"Retry resend succesfull. Session: {newSession}");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        return;     // skip on conneciton lost
+                                    }
+                                }
                             }
                         }
                     }
