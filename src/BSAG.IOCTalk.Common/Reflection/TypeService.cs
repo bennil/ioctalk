@@ -10,6 +10,7 @@ using Microsoft.CSharp;
 using System.CodeDom.Compiler;
 using System.Text.RegularExpressions;
 using System.Linq.Expressions;
+using BSAG.IOCTalk.Common.Exceptions;
 #if !AheadOfTimeOnly
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -787,8 +788,16 @@ namespace BSAG.IOCTalk.Common.Reflection
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>System.Object.</returns>
-        public static object CreateInstance(Type type, Func<Type, string, Type, object> constructorParamResolver, out object[] outParams, out ParameterInfo[] outParamsInfo)
+        public static object CreateInstance(Type type, CreateInstanceHandler constructorParamResolver, List<Type> pendingCreateList, out object[] outParams, out ParameterInfo[] outParamsInfo)
         {
+            if (pendingCreateList == null)
+                pendingCreateList = new List<Type>();   // create to regognize circular references
+
+            if (pendingCreateList.Contains(type))
+                throw new CircularServiceReferenceException(pendingCreateList, type);
+
+            pendingCreateList.Add(type);
+
             ConstructorParamsCache paramsCache;
             Func<object[], object> constructorDelegate;
             if (!constructorDelegateCacheParams.TryGetValue(type, out paramsCache))
@@ -820,7 +829,7 @@ namespace BSAG.IOCTalk.Common.Reflection
             for (int i = 0; i < paramsCache.ParamTypes.Length; i++)
             {
                 if (!paramsCache.Parameters[i].IsOut)
-                    ctorParams[i] = constructorParamResolver(paramsCache.ParamTypes[i], paramsCache.ParamNames[i], type);
+                    ctorParams[i] = constructorParamResolver(paramsCache.ParamTypes[i], paramsCache.ParamNames[i], type, pendingCreateList);
             }
 
             if (paramsCache.ContainsOutParams)

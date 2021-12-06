@@ -305,13 +305,18 @@ namespace BSAG.IOCTalk.Composition
 
         public object GetExport(Type type)
         {
-            return GetExport(type, null);
+            return GetExport(type, null, null);
         }
 
         public object GetExport(Type type, Type injectTargetType)
         {
+            return GetExport(type, injectTargetType, null);
+        }
+
+        public object GetExport(Type type, Type injectTargetType, List<Type> pendingCreateList)
+        {
             object instance;
-            if (!TryGetExport(type, injectTargetType, out instance))
+            if (!TryGetExport(type, injectTargetType, pendingCreateList, out instance))
             {
                 if (assemblies.Count == 0)
                 {
@@ -330,6 +335,11 @@ namespace BSAG.IOCTalk.Composition
         }
 
         public bool TryGetExport(Type type, Type injectTargetType, out object instance)
+        {
+            return TryGetExport(type, injectTargetType, null, out instance);
+        }
+
+        public bool TryGetExport(Type type, Type injectTargetType, List<Type> pendingCreateList, out object instance)
         {
             if (discoveryConditionItems != null)
             {
@@ -379,7 +389,7 @@ namespace BSAG.IOCTalk.Composition
                     // not found > check if multiple import
                     if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
                     {
-                        var multiImportColl = this.CollectLocalMultiImports(null, type, injectTargetType);
+                        var multiImportColl = this.CollectLocalMultiImports(null, type, injectTargetType, pendingCreateList);
                         if (multiImportColl != null)
                         {
                             instance = multiImportColl;
@@ -396,7 +406,7 @@ namespace BSAG.IOCTalk.Composition
             }
             else if (type.IsArray)
             {
-                var multiImportColl = this.CollectLocalMultiImports(null, type, injectTargetType);
+                var multiImportColl = this.CollectLocalMultiImports(null, type, injectTargetType, pendingCreateList);
                 if (multiImportColl != null)
                 {
                     instance = multiImportColl;
@@ -415,7 +425,7 @@ namespace BSAG.IOCTalk.Composition
 
             object[] outParams;
             ParameterInfo[] outParamsInfo;
-            instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, out outParams, out outParamsInfo);
+            instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
             this.CheckOutParamsSubscriptions(instance, outParams, null, type);
 
             this.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
@@ -476,9 +486,9 @@ namespace BSAG.IOCTalk.Composition
             return targetType;
         }
 
-        internal object DetermineConstructorImportInstance(Type type, string parameterName, Type injectTargetType)
+        internal object DetermineConstructorImportInstance(Type type, string parameterName, Type injectTargetType, List<Type> pendingCreateList)
         {
-            return GetExport(type, injectTargetType);
+            return GetExport(type, injectTargetType, pendingCreateList);
         }
 
         internal IEnumerable<Type> FindInterfaceImplementations(Type interfaceType, Type injectTargetType)
@@ -538,7 +548,7 @@ namespace BSAG.IOCTalk.Composition
         }
 
 
-        internal IEnumerable CollectLocalMultiImports(TalkCompositionHost host, Type type, Type injectTargetType)
+        internal IEnumerable CollectLocalMultiImports(TalkCompositionHost host, Type type, Type injectTargetType, List<Type> pendingCreateList)
         {
             // multiple imports
             // 1. determine generic target interface type
@@ -588,9 +598,9 @@ namespace BSAG.IOCTalk.Composition
                                 ParameterInfo[] outParamsInfo;
                                 object itemInstance;
                                 if (host != null)
-                                    itemInstance = TypeService.CreateInstance(implType, host.DetermineConstructorImportInstance, out outParams, out outParamsInfo);
+                                    itemInstance = TypeService.CreateInstance(implType, host.DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
                                 else
-                                    itemInstance = TypeService.CreateInstance(implType, this.DetermineConstructorImportInstance, out outParams, out outParamsInfo);
+                                    itemInstance = TypeService.CreateInstance(implType, this.DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
 
                                 CheckOutParamsSubscriptions(itemInstance, outParams, host, targetInterfaceType);
                                 targetCollection.Add(itemInstance);

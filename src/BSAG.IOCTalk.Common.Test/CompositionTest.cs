@@ -14,6 +14,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using BSAG.IOCTalk.Test.Common.Service;
 using BSAG.IOCTalk.Common.Test.TestObjects.InterfaceMapTest;
+using BSAG.IOCTalk.Common.Exceptions;
 
 namespace BSAG.IOCTalk.Common.Test
 {
@@ -189,6 +190,20 @@ namespace BSAG.IOCTalk.Common.Test
             dummyComm.RaiseSessionTerminated(session, contract);
 
             Assert.Equal(0, AdvancedImportService.CreatedCount);
+        }
+
+
+        [Fact]
+        public void CircularDependencyRegognitionTest()
+        {
+            DummyCommunicationService dummyComm = new DummyCommunicationService();
+
+            TalkCompositionHost hostContainer = new TalkCompositionHost();
+            hostContainer.RegisterLocalSharedService<ICircularDependencyTest1>();
+            hostContainer.RegisterLocalSharedServices<ICircularDependencyTest2>();
+            hostContainer.AddReferencedAssemblies();
+
+            Assert.Throws<CircularServiceReferenceException>(() => hostContainer.InitGenericCommunication(dummyComm));
         }
     }
 

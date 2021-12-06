@@ -585,13 +585,18 @@ namespace BSAG.IOCTalk.Composition
 
         public object GetExport(Type type)
         {
-            return GetExport(type, null);
+            return GetExport(type, null, null);
         }
 
         public object GetExport(Type type, Type injectTargetType)
         {
+            return GetExport(type, injectTargetType, null);
+        }
+
+        public object GetExport(Type type, Type injectTargetType, List<Type> pendingCreateList)
+        {
             object instance;
-            if (!TryGetExport(type, injectTargetType, out instance))
+            if (!TryGetExport(type, injectTargetType, pendingCreateList, out instance))
             {
                 if (localShare.Assemblies.Count == 0)
                 {
@@ -611,10 +616,16 @@ namespace BSAG.IOCTalk.Composition
 
         public bool TryGetExport(Type type, out object instance)
         {
-            return TryGetExport(type, null, out instance);
+            return TryGetExport(type, null, null, out instance);
         }
 
         public bool TryGetExport(Type type, Type injectTargetType, out object instance)
+        {
+            return TryGetExport(type, injectTargetType, null, out instance);
+        }
+
+
+        public bool TryGetExport(Type type, Type injectTargetType, List<Type> pendingCreateList, out object instance)
         {
             if (discoveryConditionItems != null)
             {
@@ -656,7 +667,7 @@ namespace BSAG.IOCTalk.Composition
                     // not found > check if multiple import
                     if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
                     {
-                        var multiImportColl = localShare.CollectLocalMultiImports(this, type, injectTargetType);
+                        var multiImportColl = localShare.CollectLocalMultiImports(this, type, injectTargetType, pendingCreateList);
                         if (multiImportColl != null)
                         {
                             instance = multiImportColl;
@@ -672,7 +683,7 @@ namespace BSAG.IOCTalk.Composition
             }
             else if (type.IsArray)
             {
-                var multiImportColl = this.localShare.CollectLocalMultiImports(this, type, injectTargetType);
+                var multiImportColl = this.localShare.CollectLocalMultiImports(this, type, injectTargetType, pendingCreateList);
                 if (multiImportColl != null)
                 {
                     instance = multiImportColl;
@@ -691,7 +702,7 @@ namespace BSAG.IOCTalk.Composition
 
             object[] outParams;
             ParameterInfo[] outParamsInfo;
-            instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, out outParams, out outParamsInfo);
+            instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
             localShare.CheckOutParamsSubscriptions(instance, outParams, this, type);
 
             localShare.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
@@ -709,7 +720,7 @@ namespace BSAG.IOCTalk.Composition
             return true;
         }
 
-        internal object DetermineConstructorImportInstance(Type type, string parameterName, Type injectTargetType)
+        internal object DetermineConstructorImportInstance(Type type, string parameterName, Type injectTargetType, List<Type> pendingCreateList)
         {
             if (string.Compare(parameterName, "sessionId", true) == 0)
             {
@@ -718,7 +729,8 @@ namespace BSAG.IOCTalk.Composition
             }
             else
             {
-                return GetExport(type, injectTargetType);
+                var targetInstance = GetExport(type, injectTargetType, pendingCreateList);
+                return targetInstance;
             }
         }
 
