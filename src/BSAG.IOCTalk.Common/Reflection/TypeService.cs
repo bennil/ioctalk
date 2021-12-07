@@ -658,12 +658,12 @@ namespace BSAG.IOCTalk.Common.Reflection
         }
 
 
-            /// <summary>
-            /// Gets the method by the given name. The name can contain a qualified parameter list.
-            /// </summary>
-            /// <param name="name">The name.</param>
-            /// <returns></returns>
-            public static MethodInfo GetMethodByName(Type type, string name)
+        /// <summary>
+        /// Gets the method by the given name. The name can contain a qualified parameter list.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <returns></returns>
+        public static MethodInfo GetMethodByName(Type type, string name)
         {
             if (name[name.Length - 1] == ')')
             {
@@ -796,6 +796,7 @@ namespace BSAG.IOCTalk.Common.Reflection
             if (pendingCreateList.Contains(type))
                 throw new CircularServiceReferenceException(pendingCreateList, type);
 
+            int pendingTypeIndex = pendingCreateList.Count;
             pendingCreateList.Add(type);
 
             ConstructorParamsCache paramsCache;
@@ -832,11 +833,12 @@ namespace BSAG.IOCTalk.Common.Reflection
                     ctorParams[i] = constructorParamResolver(paramsCache.ParamTypes[i], paramsCache.ParamNames[i], type, pendingCreateList);
             }
 
+            object result;
             if (paramsCache.ContainsOutParams)
             {
                 // slow execution to get out values
                 //todo: implement the same optimized compiled version for out param determintation
-                var result = Activator.CreateInstance(type, ctorParams);
+                result = Activator.CreateInstance(type, ctorParams);
                 outParams = new object[paramsCache.OutParams.Length];
                 for (int i = 0; i < paramsCache.OutParams.Length; i++)
                 {
@@ -844,15 +846,19 @@ namespace BSAG.IOCTalk.Common.Reflection
                     outParams[i] = ctorParams[outP.Position];
                 }
                 outParamsInfo = paramsCache.OutParams;
-                return result;
             }
             else
             {
 
                 outParams = null;
                 outParamsInfo = null;
-                return paramsCache.ConstructorDelegate(ctorParams);
+                result = paramsCache.ConstructorDelegate(ctorParams);
             }
+
+            // remove circular reference type tracking
+            pendingCreateList.RemoveAt(pendingTypeIndex);
+
+            return result;
         }
 
         private static Func<object[], object> CompileConstructorParamDelegate(Type type, out Type[] paramTypes, out string[] paramNames, out ParameterInfo[] outParams, out ParameterInfo[] cParams)
