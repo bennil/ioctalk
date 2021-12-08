@@ -103,6 +103,24 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
             Dispose();
         }
 
+        internal void AbortTransaction()
+        {
+            try
+            {
+                ClearSendIndicatorPositions();
+                CurrentWriteStream?.Close();
+                File.Delete(CurrentWritePath);
+            }
+            catch (Exception)
+            {
+                // ignore abort exceptions
+            }
+            finally
+            {
+                Dispose();
+            }
+        }
+
         internal void ClearSendIndicatorPositions()
         {
             sendIndicatorStreamPositions?.Clear();

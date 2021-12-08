@@ -242,11 +242,12 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             bool methodAlreadyPersisted = false;
             if (realSession != null && realSession.IsActive)
             {
+                PersistentMethod pm = null;
                 try
                 {
                     lastActiveInvokeUtc = DateTime.UtcNow;
 
-                    if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out PersistentMethod pm))
+                    if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out pm))
                     {
                         if (pm.Transaction != null)
                         {
@@ -293,8 +294,16 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                     }
                     else
                     {
+                        AbortTransactionBecauseFunctionalOnlineException(pm);
+
                         throw;
                     }
+                }
+                catch (Exception)
+                {
+                    AbortTransactionBecauseFunctionalOnlineException(pm);
+
+                    throw;
                 }
             }
             else if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out PersistentMethod persMeth))
@@ -308,6 +317,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 throw new OperationCanceledException("Remote connection lost!");
             }
         }
+
+
 
         private static Exception GetConnectionException(AggregateException aggExc)
         {
@@ -333,6 +344,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
             else
             {
+                AbortTransactionBecauseFunctionalOnlineException(pm);
+
                 throw exception;
             }
         }
@@ -855,6 +868,21 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 fictionalSessionTerminatedEvent(this, new SessionEventArgs(fictionalSession, fictionalSessionContract));
 
             underlyingCom.Shutdown();
+        }
+
+        /// <summary>
+        /// Functional exception during online remote invoke.
+        /// Delete pending transaction file (before re-throw in caller stack).
+        /// </summary>
+        /// <param name="pm"></param>
+        private void AbortTransactionBecauseFunctionalOnlineException(PersistentMethod pm)
+        {
+            if (pm != null && pm.Transaction != null && pm.Transaction.CurrentTransaction != null)
+            {
+                pm.Transaction.CurrentTransaction.AbortTransaction();
+
+                Logger?.Info("Pending transaction aborted");
+            }
         }
     }
 }

@@ -36,6 +36,7 @@ namespace BSAG.IOCTalk.Common.Exceptions
             sb.Append(string.Join(" > ", pendingTypeCreateList.Select(pt => pt.FullName).ToArray()));
             sb.Append(" > ");
             sb.Append(circularNodeType.FullName);
+            sb.Append(" - Use constructor parameter: out Action<IMyService> onMyServiceCreated to inject lazy");
 
             return sb.ToString();
         }

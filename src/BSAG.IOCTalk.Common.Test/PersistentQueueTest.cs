@@ -299,6 +299,75 @@ namespace BSAG.IOCTalk.Common.Test
             Assert.Equal(dummyCom.TransactionTestGuid, dummyCom.ReceivedParameterList[0][0]);
         }
 
+
+
+
+        [Fact]
+        public void TestPersistentTransactionContext_FunctionalExceptionOnComplete()
+        {
+            IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
+
+            PersistentTestCommService dummyCom = new PersistentTestCommService(xUnitLog);
+            dummyCom.RaiseConnectionLost = true;
+
+            PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
+            persistComm.ResendDelay = TimeSpan.Zero;
+            persistComm.ResendSuspensionDelay = TimeSpan.Zero;
+            persistComm.ResendSuspensionGracePeriod = TimeSpan.Zero;
+
+
+            TransactionDefinition trxDef = new TransactionDefinition("Test Transaction");
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.StartTransactionTest))
+                        .RegisterTransactionBegin(trxDef)
+                        .RegisterResendAction(new TrxResendActionUseReturnValue("testSessionId"));
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.PushTrxData))
+                        .RegisterTransaction(trxDef);
+
+            persistComm.RegisterPersistentMethod<ITrxTestService>(nameof(ITrxTestService.CompleteTransactionTest))
+                        .RegisterTransactionCommit(trxDef);
+
+            persistComm.RegisterContainerHost(talkCompositionHost, null);
+            persistComm.Init();
+
+            CleanupPeristentDirectory(persistComm);
+
+            dummyCom.RaiseConnectionLost = false;
+            dummyCom.RaiseConnectionCreated();
+
+            InvokeMethodInfo mInfoBeginTrx = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.StartTransactionTest));
+            InvokeMethodInfo mInfoTrxData = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.PushTrxData));
+            InvokeMethodInfo mInfoTrxCommit = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.CompleteTransactionTest));
+
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            Guid startTrxReturn = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
+
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
+
+            dummyCom.RaiseFunctionalException = true;
+
+            Assert.Throws<InvalidOperationException>(() => persistComm.InvokeMethod(this, mInfoTrxCommit, session, new object[] { startTrxReturn }) );  // transaction commit
+
+            // close connection to release file
+            persistComm.RealUnderlyingSession.Close();
+
+            // raise connection again
+            var firstOnlineCallGuid = dummyCom.TransactionTestGuid;
+            dummyCom.TransactionTestGuid = Guid.NewGuid(); // set new Guid
+            dummyCom.RaiseConnectionCreated();
+
+            // wait until local pending messages are processed (no messages are expected)
+            Thread.Sleep(500);
+
+            // 4 calls because last online call threw a function exception resulting in a transaction abort
+            Assert.Equal(4, dummyCom.InvokeCounter);
+        }
+
+
+
         //[Fact]
         //public async Task ResendTempTest()
         //{
@@ -387,6 +456,9 @@ namespace BSAG.IOCTalk.Common.Test
 
             public bool RaiseConnectionLost { get; set; }
 
+
+            public bool RaiseFunctionalException { get; set; }
+
             public int InvokeCounter { get; set; }
             public TimeSpan RequestTimeout { get; set; }
 
@@ -399,6 +471,10 @@ namespace BSAG.IOCTalk.Common.Test
                 if (RaiseConnectionLost)
                 {
                     throw new OperationCanceledException("Session lost unit test dummy");
+                }
+                else if (RaiseFunctionalException)
+                {
+                    throw new InvalidOperationException("Dummy functional exception");
                 }
                 else
                 {
