@@ -879,8 +879,6 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
             finally
             {
-                DismissOpenTransactions(pendFilePath, openReadTransactions);
-
                 if (stream != null)
                 {
                     try
