@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27004.2005
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Common", "BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj", "{142E2367-370D-4EB3-89F7-781B94B8E54A}"
 EndProject
@@ -25,9 +25,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Test.Interface
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Communication.PersistentQueue", "BSAG.IOCTalk.Communication.PersistentQueue\BSAG.IOCTalk.Communication.PersistentQueue.csproj", "{80D7225D-FE55-491E-B52E-7E838A45231D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BSAG.IOCTalk.Serialization.Binary", "BSAG.IOCTalk.Serialization.Binary\BSAG.IOCTalk.Serialization.Binary.csproj", "{B18E5003-657C-4790-B7AA-142823D2F754}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Serialization.Binary", "BSAG.IOCTalk.Serialization.Binary\BSAG.IOCTalk.Serialization.Binary.csproj", "{B18E5003-657C-4790-B7AA-142823D2F754}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BSAG.IOCTalk.Serialization.Binary.Test", "BSAG.IOCTalk.Serialization.Binary.Test\BSAG.IOCTalk.Serialization.Binary.Test.csproj", "{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Serialization.Binary.Test", "BSAG.IOCTalk.Serialization.Binary.Test\BSAG.IOCTalk.Serialization.Binary.Test.csproj", "{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOCTalk.BenchmarkDotNet", "IOCTalk.BenchmarkDotNet\IOCTalk.BenchmarkDotNet.csproj", "{E18F78F1-8543-494D-8E06-BA1777E95A6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,6 +85,10 @@ Global
 		{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E18F78F1-8543-494D-8E06-BA1777E95A6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E18F78F1-8543-494D-8E06-BA1777E95A6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E18F78F1-8543-494D-8E06-BA1777E95A6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E18F78F1-8543-494D-8E06-BA1777E95A6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

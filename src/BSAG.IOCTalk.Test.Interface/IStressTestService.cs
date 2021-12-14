@@ -11,5 +11,7 @@ namespace BSAG.IOCTalk.Test.Interface
         int SyncCallTest(int number);
 
         int ComplexCall(int number, IDataTransferTest data);
+
+        void SimpleCall();
     }
 }

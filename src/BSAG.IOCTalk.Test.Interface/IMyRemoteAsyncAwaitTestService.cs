@@ -14,5 +14,8 @@ namespace BSAG.IOCTalk.Test.Interface
 
 
         Task RunSomeWork();
+
+
+        Task SimpleCall();
     }
 }

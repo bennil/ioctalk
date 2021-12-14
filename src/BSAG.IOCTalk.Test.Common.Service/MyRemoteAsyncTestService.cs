@@ -27,6 +27,11 @@ namespace BSAG.IOCTalk.Test.Common.Service
             RunSomeWorkCounter++;
         }
 
+        public Task SimpleCall()
+        {
+            return Task.CompletedTask;
+        }
+
         public static int RunSomeWorkCounter { get; set; }
     }
 }

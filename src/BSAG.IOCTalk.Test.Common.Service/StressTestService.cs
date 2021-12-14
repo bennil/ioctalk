@@ -39,6 +39,10 @@ namespace BSAG.IOCTalk.Test.Common.Service
             return CheckNumber(number);
         }
 
+        public void SimpleCall()
+        {
+        }
+
         public int CurrentNumber => expectedNumber;
     }
 }
