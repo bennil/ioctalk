@@ -110,6 +110,7 @@ namespace BSAG.IOCTalk.Communication.Common
         private long lastReceivedMessageCounter = 0;
         private long lastSentMessageCounter = 0;
 
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -869,6 +870,108 @@ namespace BSAG.IOCTalk.Communication.Common
         }
 
 
+        public async Task<object> InvokeMethodAsync(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters)
+        {
+            if (session == null || !session.IsActive)
+            {
+                if (session == null)
+                    throw new OperationCanceledException("Remote connction lost");
+                else
+                    throw new OperationCanceledException($"Remote connction lost - Session: {session.SessionId} {session.Description}");
+
+            }
+
+            long requestId = Interlocked.Increment(ref currentRequestId);
+
+            bool responseExpected = true;
+
+            if (invokeInfo.IsVoidReturnMethod && invokeInfo.IsAsyncVoidRemoteInvoke(containerHost))
+            {
+                if (baseCommunicationServiceSupport.IsAsyncVoidSendCurrentlyPossible(session))
+                {
+                    responseExpected = false;
+                }
+            }
+
+            GenericMessage requestMsg = new GenericMessage(requestId, invokeInfo, parameters, responseExpected);
+
+
+            InvokeState invokeState = null;
+            if (responseExpected)
+            {
+                // create state object for request/response mapping
+                invokeState = new InvokeState();
+                invokeState.RequestMessage = requestMsg;
+
+                invokeState.WaitHandle = new ManualResetEventSlim(false);
+                invokeState.Method = invokeInfo.InterfaceMethod;
+                invokeState.MethodSource = invokeInfo;
+                invokeState.Session = session;
+
+                if (invokeInfo.OutParameters != null)
+                    invokeState.OutParameterValues = new object[invokeInfo.OutParameters.Length];
+
+                try
+                {
+                    session.PendingRequests.Add(requestId, invokeState);
+                }
+                catch (NullReferenceException)
+                {
+                    // session lost check
+                    if (!session.IsActive)
+                    {
+                        throw new OperationCanceledException("Remote connction lost - Session ID: " + session.SessionId);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+
+
+            await baseCommunicationServiceSupport.SendMessageAsync(requestMsg, session.SessionId, invokeInfo);
+            sentMessageCounter++;
+
+            if (responseExpected)
+            {
+                // block thread and wait for return object response
+                TimeSpan timeout = invokeInfo.CustomTimeout.HasValue ? invokeInfo.CustomTimeout.Value : requestTimeout;
+
+                await WaitHandleTaskAsyncResponseHelper(invokeState.WaitHandle.WaitHandle, timeout, invokeState, session.SessionId, requestId);
+
+                invokeState.WaitHandle.Dispose();
+
+                if (invokeState.Exception != null)
+                {
+                    // rethrow remote exception
+                    PreserveStackTrace(invokeState.Exception);
+                    throw invokeState.Exception;
+                }
+                else
+                {
+                    if (invokeInfo.OutParameters != null)
+                    {
+                        // set out parameter
+                        for (int outParamIndex = 0; outParamIndex < invokeInfo.OutParameters.Length; outParamIndex++)
+                        {
+                            ParameterInfo paramInfo = invokeInfo.OutParameters[outParamIndex];
+                            parameters[paramInfo.Position] = invokeState.OutParameterValues[outParamIndex];
+                        }
+                    }
+
+                    return invokeState.ReturnObject;
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+
+
+
         /// <summary>
         /// Processes the received message string.
         /// </summary>
@@ -1052,7 +1155,7 @@ namespace BSAG.IOCTalk.Communication.Common
 
                         case InvokeThreadModel.ReceiverThread:
                             // call method directly in this receiver thread
-                            CallReceivedMethod(session, message);
+                            await CallReceivedMethodAsync(session, message);
                             break;
 
                         case InvokeThreadModel.IndividualTask:
@@ -1277,6 +1380,153 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
+
+        private async ValueTask CallReceivedMethodAsync(ISession session, IGenericMessage message)
+        {
+
+            try
+            {
+                if (!session.IsInitialized)
+                {
+                    WaitForPendingSession(session);
+                }
+
+                // call remote invoke request
+                object implementationInstance = containerHost.GetInterfaceImplementationInstance(session, message.Target);
+
+                if (implementationInstance == null)
+                {
+                    throw new Exception("No implementation for the interface \"" + message.Target + "\" found!");
+                }
+                else if (implementationInstance.GetType().Namespace == TypeService.AutoGeneratedProxiesNamespace)
+                {
+                    throw new Exception("No implementation for the interface \"" + message.Target + "\" found! The auto generated proxy \"" + implementationInstance.GetType().FullName + "\" is not valid for remote invoke requests.");
+                }
+
+                Type serviceType = implementationInstance.GetType();
+
+                // Get method
+                IInvokeMethodInfo methodInfo;
+                int invokeInfoCacheKey = InvokeMethodInfo.CreateKey(message.Target, message.Name, serviceType);
+                if (!methodInfoCache.TryGetValue(invokeInfoCacheKey, out methodInfo))
+                {
+                    Type interfaceType = serviceType.GetInterface(message.Target);
+                    methodInfo = new InvokeMethodInfo(interfaceType, message.Name, null, serviceType);
+
+                    methodInfoCache[invokeInfoCacheKey] = methodInfo;
+                }
+
+                // Get method params
+                object[] parameters = null;
+                if (message.Payload != null)
+                {
+                    parameters = (object[])message.Payload;
+
+                    // check parameter types and convert is necesarry
+                    var parameterInfos = methodInfo.ParameterInfos;
+                    if (parameters.Length != parameters.Length)
+                    {
+                        throw new MethodAccessException("Parameter count mismatch! Method name: " + message.Name + "; Interface: " + message.Target);
+                    }
+                }
+
+                // Invoke method
+                object returnObject = methodInfo.Invoke(implementationInstance, parameters);
+
+                bool responseExpected = message.Type != MessageType.AsyncMethodInvokeRequest;
+                if (responseExpected)
+                {
+                    if (methodInfo.IsAsyncAwaitRemoteMethod)
+                    {
+                        
+                        if (returnObject is Task task)
+                        {
+                            await task;
+
+                            returnObject = TypeService.GetAsyncAwaitResultValue(task);
+                        }
+                        //else if (returnObject is ValueTask valueTask)
+                        //{
+                        //    await valueTask;
+                        //}
+                        else
+                        {
+                            throw new MethodAccessException($"Unexpected async/await method return type! Unsupported type: {returnObject?.GetType().FullName}");
+                        }
+
+                        if (methodInfo.IsVoidReturnMethod)
+                        {
+                            // do not serialize Task
+                            returnObject = null;
+                        }
+                    }
+
+                    object responseObject;
+                    if (methodInfo.OutParameters != null)
+                    {
+                        // method contains out parameters
+                        // create a list of return values
+                        // Index 0: method return object
+                        // Index 1 - x: out parameter values
+                        object[] responseArray = new object[methodInfo.OutParameters.Length + 1];
+                        responseArray[0] = returnObject;
+
+                        for (int i = 0; i < methodInfo.OutParameters.Length; i++)
+                        {
+                            responseArray[i + 1] = parameters[methodInfo.OutParameters[i].Position];
+                        }
+
+                        responseObject = responseArray;
+                    }
+                    else
+                    {
+                        responseObject = returnObject;
+                    }
+
+                    try
+                    {
+                        // Send response message
+                        GenericMessage responseMessage = new GenericMessage(message.RequestId, responseObject);
+                        baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, methodInfo);
+                        sentMessageCounter++;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        logger.Warn($"Could not answer to request id {message.RequestId} because of session id {session.SessionId} connection loss");
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                logger.Debug(string.Format("Error during remote call processing from session ID {0}. The exception will be send to the caller. Details: {1}", session.SessionId, ex.ToString()));
+
+                if (ex is TargetInvocationException)
+                {
+                    TargetInvocationException targetInvokeEx = (TargetInvocationException)ex;
+
+                    // unwrap reflection (invoke) exception container
+                    ex = targetInvokeEx.InnerException;
+                }
+
+                try
+                {
+                    // Send exception message
+                    GenericMessage responseMessage = new GenericMessage(message.RequestId, ex);
+                    baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, null);
+                    sentMessageCounter++;
+                }
+                catch (OperationCanceledException)
+                {
+                    logger.Warn($"Could not error respond to request id {message.RequestId} because of session id {session.SessionId} connection loss");
+                }
+                catch (Exception exSendEx)
+                {
+                    logger.Warn($"Exception during send response exception back to client! Details: {exSendEx}");
+                }
+            }
+        }
+
         /// <summary>
         /// Preserves the exception stack trace on rethrow.
         /// </summary>
@@ -1345,7 +1595,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 {
                     if (reader.TryRead(out var invokeItem))
                     {
-                        CallReceivedMethod(invokeItem.Item1, invokeItem.Item2);
+                        await CallReceivedMethodAsync(invokeItem.Item1, invokeItem.Item2);
                     }
                 }
             }
@@ -1468,6 +1718,27 @@ namespace BSAG.IOCTalk.Communication.Common
             {
                 logger.Debug($"Send heartbeats for {session.SessionId} stopped");
             }
+        }
+
+        private static Task WaitHandleTaskAsyncResponseHelper(WaitHandle handle, TimeSpan timeout, IInvokeState invokeState, int sessionId, long requestId)
+        {
+            var tcs = new TaskCompletionSource<object>();
+            var registration = ThreadPool.RegisterWaitForSingleObject(handle, (state, timedOut) =>
+            {
+                var localTcs = (TaskCompletionSource<object>)state;
+                if (timedOut)
+                {
+                    localTcs.SetException(new TimeoutException($"Request timeout occured! Request: {invokeState.Method.Name}; timeout time: {timeout}; session ID: {sessionId}; request ID: {requestId}"));
+                }
+                else
+                {
+                    localTcs.SetResult(null);
+                }
+            }, tcs, timeout, true);
+
+            // clean up the RegisterWaitHandle
+            tcs.Task.ContinueWith((_, state) => ((RegisteredWaitHandle)state).Unregister(null), registration, TaskScheduler.Default);
+            return tcs.Task;
         }
 
         // ----------------------------------------------------------------------------------------

@@ -986,6 +986,11 @@ namespace BSAG.IOCTalk.Composition
                             sc.Init(initSubContainers);
                         }
                     }
+
+                    if (TryGetCachedLocalExport(typeof(ILogger), out var log))
+                    {
+                        this.logger = (ILogger)log;
+                    }
                 }
             }
         }

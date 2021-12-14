@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Collections.Concurrent;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Exceptions;
+using System.Threading.Tasks;
 
 namespace BSAG.IOCTalk.Communication.Tcp
 {
@@ -251,6 +252,24 @@ namespace BSAG.IOCTalk.Communication.Tcp
             if (client != null)
             {
                 client.Send(dataBytes);
+            }
+            else
+            {
+                throw new OperationCanceledException("Remote connction lost - Session ID: " + receiverId);
+            }
+        }
+
+        /// <summary>
+        /// Sends the specified data bytes async.
+        /// </summary>
+        /// <param name="dataBytes">The data bytes.</param>
+        /// <param name="receiverId">The receiver socket id.</param>
+        /// <returns></returns>
+        public override async ValueTask SendAsync(byte[] dataBytes, int receiverId)
+        {
+            if (client != null)
+            {
+                await client.SendAsync(dataBytes);
             }
             else
             {

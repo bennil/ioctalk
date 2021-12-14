@@ -9,6 +9,7 @@ using BSAG.IOCTalk.Common.Interface.Container;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Interface.Reflection;
 using BSAG.IOCTalk.Common.Interface.Logging;
+using System.Threading.Tasks;
 
 namespace BSAG.IOCTalk.Common.Interface.Communication
 {
@@ -184,6 +185,17 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <param name="parameters">The parameters.</param>
         /// <returns></returns>
         object InvokeMethod(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters);
+
+
+        /// <summary>
+        /// Invokes a remote interface method async.
+        /// </summary>
+        /// <param name="source">The source.</param>
+        /// <param name="invokeInfo">The invoke info.</param>
+        /// <param name="session">The target session</param>
+        /// <param name="parameters">The parameters.</param>
+        /// <returns></returns>
+        Task<object> InvokeMethodAsync(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters);
 
         // ----------------------------------------------------------------------------------------
         #endregion

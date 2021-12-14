@@ -367,6 +367,15 @@ namespace BSAG.IOCTalk.Communication.Tcp
         public abstract void Send(byte[] dataBytes, int receiverId);
 
         /// <summary>
+        /// Sends the specified data bytes async.
+        /// </summary>
+        /// <param name="dataBytes">The data bytes.</param>
+        /// <param name="receiverId">The receiver socket id.</param>
+        /// <returns></returns>
+        public abstract ValueTask SendAsync(byte[] dataBytes, int receiverId);
+
+
+        /// <summary>
         /// Determines whether [is send buffer under pressure] [the specified receiver id].
         /// </summary>
         /// <param name="receiverId">The receiver id.</param>

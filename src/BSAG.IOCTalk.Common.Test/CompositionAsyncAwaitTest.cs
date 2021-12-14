@@ -1,5 +1,5 @@
 ﻿using BSAG.IOCTalk.Common.Interface.Logging;
-using BSAG.IOCTalk.Common.Test.TestObjects;
+using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Communication.Tcp;
 using BSAG.IOCTalk.Composition;
 using BSAG.IOCTalk.Test.Common.Service;
@@ -15,19 +15,36 @@ using Xunit.Abstractions;
 
 namespace BSAG.IOCTalk.Common.Test
 {
-    public class TcpStressTest
+
+    /// <summary>
+    /// Tests verify the remote proxy generation of async/await methods
+    /// ValueTask is not supported yet because of current .net Standard 2.0 dependency
+    /// </summary>
+    public class CompositionAsyncAwaitTest
     {
         TaskCompletionSource<bool> onConnectionEstablished;
-        IStressTestService currentStressTestServiceClientProxyInstance;
+        IMyRemoteAsyncAwaitTestService currentAsyncAwaitTestServiceClientProxyInstance;
         readonly ITestOutputHelper xUnitLog;
 
-        public TcpStressTest(ITestOutputHelper xUnitLog)
+        public CompositionAsyncAwaitTest(ITestOutputHelper xUnitLog)
         {
             this.xUnitLog = xUnitLog;
         }
 
+
         [Fact]
-        public async Task ClientServiceStressTest1()
+        public void TestCreateProxyImplementationAsyncAwaitMethods()
+        {
+            Type result = TypeService.BuildProxyImplementation(typeof(IMyRemoteAsyncAwaitTestService));
+
+            IMyRemoteAsyncAwaitTestService instance = (IMyRemoteAsyncAwaitTestService)Activator.CreateInstance(result, new object[2]);
+
+            Assert.NotNull(instance);
+        }
+
+
+        [Fact]
+        public async Task TestMethodBuildDataTransferInterfaceAsyncImplementation()
         {
             onConnectionEstablished = new TaskCompletionSource<bool>();
 
@@ -35,31 +52,30 @@ namespace BSAG.IOCTalk.Common.Test
             var ct = new CancellationTokenSource(timeoutMs);
             ct.Token.Register(() => onConnectionEstablished.TrySetCanceled(), useSynchronizationContext: false);
 
-            int port = 33254;
+            int port = 33255;
             var log = new UnitTestLogger(xUnitLog);
 
             TcpCommunicationController tcpClient;
             TcpCommunicationController tcpBackendService;
-
-            StressTestService localService;
+            MyRemoteAsyncTestService localService;
             {
                 // init service
                 var compositionHostService = new TalkCompositionHost();
-                //compositionHostService.AddAssembly(typeof(IStressTestService).Assembly);
-                compositionHostService.AddAssembly(typeof(StressTestService).Assembly);
+                compositionHostService.AddAssembly(typeof(MyRemoteAsyncTestService).Assembly);
 
                 compositionHostService.RegisterLocalSharedService<ILogger>(log);
 
-                compositionHostService.RegisterLocalSharedService<IStressTestService>();
+                compositionHostService.RegisterLocalSharedService<IMyRemoteAsyncAwaitTestService>();
 
 
                 tcpBackendService = new TcpCommunicationController(log);
+                tcpBackendService.LogDataStream = true;
 
                 compositionHostService.InitGenericCommunication(tcpBackendService);
 
                 tcpBackendService.InitService(port);
 
-                localService = (StressTestService)compositionHostService.GetExport<IStressTestService>();
+                localService = (MyRemoteAsyncTestService)compositionHostService.GetExport<IMyRemoteAsyncAwaitTestService>();
             }
 
             {
@@ -68,10 +84,11 @@ namespace BSAG.IOCTalk.Common.Test
                 //compositionHostClient.AddAssembly(typeof(IStressTestService).Assembly);
                 compositionHostClient.RegisterLocalSharedService<ILogger>(log);
 
-                compositionHostClient.RegisterRemoteService<IStressTestService>();
-                compositionHostClient.RegisterAsyncVoidMethod<IStressTestService>(nameof(IStressTestService.AsyncCallTest));
+                compositionHostClient.RegisterRemoteService<IMyRemoteAsyncAwaitTestService>();
 
                 tcpClient = new TcpCommunicationController(log);
+                tcpClient.LogDataStream = true;
+                tcpClient.RequestTimeoutSeconds = 15;
 
                 compositionHostClient.SessionCreated += OnCompositionHostClient_SessionCreated;
 
@@ -82,41 +99,33 @@ namespace BSAG.IOCTalk.Common.Test
 
             Assert.True(await onConnectionEstablished.Task);
 
-            int number = 0;
-            for (; number < 10000; number++)
-            {
-                currentStressTestServiceClientProxyInstance.AsyncCallTest(number);
-            }
 
-            for (; number < 20000; number++)
-            {
-                var result = currentStressTestServiceClientProxyInstance.SyncCallTest(number);
-                Assert.Equal(number, result);
-            }
+            var dataResponse = await currentAsyncAwaitTestServiceClientProxyInstance.GetDataAsync();
 
-            Assert.Equal(number, localService.CurrentNumber);
+            Assert.Equal("Hello world", dataResponse);
 
-            string longTestData = "TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST";
-            for (; number < 25000; number++)
-            {
-                var data = new DataTransferTest
-                {
-                    ID = number,
-                    Name = longTestData
-                };
-                var result = currentStressTestServiceClientProxyInstance.ComplexCall(number, data);
-                Assert.Equal(number, result);
-            }
 
-            Assert.Equal(number, localService.CurrentNumber);
+            int expected = 23134;
+            var response2 = await currentAsyncAwaitTestServiceClientProxyInstance.GetDataAsync2(expected);
+            Assert.Equal(expected, response2);
+
+            // without return value
+            MyRemoteAsyncTestService.RunSomeWorkCounter = 0;
+            await currentAsyncAwaitTestServiceClientProxyInstance.RunSomeWork();
+
+            Assert.Equal(1, MyRemoteAsyncTestService.RunSomeWorkCounter);
 
             tcpClient.Shutdown();
             tcpBackendService.Shutdown();
         }
 
+
+
+
+
         private void OnCompositionHostClient_SessionCreated(object contractSession, Session.SessionEventArgs e)
         {
-            currentStressTestServiceClientProxyInstance = e.SessionContract.GetSessionInstance<IStressTestService>();
+            currentAsyncAwaitTestServiceClientProxyInstance = e.SessionContract.GetSessionInstance<IMyRemoteAsyncAwaitTestService>();
             onConnectionEstablished.SetResult(true);
         }
     }

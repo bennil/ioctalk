@@ -7,6 +7,7 @@ using System.Net;
 using System.Collections.Concurrent;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Exceptions;
+using System.Threading.Tasks;
 
 namespace BSAG.IOCTalk.Communication.Tcp
 {
@@ -236,6 +237,20 @@ namespace BSAG.IOCTalk.Communication.Tcp
             }
         }
 
+
+        public override async ValueTask SendAsync(byte[] dataBytes, int receiverId)
+        {
+            Client client;
+            if (clients.TryGetValue(receiverId, out client))
+            {
+                await client.SendAsync(dataBytes);
+            }
+            else
+            {
+                throw new OperationCanceledException("Remote connction lost - Session ID: " + receiverId);
+            }
+        }
+
         public override bool IsSendBufferUnderPressure(int receiverId)
         {
             return false; // always return false using blocking tcp sockets
@@ -246,6 +261,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             //}
             //return false;
         }
+
 
         // ----------------------------------------------------------------------------------------
         #endregion

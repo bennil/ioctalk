@@ -10,6 +10,7 @@ using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Exceptions;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace BSAG.IOCTalk.Communication.Tcp
 {
@@ -234,6 +235,63 @@ namespace BSAG.IOCTalk.Communication.Tcp
             finally
             {
                 spinLock.Exit();
+            }
+        }
+
+
+        public async ValueTask SendAsync(byte[] dataBytes)
+        {
+            if (!socket.Connected)
+                throw new OperationCanceledException("Remote connction lost");
+
+            try
+            {
+                int length = dataBytes.Length;
+
+                await stream.WriteAsync(dataBytes, 0, length);
+            }
+            catch (ObjectDisposedException)
+            {
+                throw new OperationCanceledException("Remote connction lost");
+            }
+            catch (IOException ioEx)
+            {
+                if (ioEx.InnerException is SocketException)
+                {
+                    SocketException sockEx = (SocketException)ioEx.InnerException;
+
+                    SocketError errorCode = (SocketError)sockEx.ErrorCode;
+                    switch (errorCode)
+                    {
+                        case SocketError.Shutdown:
+                        case SocketError.ConnectionAborted:
+                        case SocketError.ConnectionReset:
+                        case SocketError.Disconnecting:
+                            throw new OperationCanceledException("Remote connction lost");
+
+                        default:
+                            throw sockEx;
+                    }
+                }
+                else
+                {
+                    throw ioEx;
+                }
+            }
+            catch (SocketException sockEx)
+            {
+                SocketError errorCode = (SocketError)sockEx.ErrorCode;
+                switch (errorCode)
+                {
+                    case SocketError.Shutdown:
+                    case SocketError.ConnectionAborted:
+                    case SocketError.ConnectionReset:
+                    case SocketError.Disconnecting:
+                        throw new OperationCanceledException("Remote connction lost");
+
+                    default:
+                        throw sockEx;
+                }
             }
         }
 

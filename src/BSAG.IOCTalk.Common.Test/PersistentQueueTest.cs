@@ -496,6 +496,12 @@ namespace BSAG.IOCTalk.Common.Test
                 }
             }
 
+
+            public Task<object> InvokeMethodAsync(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters)
+            {
+                throw new NotImplementedException();
+            }
+
             public void RegisterContainerHost(IGenericContainerHost containerHost, ILogger logger)
             {
                 this.containerHost = containerHost;
@@ -527,6 +533,7 @@ namespace BSAG.IOCTalk.Common.Test
                 xUnitLogger.WriteLine("ERROR: " + message);
                 throw new Exception(message);
             }
+
         }
     }
 }

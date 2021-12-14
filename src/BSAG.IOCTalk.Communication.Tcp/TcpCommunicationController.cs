@@ -524,6 +524,21 @@ namespace BSAG.IOCTalk.Communication.Tcp
         }
 
 
+        public async ValueTask SendMessageAsync(IGenericMessage message, int receiverSessionId, object context)
+        {
+            byte[] msgBytes = serializer.SerializeToBytes(message, context);
+            byte[] encapsulatedMessageBytes = AbstractTcpCom.CreateMessage(serializer.MessageFormat, msgBytes);
+
+            if (logDataStream)
+            {
+                // todo: create async version
+                dataStreamLogger.LogStreamMessage(receiverSessionId, false, msgBytes, serializer.MessageFormat != RawMessageFormat.JSON);
+            }
+
+            await communication.SendAsync(encapsulatedMessageBytes, receiverSessionId);
+        }
+
+
         /// <summary>
         /// Called when [raw message received].
         /// </summary>
@@ -546,6 +561,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             return !communication.IsSendBufferUnderPressure(session.SessionId);
         }
+
 
 
 

@@ -318,6 +318,98 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
         }
 
+        /// <summary>
+        /// todo: implement async file write
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="invokeInfo"></param>
+        /// <param name="session"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        /// <exception cref="OperationCanceledException"></exception>
+        public async Task<object> InvokeMethodAsync(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters)
+        {
+            var realSession = realUnderlyingSession;
+
+            bool methodAlreadyPersisted = false;
+            if (realSession != null && realSession.IsActive)
+            {
+                PersistentMethod pm = null;
+                try
+                {
+                    lastActiveInvokeUtc = DateTime.UtcNow;
+
+                    if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out pm))
+                    {
+                        if (pm.Transaction != null)
+                        {
+                            PersistPendingMethodInvoke(invokeInfo, parameters, pm, true, false);
+                            methodAlreadyPersisted = true;
+                        }
+                    }
+
+                    var returnValue = await underlyingCom.InvokeMethodAsync(source, invokeInfo, realSession, parameters);
+
+                    if (pm != null
+                        && pm.Transaction != null
+                        && pm.Transaction.CurrentTransaction != null
+                        && pm.Transaction.CommitTransactionMethod == pm)
+                    {
+                        // all methods are sent > commit online transaction
+                        pm.Transaction.CommitOnlineTransaction();
+
+                        Logger.Debug($"Online write transaction committed - method: {pm.MethodName}");
+                    }
+
+                    return returnValue;
+                }
+                catch (TimeoutException timeoutEx)
+                {
+                    return PersistOrThrow(invokeInfo, parameters, timeoutEx, methodAlreadyPersisted);
+                }
+                catch (IOException ioExc)
+                {
+                    return PersistOrThrow(invokeInfo, parameters, ioExc, methodAlreadyPersisted);
+                }
+                catch (OperationCanceledException operationCancelledEx)
+                {
+                    return PersistOrThrow(invokeInfo, parameters, operationCancelledEx, methodAlreadyPersisted);
+                }
+                catch (AggregateException aggExc)
+                {
+                    // check if AggregateException contains a connection related exception
+                    Exception connectionException = GetConnectionException(aggExc);
+
+                    if (connectionException != null)
+                    {
+                        return PersistOrThrow(invokeInfo, parameters, connectionException, methodAlreadyPersisted);
+                    }
+                    else
+                    {
+                        AbortTransactionBecauseFunctionalOnlineException(pm);
+
+                        throw;
+                    }
+                }
+                catch (Exception)
+                {
+                    AbortTransactionBecauseFunctionalOnlineException(pm);
+
+                    throw;
+                }
+            }
+            else if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out PersistentMethod persMeth))
+            {
+                // persist async request in file
+                // continue processing
+                return PersistPendingMethodInvoke(invokeInfo, parameters, persMeth, false, methodAlreadyPersisted);
+            }
+            else
+            {
+                throw new OperationCanceledException("Remote connection lost!");
+            }
+        }
+
 
 
         private static Exception GetConnectionException(AggregateException aggExc)
@@ -753,12 +845,12 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 Logger.Warn("Connection lost during local resend");
                 return false;
             }
-            catch (TimeoutException timeoutEx)
+            catch (TimeoutException)
             {
                 Logger.Warn("Connection lost during local resend (Timeout)");
                 return false;
             }
-            catch (IOException ioExc)
+            catch (IOException)
             {
                 Logger.Warn("Connection lost during local resend (IOException)");
                 return false;
@@ -884,5 +976,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 Logger?.Info("Pending transaction aborted");
             }
         }
+
+
     }
 }

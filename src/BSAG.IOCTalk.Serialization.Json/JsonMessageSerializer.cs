@@ -250,10 +250,10 @@ namespace BSAG.IOCTalk.Serialization.Json
                         case MessageType.MethodInvokeResponse:
 
 
-                            if (context.ArrayIndex == 0
-                                || !context.ArrayIndex.HasValue)
+                            if (context.ArrayIndex.HasValue == false 
+                                || context.ArrayIndex == 0)
                             {
-                                return invokeInfo.InterfaceMethod.ReturnType;
+                                return TypeService.GetAsyncAwaitResultType(invokeInfo.InterfaceMethod.ReturnType);
                             }
                             else
                             {
@@ -356,7 +356,7 @@ namespace BSAG.IOCTalk.Serialization.Json
                                 {
                                     // first arrar item contains method return type 
                                     // or payload only inlcudes return object
-                                    return invokeState.Method.ReturnType;
+                                    return TypeService.GetAsyncAwaitResultType(invokeState.Method.ReturnType);
                                 }
                             }
                             else

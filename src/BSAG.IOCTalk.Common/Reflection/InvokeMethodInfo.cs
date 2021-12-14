@@ -6,6 +6,7 @@ using BSAG.IOCTalk.Common.Interface.Reflection;
 using System.Reflection;
 using BSAG.IOCTalk.Common.Attributes;
 using BSAG.IOCTalk.Common.Interface.Container;
+using System.Threading.Tasks;
 
 namespace BSAG.IOCTalk.Common.Reflection
 {
@@ -27,7 +28,6 @@ namespace BSAG.IOCTalk.Common.Reflection
         private FastMethodInfo interfaceMethodInvoker;
         private ParameterInfo[] parameterInfos;
         private ParameterInfo[] outParameters;
-        private bool isAsyncRemoteInvoke = false;
         private MethodInfo implementationMethod;
         private string qualifiedMethodName;
         private TimeSpan? customTimeout;
@@ -35,6 +35,9 @@ namespace BSAG.IOCTalk.Common.Reflection
         private bool isAsyncVoidRemoteInvoke;
         private bool isAsyncVoidRemoteInvokeResolved;
         private bool isVoidReturnMethod;
+
+        private bool isAsyncAwaitRemoteMethod;
+
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -111,6 +114,11 @@ namespace BSAG.IOCTalk.Common.Reflection
             }
 
             isVoidReturnMethod = interfaceMethod.ReturnType.Equals(typeof(void));
+            isAsyncAwaitRemoteMethod = TypeService.IsAsyncAwaitType(interfaceMethod.ReturnType, out bool containsAsyncResultValue);
+            if (isAsyncAwaitRemoteMethod)
+            {
+                isVoidReturnMethod = !containsAsyncResultValue;
+            }
         }
 
         /// <summary>
@@ -244,6 +252,8 @@ namespace BSAG.IOCTalk.Common.Reflection
         public bool IsVoidReturnMethod => isVoidReturnMethod;
 
 
+        public bool IsAsyncAwaitRemoteMethod => isAsyncAwaitRemoteMethod;
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -297,6 +307,8 @@ namespace BSAG.IOCTalk.Common.Reflection
 
             return isAsyncVoidRemoteInvoke;
         }
+
+
 
         // ----------------------------------------------------------------------------------------
         #endregion

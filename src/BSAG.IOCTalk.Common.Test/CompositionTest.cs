@@ -15,6 +15,7 @@ using System.Reflection;
 using BSAG.IOCTalk.Test.Common.Service;
 using BSAG.IOCTalk.Common.Test.TestObjects.InterfaceMapTest;
 using BSAG.IOCTalk.Common.Exceptions;
+using System.Threading.Tasks;
 
 namespace BSAG.IOCTalk.Common.Test
 {
@@ -259,6 +260,11 @@ namespace BSAG.IOCTalk.Common.Test
         public object InvokeMethod(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters)
         {
             //throw new NotImplementedException();
+            return null;
+        }
+
+        public async Task<object> InvokeMethodAsync(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters)
+        {
             return null;
         }
 

@@ -47,6 +47,12 @@ namespace BSAG.IOCTalk.Common.Interface.Reflection
         bool IsVoidReturnMethod { get; }
 
         /// <summary>
+        /// Gets a value indicating an async/await method return
+        /// </summary>
+        bool IsAsyncAwaitRemoteMethod { get; }
+
+
+        /// <summary>
         /// Gets a custom request timeout
         /// </summary>
         TimeSpan? CustomTimeout { get; }
