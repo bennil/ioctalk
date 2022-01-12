@@ -320,7 +320,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
                     {
                         File.Delete(file);
 
-                        log.Info(string.Format("Old data stream file \"{0}\" from {1} UTC deleted", file, lastWriteTimeUtc));
+                        log.Info($"Old data stream file \"{file}\" from {lastWriteTimeUtc} UTC deleted; KeepStreamLogsDays: {keepStreamLogsDays}");
                     }
                 }
             }

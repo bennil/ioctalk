@@ -24,7 +24,8 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
     {
         #region fields
 
-        private SslProtocols protocol = SslProtocols.Tls;
+        private SslProtocols protocol = SslProtocols.Tls12;
+        private X509Certificate2 certificate;
 
         #endregion
 
@@ -35,6 +36,15 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
         /// </summary>
         public SecureTcpServer()
         {
+        }
+
+        /// <summary>
+        /// Creates and initializes an instance of the class <c>SecureTcpServer</c>.
+        /// </summary>
+        /// <param name="certificate">Used certificate</param>
+        public SecureTcpServer(X509Certificate2 certificate)
+        {
+            this.certificate = certificate;
         }
 
         #endregion
@@ -99,19 +109,22 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
             {
                 clientSocket = listener.EndAccept(asyncResult);
                 clientSocket.ReceiveBufferSize = this.ReceiveBufferSize;
+
+                if (certificate == null)
+                {
+                    if (!string.IsNullOrEmpty(CertificateFilename))
+                    {
+                        Logger?.Info($"Load certificate file: \"{CertificateFilename}\"");
+                        certificate = GetCertificateByFilename(CertificateFilename, CertificateFilePassword);
+                    }
+                    else
+                    {
+                        Logger?.Info($"Load certificate from store: \"{CertificateName}\"; Location: {Location}");
+                        certificate = GetCertificateByName(CertificateName, Location);
+                    }
+                }
                 
-                X509Certificate2 certificate;
-                if (!string.IsNullOrEmpty(CertificateFilename))
-                {
-                    Logger?.Info($"Load certificate file: \"{CertificateFilename}\"");
-                    certificate = GetCertificateByFilename(CertificateFilename, CertificateFilePassword);
-                }
-                else
-                {
-                    Logger?.Info($"Load certificate from store: \"{CertificateName}\"; Location: {Location}");
-                    certificate = GetCertificateByName(CertificateName, Location);
-                }
-                Logger?.Info($"Certificate \"{certificate.SubjectName.Name}\" loaded successfully - Thumbprint: {certificate.Thumbprint}");
+                Logger?.Info($"Use certificate \"{certificate.SubjectName.Name}\"; Thumbprint: {certificate.Thumbprint}; Issuer: {certificate.Issuer}");
 
                 SslStream tlsStream = new SslStream(new NetworkStream(clientSocket), false);
                 tlsStream.AuthenticateAsServer(certificate, ClientCertificateRequired, protocol, true);

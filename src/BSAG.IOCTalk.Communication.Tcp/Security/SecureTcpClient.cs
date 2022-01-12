@@ -26,7 +26,8 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
         #region fields
 
         private SslStream tlsStream;
-        private SslProtocols protocol = SslProtocols.Tls;
+        private SslProtocols protocol = SslProtocols.Tls12;
+        private X509Certificate2 clientCertificate;
 
         #endregion
 
@@ -37,6 +38,16 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
         /// </summary>
         public SecureTcpClient()
         {
+        }
+
+        /// <summary>
+        /// Creates and initializes an instance of the class <c>SecureTcpClient</c>.
+        /// </summary>
+        /// <param name="clientCertificate">Provides the given certificate to the server.</param>
+        public SecureTcpClient(X509Certificate2 clientCertificate)
+        {
+            this.clientCertificate = clientCertificate;
+            this.ProvideClientCertificate = true;
         }
 
         #endregion
@@ -130,18 +141,20 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
 
                 if (ProvideClientCertificate)
                 {
-                    X509Certificate2 clientCertificate;
-                    if (!string.IsNullOrEmpty(ClientCertificateFilename))
+                    if (clientCertificate == null)
                     {
-                        Logger?.Info($"Load client certificate file: \"{ClientCertificateFilename}\"");
-                        clientCertificate = SecureTcpServer.GetCertificateByFilename(ClientCertificateFilename, ClientCertificateFilePassword);
+                        if (!string.IsNullOrEmpty(ClientCertificateFilename))
+                        {
+                            Logger?.Info($"Load client certificate file: \"{ClientCertificateFilename}\"");
+                            clientCertificate = SecureTcpServer.GetCertificateByFilename(ClientCertificateFilename, ClientCertificateFilePassword);
+                        }
+                        else
+                        {
+                            Logger?.Info($"Load client certificate from store: \"{ClientCertificateName}\"; Location: {Location}");
+                            clientCertificate = SecureTcpServer.GetCertificateByName(ClientCertificateName, Location);
+                        }
                     }
-                    else
-                    {
-                        Logger?.Info($"Load client certificate from store: \"{ClientCertificateName}\"; Location: {Location}");
-                        clientCertificate = SecureTcpServer.GetCertificateByName(ClientCertificateName, Location);
-                    }
-                    Logger?.Info($"Client certificate \"{clientCertificate.SubjectName.Name}\" loaded successfully - Thumbprint: {clientCertificate.Thumbprint}");
+                    Logger?.Info($"Use client certificate \"{clientCertificate.SubjectName.Name}\"; Thumbprint: {clientCertificate.Thumbprint}; Issuer: {clientCertificate.Issuer}");
 
                     X509Certificate2Collection clientCerts = new X509Certificate2Collection(clientCertificate);
 
