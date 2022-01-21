@@ -33,10 +33,12 @@ namespace IOCTalk.StreamAnalyzer.Implementation
         {
             this.SessionId = sessionId;
 
-            int descrIndex = sessionInfo.IndexOf("Description");
+            string descrPattern = "Description";
+            int descrIndex = sessionInfo.IndexOf(descrPattern);
             if (descrIndex > 0)
             {
-                sessionInfo = sessionInfo.Substring(descrIndex);
+                string shortVersion = sessionInfo.Substring(descrIndex + descrPattern.Length + 1);
+                sessionInfo = sessionInfo.Substring(18, descrIndex - 18) + shortVersion;
             }
 
             this.SessionInfo = sessionInfo;

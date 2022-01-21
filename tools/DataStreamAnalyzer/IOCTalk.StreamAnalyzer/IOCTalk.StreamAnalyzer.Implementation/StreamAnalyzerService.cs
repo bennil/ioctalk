@@ -603,6 +603,37 @@ namespace IOCTalk.StreamAnalyzer.Implementation
         }
 
 
+        public void ExportSessionRows(StreamSession session, string targetPath)
+        {
+            using (StreamReader streamReader = new StreamReader(LastFilePath))
+            {
+                using (StreamWriter sw = new StreamWriter(targetPath))
+                {
+                    string line = null;
+                    long lineNumber = 1;
+                    while ((line = streamReader.ReadLine()) != null)
+                    {
+                        // get session id
+                        int firstSepIndex = line.IndexOf(FieldSeparator);
+                        int secondSepIndex = line.IndexOf(FieldSeparator, firstSepIndex + 1);
+
+                        if (firstSepIndex > 0 && secondSepIndex > 0)
+                        {
+                            string sessionIdStr = line.Substring(firstSepIndex + 1, secondSepIndex - firstSepIndex - 1);
+                            int sessionId = int.Parse(sessionIdStr);
+
+                            if (session.SessionId == sessionId)
+                            {
+                                sw.WriteLine(line);
+                            }
+                        }
+
+                        lineNumber++;
+                    }
+                }
+            }
+        }
+
         #endregion
     }
 }

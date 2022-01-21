@@ -258,5 +258,46 @@ namespace IOCTalk.StreamAnalyzer
 
             this.ButtonMergeSessions.IsEnabled = false;
         }
+
+        private void ButtonExportSessionMsg_Click(object sender, RoutedEventArgs e)
+        {
+            StreamSession session = (StreamSession)DataContext;
+
+            OpenFileDialog openFile = new OpenFileDialog();
+            openFile.Title = "Select Target Export File";
+            openFile.CheckFileExists = false;
+            openFile.CheckPathExists = true;
+            openFile.DefaultExt = ".txt";
+            openFile.FileName = System.IO.Path.GetFileNameWithoutExtension(MainWindow.Analyzer.LastFilePath) + "_sessionID_" + session.SessionId + ".txt";
+
+            var result = openFile.ShowDialog();
+
+            if (result.HasValue && result.Value)
+            {
+                string targetPath = openFile.FileName;
+
+                this.ButtonExportSessionMsg.IsEnabled = false;
+                MainWindow.Instance.ShowPleaseWait();
+                Task.Factory.StartNew(() =>
+                {
+                    try
+                    {
+                        MainWindow.Analyzer.ExportSessionRows(session, targetPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        MainWindow.Instance.ShowError(ex.ToString());
+                    }
+                }).ContinueWith(new Action<Task>((Task t) =>
+                {
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        MainWindow.Instance.HidePleaseWait();
+                        this.ButtonExportSessionMsg.IsEnabled = true;
+                        MessageBox.Show("File part successfully exported to: " + targetPath, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }));
+                }));
+            }
+        }
     }
 }

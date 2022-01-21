@@ -61,6 +61,8 @@
                     
                     <TextBlock>Outgoing asynchronous calls:</TextBlock>
                     <TextBlock Text="{Binding OutgoingAsyncCallCount}" />
+
+                    <Button x:Name="ButtonExportSessionMsg" Click="ButtonExportSessionMsg_Click">Export Session Messages</Button>
                 </UniformGrid>
             </TabItem>
             <TabItem Header="Outgoing Sync. Calls">
