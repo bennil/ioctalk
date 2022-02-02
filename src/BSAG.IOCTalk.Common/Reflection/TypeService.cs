@@ -510,6 +510,10 @@ namespace BSAG.IOCTalk.Common.Reflection
 
                         string invokeInfoMemberTypeName = string.Concat(decoration, parameterTypeString);
                         invokeInfoMemberTypeName = Regex.Replace(invokeInfoMemberTypeName, @"[^a-zA-Z0-9]", "");    // remove invalid chars
+                        if (paramType.IsArray)
+                        {
+                            invokeInfoMemberTypeName += "Arr";
+                        }
                         invokeInfoMemberName += invokeInfoMemberTypeName;
 
                         // add reference to parameter value array
