@@ -427,6 +427,8 @@ namespace BSAG.IOCTalk.Composition
                 CheckSessionTerminatedActions(e.Session, e.SessionContract);
 
                 SessionTerminated?.Invoke(e.SessionContract, e);
+
+                sessionIdContractMapping.Remove(e.Session.SessionId);
             }
             catch (Exception ex)
             {
