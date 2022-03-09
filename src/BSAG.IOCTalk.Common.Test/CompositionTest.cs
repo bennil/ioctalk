@@ -206,6 +206,40 @@ namespace BSAG.IOCTalk.Common.Test
 
             Assert.Throws<CircularServiceReferenceException>(() => hostContainer.InitGenericCommunication(dummyComm));
         }
+
+
+        [Fact]
+        public void TestMethodImplementationMapping()
+        {
+            DummyCommunicationService dummyComm = new DummyCommunicationService();
+
+            LocalShareContext localShareContext = new LocalShareContext();
+            localShareContext.MapInterfaceImplementationType<IMyLocalService, MyLocalService>();
+
+            localShareContext.RegisterLocalSharedService<IMyLocalService>();
+
+            localShareContext.Init();
+
+            var myService = localShareContext.GetExport<IMyLocalService>();
+
+            Assert.Equal(typeof(MyLocalService), myService.GetType());
+        }
+
+        [Fact]
+        public void TestMethodImplementationMapping2()
+        {
+            DummyCommunicationService dummyComm = new DummyCommunicationService();
+
+            LocalShareContext localShareContext = new LocalShareContext();
+
+            localShareContext.RegisterLocalSharedService<IMyLocalService, MyLocalService>();
+
+            localShareContext.Init();
+
+            var myService = localShareContext.GetExport<IMyLocalService>();
+
+            Assert.Equal(typeof(MyLocalService), myService.GetType());
+        }
     }
 
 

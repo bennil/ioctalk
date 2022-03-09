@@ -840,9 +840,17 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
                 return true;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException operationCancel)
             {
                 Logger.Warn("Connection lost during local resend");
+
+                await Task.Delay(300);
+
+                if (newSession.IsActive)
+                {
+                    Logger.Error($"Connection still active after cancel persistent resend! ExDetails: {operationCancel}");
+                }
+
                 return false;
             }
             catch (TimeoutException)

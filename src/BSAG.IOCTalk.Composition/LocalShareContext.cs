@@ -37,6 +37,7 @@ namespace BSAG.IOCTalk.Composition
 
         private List<Assembly> assemblies = new List<Assembly>();
         private List<IDiscoveryCondition> discoveryConditionItems;
+        private Dictionary<Type, Type> interfaceImplementationMapping;
 
         private ILogger logger;
         private bool isInitalized = false;
@@ -44,7 +45,7 @@ namespace BSAG.IOCTalk.Composition
 
         public LocalShareContext()
         {
-
+            interfaceImplementationMapping = new Dictionary<Type, Type>();
         }
 
 
@@ -102,6 +103,33 @@ namespace BSAG.IOCTalk.Composition
 
         public ITalkContainer ParentContainer { get; set; }
 
+        /// <summary>
+        /// Assigns an interface type to a fixed implementation type. This prevents assembly scanning and improves discovery performance.
+        /// </summary>
+        /// <typeparam name="InterfaceType">The interface type</typeparam>
+        /// <typeparam name="ImplementationType">The implmentation type</typeparam>
+        public void MapInterfaceImplementationType<InterfaceType, ImplementationType>()
+            where ImplementationType : class, InterfaceType
+        {
+            MapInterfaceImplementationType(typeof(InterfaceType), typeof(ImplementationType));
+        }
+
+        /// <summary>
+        /// Assigns an interface type to a fixed implementation type. This prevents assembly scanning and improves discovery performance.
+        /// </summary>
+        /// <param name="interfaceType">The interface type</param>
+        /// <param name="implementationType">The implmentation type</param>
+        /// <exception cref="ArgumentException">Throws if unexpected types are received.</exception>
+        public void MapInterfaceImplementationType(Type interfaceType, Type implementationType)
+        {
+            if (interfaceType.IsInterface == false)
+                throw new ArgumentException($"Interface type expected. Actual: {interfaceType.FullName}", nameof(interfaceType));
+
+            if (implementationType.IsClass == false)
+                throw new ArgumentException($"Class type expected. Actual: {interfaceType.FullName}", nameof(implementationType));
+
+            interfaceImplementationMapping[interfaceType] = implementationType;
+        }
 
 
         #region Assembly management
@@ -435,6 +463,9 @@ namespace BSAG.IOCTalk.Composition
 
         internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, out Type targetType)
         {
+            if (interfaceImplementationMapping.TryGetValue(interfaceType, out targetType))
+                return true;
+
             if (injectTargetType != null)
             {
                 // first scan inject assembly
@@ -809,11 +840,24 @@ namespace BSAG.IOCTalk.Composition
 
 
         /// <summary>
-        /// Creates a single instance of the local implmentation of the given interface.
+        /// Registers a single instance of the local implmentation for the given interface.
         /// </summary>
         /// <typeparam name="InterfaceType">The interface service type</typeparam>
         public void RegisterLocalSharedService<InterfaceType>()
         {
+            RegisterLocalSharedService(typeof(InterfaceType));
+        }
+
+        /// <summary>
+        /// Registers a single instance of the local implmentation for the given interface and a specific implementation type.
+        /// </summary>
+        /// <typeparam name="InterfaceType">The interface service type</typeparam>
+        /// <typeparam name="ImplementationType">The implementation type</typeparam>
+        public void RegisterLocalSharedService<InterfaceType, ImplementationType>()
+            where ImplementationType : class, InterfaceType
+        {
+            MapInterfaceImplementationType<InterfaceType, ImplementationType>();
+
             RegisterLocalSharedService(typeof(InterfaceType));
         }
 
