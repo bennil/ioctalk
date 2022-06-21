@@ -29,7 +29,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Serialization.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Serialization.Binary.Test", "BSAG.IOCTalk.Serialization.Binary.Test\BSAG.IOCTalk.Serialization.Binary.Test.csproj", "{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOCTalk.BenchmarkDotNet", "IOCTalk.BenchmarkDotNet\IOCTalk.BenchmarkDotNet.csproj", "{E18F78F1-8543-494D-8E06-BA1777E95A6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IOCTalk.BenchmarkDotNet", "IOCTalk.BenchmarkDotNet\IOCTalk.BenchmarkDotNet.csproj", "{E18F78F1-8543-494D-8E06-BA1777E95A6C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOCTalk.CodeGenerator", "IOCTalk.CodeGenerator\IOCTalk.CodeGenerator.csproj", "{7B560F1C-E6CA-41E3-8FD0-0FAE662145B2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,6 +91,10 @@ Global
 		{E18F78F1-8543-494D-8E06-BA1777E95A6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E18F78F1-8543-494D-8E06-BA1777E95A6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E18F78F1-8543-494D-8E06-BA1777E95A6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B560F1C-E6CA-41E3-8FD0-0FAE662145B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B560F1C-E6CA-41E3-8FD0-0FAE662145B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B560F1C-E6CA-41E3-8FD0-0FAE662145B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B560F1C-E6CA-41E3-8FD0-0FAE662145B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
