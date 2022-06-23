@@ -495,7 +495,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                             {
                                 this.persistMsgFilePath = Path.Combine(dir, $"MessageStore-{t.ToString("yyyyMMdd_HHmmss_ffff")}.pend");
 
-                                Logger.Debug("Create persistent file: " + persistMsgFilePath);
+                                Logger.Info("No connection - create persistent file: " + persistMsgFilePath);
 
                                 persistMsgFile = new FileStream(persistMsgFilePath, FileMode.Append, FileAccess.Write);
                             }
@@ -668,13 +668,13 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         {
             FileStream stream = null;
             List<TransactionDefinition> openReadTransactions = new List<TransactionDefinition>();
+            int resendMethodInvokeCount = 0;
             try
             {
                 Logger.Info($"Open pend file: {pendFilePath}");
 
                 stream = new FileStream(pendFilePath, FileMode.Open, FileAccess.ReadWrite);
 
-                //byte[] msgBytesPrevious = null;
                 int persistentMethodReadCount = 0;
                 do
                 {
@@ -771,6 +771,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                             // call underlying communication layer
                             object returnValue = underlyingCom.InvokeMethod(this, invokeInfo, newSession, paramValues);
 
+                            resendMethodInvokeCount++;
+
                             // post call transaction processing
                             if (commitTransactionAfterInvoke)
                             {
@@ -836,13 +838,13 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 // delete file
                 File.Delete(pendFilePath);
 
-                Logger.Debug("Pending message file deleted");
+                Logger.Info($"Complete resend of {resendMethodInvokeCount} persistent messages");
 
                 return true;
             }
             catch (OperationCanceledException operationCancel)
             {
-                Logger.Warn("Connection lost during local resend");
+                Logger.Warn($"Connection lost during local resend - sent messages: {resendMethodInvokeCount}");
 
                 await Task.Delay(300);
 
@@ -855,12 +857,12 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
             catch (TimeoutException)
             {
-                Logger.Warn("Connection lost during local resend (Timeout)");
+                Logger.Warn($"Connection lost during local resend (Timeout) - sent messages: {resendMethodInvokeCount}");
                 return false;
             }
             catch (IOException)
             {
-                Logger.Warn("Connection lost during local resend (IOException)");
+                Logger.Warn($"Connection lost during local resend (IOException) - sent messages: {resendMethodInvokeCount}");
                 return false;
             }
             catch (AggregateException aggExc)
@@ -870,7 +872,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
                 if (connectionException != null)
                 {
-                    Logger.Warn($"Connection lost during local resend ({connectionException.GetType().FullName})");
+                    Logger.Warn($"Connection lost during local resend ({connectionException.GetType().FullName}) - sent messages: {resendMethodInvokeCount}");
                     return false;
                 }
                 else
@@ -881,7 +883,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             catch (Exception ex)
             {
                 // Log unexpected error
-                Logger.Error($"Error resending file {pendFilePath}  \nException: {ex}");
+                Logger.Error($"Error resending file {pendFilePath} - sent messages: {resendMethodInvokeCount} \nException: {ex}");
 
                 return true; // no connection lost > continue sending next file
             }

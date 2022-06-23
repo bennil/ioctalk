@@ -200,17 +200,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     SocketException sockEx = (SocketException)ioEx.InnerException;
 
                     SocketError errorCode = (SocketError)sockEx.ErrorCode;
-                    switch (errorCode)
-                    {
-                        case SocketError.Shutdown:
-                        case SocketError.ConnectionAborted:
-                        case SocketError.ConnectionReset:
-                        case SocketError.Disconnecting:
-                            throw new OperationCanceledException("Remote connction lost");
-
-                        default:
-                            throw sockEx;
-                    }
+                    throw new OperationCanceledException($"Remote connction lost (socket error: {errorCode})");
                 }
                 else
                 {
@@ -220,17 +210,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
             catch (SocketException sockEx)
             {
                 SocketError errorCode = (SocketError)sockEx.ErrorCode;
-                switch (errorCode)
-                {
-                    case SocketError.Shutdown:
-                    case SocketError.ConnectionAborted:
-                    case SocketError.ConnectionReset:
-                    case SocketError.Disconnecting:
-                        throw new OperationCanceledException("Remote connction lost");
 
-                    default:
-                        throw sockEx;
-                }
+                throw new OperationCanceledException($"Remote connction lost (socket error: {errorCode})");
             }
             finally
             {

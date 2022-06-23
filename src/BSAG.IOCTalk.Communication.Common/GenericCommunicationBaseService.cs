@@ -497,7 +497,7 @@ namespace BSAG.IOCTalk.Communication.Common
         /// </summary>
         /// <param name="sessionId">The session id.</param>
         /// <returns>Returns <c>true</c> if the session was found and terminated; otherwise <c>false</c>.</returns>
-        public bool ProcessSessionTerminated(int sessionId)
+        public bool ProcessSessionTerminated(int sessionId, string source)
         {
             lock (sessionLockSyncObj)
             {
@@ -509,7 +509,7 @@ namespace BSAG.IOCTalk.Communication.Common
                     sessionDictionary.Remove(session.SessionId);
                     sessions = sessionDictionary.Values.ToArray<ISession>();
 
-                    logger.Info(string.Format("Session terminated - {0} - {1}", session.SessionId, session.Description));
+                    logger.Info($"Session terminated - {session.SessionId} - {session.Description} - {source}");
 
                     if (dataStreamLogger != null)
                     {
@@ -1710,12 +1710,19 @@ namespace BSAG.IOCTalk.Communication.Common
                     await Task.Delay(HeartbeatIntervalTime);
                 }
             }
-            catch
+            catch (OperationCanceledException)
             {
-                // ignore
+                ProcessSessionTerminated(session.SessionId, "Heartbeat fail");
+            }
+            catch (Exception ex)
+            {
+                logger.Warn($"Unexpected exception during heartbeat send! Details: {ex}");
             }
             finally
             {
+                if (session.IsActive)
+                    logger.Error($"Send heartbeats unexpected stopped though session (ID: {session.SessionId}) is still marked as active");
+
                 logger.Debug($"Send heartbeats for {session.SessionId} stopped");
             }
         }

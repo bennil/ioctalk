@@ -282,7 +282,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             }
 
             // async client connect
-            StartAutoReconnectAsync();
+            Task.Run(StartAutoReconnectAsync);
         }
 
         private void InitService(XElement securityXml, bool isSecurityEnabled, int servicePort)
@@ -341,90 +341,86 @@ namespace BSAG.IOCTalk.Communication.Tcp
         }
 
 
-        protected void StartAutoReconnectAsync()
+        protected async void StartAutoReconnectAsync()
         {
             if (Interlocked.Exchange(ref clientAutoReconnectLock, 1) == 0)    // only start auto reconnect task once
             {
-                Task taskClientReconnect = new Task(new Action(async () =>
+                try
                 {
-                    try
+                    await Task.Delay(100);
+
+                    if (!isActive)
                     {
-                        await Task.Delay(100);
-
-                        if (!isActive)
-                        {
-                            if (Logger != null)
-                                Logger.Info($"No reconnect to {communication?.EndPoint} because of shutdown");
-
-                            return;
-                        }
-
-                        if (this.communication.ConnectTimeUtc.HasValue)
-                        {
-                            // only if established connection is immediately reset by the remote host
-                            // sleep to prevent fast endless reconnect loop
-                            var lastConnectDiff = DateTime.UtcNow - this.communication.ConnectTimeUtc.Value;
-
-                            if (lastConnectDiff < ClientReconnectInterval)
-                            {
-                                await Task.Delay(ClientReconnectInterval);
-                            }
-                        }
-
                         if (Logger != null)
-                            Logger.Info($"Connect to {communication?.EndPointInfo}...");
+                            Logger.Info($"No reconnect to {communication?.EndPoint} because of shutdown");
+
+                        return;
+                    }
+
+                    if (this.communication.ConnectTimeUtc.HasValue)
+                    {
+                        // only if established connection is immediately reset by the remote host
+                        // sleep to prevent fast endless reconnect loop
+                        var lastConnectDiff = DateTime.UtcNow - this.communication.ConnectTimeUtc.Value;
+
+                        if (lastConnectDiff < ClientReconnectInterval)
+                        {
+                            await Task.Delay(ClientReconnectInterval);
+                        }
+                    }
+
+                    if (Logger != null)
+                        Logger.Info($"Connect to {communication?.EndPointInfo}...");
+
+                    clientConnectCount++;
+
+                    string errMsg;
+                    while (!this.communication.Connect(out errMsg))
+                    {
+                        if (Logger != null)
+                            Logger.Warn($"Connection refused {communication?.EndPoint}! {errMsg}");
+
+                        await Task.Delay(ClientReconnectInterval);
 
                         clientConnectCount++;
 
-                        string errMsg;
-                        while (!this.communication.Connect(out errMsg))
-                        {
-                            if (Logger != null)
-                                Logger.Warn($"Connection refused {communication?.EndPoint}! {errMsg}");
-
-                            await Task.Delay(ClientReconnectInterval);
-
-                            clientConnectCount++;
-
-                            RotateFallbackClientTargets();
-                        }
-
-                        clientConnectCount = 0;
+                        RotateFallbackClientTargets();
                     }
-                    catch (Exception ex)
+
+                    clientConnectCount = 0;
+                }
+                catch (Exception ex)
+                {
+                    if (Logger != null)
+                        Logger.Error(ex.ToString());
+
+                    await Task.Delay(1000);    // pause between reconnect
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref clientAutoReconnectLock, 0);
+
+                    if (communication is TcpClientCom)
                     {
-                        if (Logger != null)
-                            Logger.Error(ex.ToString());
+                        TcpClientCom client = (TcpClientCom)communication;
 
-                        await Task.Delay(1000);    // pause between reconnect
-                    }
-                    finally
-                    {
-                        Interlocked.Exchange(ref clientAutoReconnectLock, 0);
-
-                        if (communication is TcpClientCom)
+                        if (!client.IsConnected && isActive)
                         {
-                            TcpClientCom client = (TcpClientCom)communication;
+                            if (ClientReconnectFailed != null)
+                                ClientReconnectFailed(this, EventArgs.Empty);
 
-                            if (!client.IsConnected && isActive)
-                            {
-                                if (ClientReconnectFailed != null)
-                                    ClientReconnectFailed(this, EventArgs.Empty);
-
-                                if (logger != null)
-                                    logger.Debug("Restart reconnect processing");
-
-                                StartAutoReconnectAsync();
-                            }
-                        }
-                        else
-                        {
                             if (logger != null)
-                                logger.Debug("Reconnect processing exit");
+                                logger.Debug("Restart reconnect processing");
+
+                            _ = Task.Run(StartAutoReconnectAsync);
                         }
                     }
-                }));
-                taskClientReconnect.Start();
+                    else
+                    {
+                        if (logger != null)
+                            logger.Debug("Reconnect processing exit");
+                    }
+                }
             }
         }
 
@@ -491,7 +487,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             try
             {
-                this.ProcessSessionTerminated(e.Client.SessionId);
+                this.ProcessSessionTerminated(e.Client.SessionId, "Tcp");
             }
             catch (Exception ex)
             {
@@ -500,7 +496,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
             if (connectionType == ConnectionType.Client)
             {
-                StartAutoReconnectAsync();
+                Task.Run(StartAutoReconnectAsync);
             }
         }
 
