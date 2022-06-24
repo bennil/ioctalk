@@ -133,6 +133,26 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
         public event EventHandler ClientReconnectFailed;
 
+
+
+        /// <summary>
+        /// Gets or sets the size of the receive buffer.
+        /// </summary>
+        /// <value>
+        /// The initial size of the receive buffer.
+        /// </value>
+        public int ReceiveBufferSize { get; set; } = 65536;
+
+
+        /// <summary>
+        /// Gets or sets the size of the send buffer.
+        /// </summary>
+        /// <value>
+        /// The size of the send buffer.
+        /// </value>
+        public int SendBufferSize { get; set; } = 65536;
+
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -265,9 +285,11 @@ namespace BSAG.IOCTalk.Communication.Tcp
         }
 
         private void InitClientInternal(string host, int port, TcpClientCom client)
-        {
+        {            
             this.connectionType = ConnectionType.Client;
             client.Logger = this.logger;
+            client.ReceiveBufferSize = this.ReceiveBufferSize;
+            client.SendBufferSize = this.SendBufferSize;
             SubscribeCommunicationEvents(client);
 
             originalTarget = new TcpTarget() { Host = host, Port = port };
@@ -307,6 +329,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             this.connectionType = ConnectionType.Service;
             service.Logger = this.logger;
+            service.ReceiveBufferSize = this.ReceiveBufferSize;
+            service.SendBufferSize = this.SendBufferSize;
 
 
             SubscribeCommunicationEvents(service);

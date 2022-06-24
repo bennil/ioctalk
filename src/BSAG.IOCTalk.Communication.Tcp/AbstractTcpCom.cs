@@ -37,8 +37,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         private event EventHandler<ConnectionStateChangedEventArgs> connectionEstablished;
         private RawMessageReceivedDelegate rawMessageReceivedDelegate;
         private int maxReadBufferSize = 3276800;
-        private int receiveBufferSize = 16384;
-        private int sendBufferSize = 16384;
+        private int receiveBufferSize = 65536;
+        private int sendBufferSize = 65536;
 
         private CancellationTokenSource cancelTokenSource;
 
@@ -275,7 +275,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     else
                     {
                         // Connection closed
-                        Close(state.Client, "OnReceiveDataAsync rc: " + bytesReadCount);
+                        Close(state.Client, $"OnReceiveDataAsync rc: {bytesReadCount}; Socket: {state?.Client?.socket?.Connected}");
                         return;
                     }
                 }
