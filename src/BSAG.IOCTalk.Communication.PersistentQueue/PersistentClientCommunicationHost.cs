@@ -198,6 +198,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                     }
 
                     this.realUnderlyingSession = e.Session;
+
+                    Logger.Debug($"Persistent handler: new underlying session received. SessionID: {this.realUnderlyingSession.SessionId}");
                 }
 
                 var resendTask = Task.Run(() => ResendPendingMethodInvokes(e.Session));
@@ -226,6 +228,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             lock (syncLock)
             {
                 realUnderlyingSession = null;
+                Logger.Debug($"Persistent handler: underlying session terminated");
             }
 
             if (RedirectSessionEvents)
@@ -251,7 +254,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                     {
                         if (pm.Transaction != null)
                         {
-                            PersistPendingMethodInvoke(invokeInfo, parameters, pm, true, false);
+                            PersistPendingMethodInvoke(invokeInfo, parameters, pm, true, false, realSession, "transaction");
                             methodAlreadyPersisted = true;
                         }
                     }
@@ -273,15 +276,15 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 }
                 catch (TimeoutException timeoutEx)
                 {
-                    return PersistOrThrow(invokeInfo, parameters, timeoutEx, methodAlreadyPersisted);
+                    return PersistOrThrow(invokeInfo, parameters, timeoutEx, methodAlreadyPersisted, realSession, nameof(TimeoutException));
                 }
                 catch (IOException ioExc)
                 {
-                    return PersistOrThrow(invokeInfo, parameters, ioExc, methodAlreadyPersisted);
+                    return PersistOrThrow(invokeInfo, parameters, ioExc, methodAlreadyPersisted, realSession, nameof(IOException));
                 }
                 catch (OperationCanceledException operationCancelledEx)
                 {
-                    return PersistOrThrow(invokeInfo, parameters, operationCancelledEx, methodAlreadyPersisted);
+                    return PersistOrThrow(invokeInfo, parameters, operationCancelledEx, methodAlreadyPersisted, realSession, nameof(OperationCanceledException));
                 }
                 catch (AggregateException aggExc)
                 {
@@ -290,7 +293,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
                     if (connectionException != null)
                     {
-                        return PersistOrThrow(invokeInfo, parameters, connectionException, methodAlreadyPersisted);
+                        return PersistOrThrow(invokeInfo, parameters, connectionException, methodAlreadyPersisted, realSession, connectionException.GetType().Name);
                     }
                     else
                     {
@@ -310,7 +313,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             {
                 // persist async request in file
                 // continue processing
-                return PersistPendingMethodInvoke(invokeInfo, parameters, persMeth, false, methodAlreadyPersisted);
+                return PersistPendingMethodInvoke(invokeInfo, parameters, persMeth, false, methodAlreadyPersisted, realSession, "Inactive session");
             }
             else
             {
@@ -343,7 +346,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                     {
                         if (pm.Transaction != null)
                         {
-                            PersistPendingMethodInvoke(invokeInfo, parameters, pm, true, false);
+                            PersistPendingMethodInvoke(invokeInfo, parameters, pm, true, false, realSession, "transaction");
                             methodAlreadyPersisted = true;
                         }
                     }
@@ -365,15 +368,15 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 }
                 catch (TimeoutException timeoutEx)
                 {
-                    return PersistOrThrow(invokeInfo, parameters, timeoutEx, methodAlreadyPersisted);
+                    return PersistOrThrow(invokeInfo, parameters, timeoutEx, methodAlreadyPersisted, realSession, nameof(TimeoutException));
                 }
                 catch (IOException ioExc)
                 {
-                    return PersistOrThrow(invokeInfo, parameters, ioExc, methodAlreadyPersisted);
+                    return PersistOrThrow(invokeInfo, parameters, ioExc, methodAlreadyPersisted, realSession, nameof(IOException));
                 }
                 catch (OperationCanceledException operationCancelledEx)
                 {
-                    return PersistOrThrow(invokeInfo, parameters, operationCancelledEx, methodAlreadyPersisted);
+                    return PersistOrThrow(invokeInfo, parameters, operationCancelledEx, methodAlreadyPersisted, realSession, nameof(OperationCanceledException));
                 }
                 catch (AggregateException aggExc)
                 {
@@ -382,7 +385,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
                     if (connectionException != null)
                     {
-                        return PersistOrThrow(invokeInfo, parameters, connectionException, methodAlreadyPersisted);
+                        return PersistOrThrow(invokeInfo, parameters, connectionException, methodAlreadyPersisted, realSession, connectionException.GetType().Name);
                     }
                     else
                     {
@@ -402,7 +405,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             {
                 // persist async request in file
                 // continue processing
-                return PersistPendingMethodInvoke(invokeInfo, parameters, persMeth, false, methodAlreadyPersisted);
+                return PersistPendingMethodInvoke(invokeInfo, parameters, persMeth, false, methodAlreadyPersisted, realSession, "inactive session");
             }
             else
             {
@@ -427,12 +430,12 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             return connectionException;
         }
 
-        private object PersistOrThrow(IInvokeMethodInfo invokeInfo, object[] parameters, Exception exception, bool isPersistet)
+        private object PersistOrThrow(IInvokeMethodInfo invokeInfo, object[] parameters, Exception exception, bool isPersistet, ISession realSession, string reason)
         {
             if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out PersistentMethod pm))
             {
                 // persist
-                return PersistPendingMethodInvoke(invokeInfo, parameters, pm, false, isPersistet);
+                return PersistPendingMethodInvoke(invokeInfo, parameters, pm, false, isPersistet, realSession, reason);
             }
             else
             {
@@ -443,7 +446,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         }
 
 
-        private object PersistPendingMethodInvoke(IInvokeMethodInfo invokeInfo, object[] parameters, PersistentMethod persistentMeth, bool isOnlineTry, bool isPersistet)
+        private object PersistPendingMethodInvoke(IInvokeMethodInfo invokeInfo, object[] parameters, PersistentMethod persistentMeth, bool isOnlineTry, bool isPersistet, ISession realSession, string reason)
         {
             bool isTransaction = persistentMeth.Transaction != null;
 
@@ -482,7 +485,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                             {
                                 trx.CurrentWritePath = Path.Combine(dir, $"MessageStore-Trx_{persistentMeth.Transaction.Name}-{t.ToString("yyyyMMdd_HHmmss_ffff")}.pend");
 
-                                Logger.Debug("Create persistent transaction file: " + trx.CurrentWritePath);
+                                Logger.Info($"Create persistent transaction file: {trx.CurrentWritePath}; reason: {reason}");
 
                                 trx.CurrentWriteStream = new FileStream(trx.CurrentWritePath, FileMode.Append, FileAccess.Write);
                             }
@@ -495,7 +498,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                             {
                                 this.persistMsgFilePath = Path.Combine(dir, $"MessageStore-{t.ToString("yyyyMMdd_HHmmss_ffff")}.pend");
 
-                                Logger.Info("No connection - create persistent file: " + persistMsgFilePath);
+                                Logger.Info($"Create persistent file: {persistMsgFilePath}; reason: {reason}; isOnlineTry: {isOnlineTry}; isPersistet: {isPersistet}; isConnected: {(realSession == null ? "no" : $"{realSession.IsActive}")}; sessionID: {realSession?.SessionId}");
 
                                 persistMsgFile = new FileStream(persistMsgFilePath, FileMode.Append, FileAccess.Write);
                             }
