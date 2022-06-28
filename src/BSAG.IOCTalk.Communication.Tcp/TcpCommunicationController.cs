@@ -16,6 +16,7 @@ using BSAG.IOCTalk.Common.Interface.Communication.Raw;
 using BSAG.IOCTalk.Communication.Tcp.Security;
 using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Communication.Tcp.Config;
+using System.Net.Sockets;
 
 namespace BSAG.IOCTalk.Communication.Tcp
 {
@@ -151,6 +152,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// The size of the send buffer.
         /// </value>
         public int SendBufferSize { get; set; } = 65536;
+
+
+        public Action<Socket> AdjustSocketHandler { get; set; }
 
 
         // ----------------------------------------------------------------------------------------
@@ -290,6 +294,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             client.Logger = this.logger;
             client.ReceiveBufferSize = this.ReceiveBufferSize;
             client.SendBufferSize = this.SendBufferSize;
+            client.AdjustSocketHandler = this.AdjustSocketHandler;
             SubscribeCommunicationEvents(client);
 
             originalTarget = new TcpTarget() { Host = host, Port = port };
@@ -331,6 +336,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             service.Logger = this.logger;
             service.ReceiveBufferSize = this.ReceiveBufferSize;
             service.SendBufferSize = this.SendBufferSize;
+            service.AdjustSocketHandler = this.AdjustSocketHandler;
 
 
             SubscribeCommunicationEvents(service);

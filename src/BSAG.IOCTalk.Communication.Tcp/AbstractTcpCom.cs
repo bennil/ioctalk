@@ -177,6 +177,10 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// </summary>
         public abstract DateTime? ConnectTimeUtc { get; }
 
+
+        public Action<Socket> AdjustSocketHandler { get; set; }
+
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -393,6 +397,9 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             socket.ReceiveBufferSize = receiveBufferSize;
             socket.SendBufferSize = sendBufferSize;
+
+            if (AdjustSocketHandler != null)
+                AdjustSocketHandler(socket);
         }
 
 

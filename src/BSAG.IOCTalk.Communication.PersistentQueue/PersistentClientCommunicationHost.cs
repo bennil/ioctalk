@@ -248,34 +248,26 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 PersistentMethod pm = null;
                 try
                 {
-                    lastActiveInvokeUtc = DateTime.UtcNow;
-
-                    if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out pm))
-                    {
-                        if (pm.Transaction != null)
-                        {
-                            PersistPendingMethodInvoke(invokeInfo, parameters, pm, true, false, realSession, "transaction");
-                            methodAlreadyPersisted = true;
-                        }
-                    }
-
-                    var returnValue = underlyingCom.InvokeMethod(source, invokeInfo, realSession, parameters);
-
-                    if (pm != null
-                        && pm.Transaction != null
-                        && pm.Transaction.CurrentTransaction != null
-                        && pm.Transaction.CommitTransactionMethod == pm)
-                    {
-                        // all methods are sent > commit online transaction
-                        pm.Transaction.CommitOnlineTransaction();
-
-                        Logger.Debug($"Online write transaction committed - method: {pm.MethodName}");
-                    }
-
-                    return returnValue;
+                    return InvokeMethodInternalActiveSession(source, invokeInfo, parameters, realSession, ref methodAlreadyPersisted, out pm);
                 }
                 catch (TimeoutException timeoutEx)
                 {
+                    if (realSession.IsActive)
+                    {
+                        try
+                        {
+                            Logger.Info("PersistentQueue: Remote invoke timeout but session still active - retry");
+                            var result = InvokeMethodInternalActiveSession(source, invokeInfo, parameters, realSession, ref methodAlreadyPersisted, out pm);
+                            Logger.Info("PersistentQueue: retry invoke successfully");
+                            return result;
+                        }
+                        catch (Exception)
+                        {
+                            // ignore retry exception
+                            Logger.Info("PersistentQueue: retry online invoke failed continue persistence");
+                        }
+                    }
+
                     return PersistOrThrow(invokeInfo, parameters, timeoutEx, methodAlreadyPersisted, realSession, nameof(TimeoutException));
                 }
                 catch (IOException ioExc)
@@ -319,6 +311,35 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             {
                 throw new OperationCanceledException("Remote connection lost!");
             }
+        }
+
+        private object InvokeMethodInternalActiveSession(object source, IInvokeMethodInfo invokeInfo, object[] parameters, ISession realSession, ref bool methodAlreadyPersisted, out PersistentMethod pm)
+        {
+            lastActiveInvokeUtc = DateTime.UtcNow;
+
+            if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out pm))
+            {
+                if (pm.Transaction != null)
+                {
+                    PersistPendingMethodInvoke(invokeInfo, parameters, pm, true, false, realSession, "transaction");
+                    methodAlreadyPersisted = true;
+                }
+            }
+
+            var returnValue = underlyingCom.InvokeMethod(source, invokeInfo, realSession, parameters);
+
+            if (pm != null
+                && pm.Transaction != null
+                && pm.Transaction.CurrentTransaction != null
+                && pm.Transaction.CommitTransactionMethod == pm)
+            {
+                // all methods are sent > commit online transaction
+                pm.Transaction.CommitOnlineTransaction();
+
+                Logger.Debug($"Online write transaction committed - method: {pm.MethodName}");
+            }
+
+            return returnValue;
         }
 
         /// <summary>

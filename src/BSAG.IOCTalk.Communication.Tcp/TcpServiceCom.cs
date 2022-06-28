@@ -39,7 +39,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         /// </summary>
         public TcpServiceCom()
         {
-            MaxConnectionCount = 350;
+            MaxConnectionCount = 1000;
         }
 
         // ----------------------------------------------------------------------------------------
