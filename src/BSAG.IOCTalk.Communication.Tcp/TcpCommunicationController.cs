@@ -289,7 +289,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         }
 
         private void InitClientInternal(string host, int port, TcpClientCom client)
-        {            
+        {
             this.connectionType = ConnectionType.Client;
             client.Logger = this.logger;
             client.ReceiveBufferSize = this.ReceiveBufferSize;
@@ -487,7 +487,12 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     catch (Exception setEndpointEx)
                     {
                         if (Logger != null)
-                            Logger.Error($"Could not set fallback endpoint! Host: {nextTcpTarget.Host}; Port: {nextTcpTarget.Port}; Exception: {setEndpointEx}");
+                        {
+                            if (targetFallbackIndex == 0)
+                                Logger.Warn($"Could not set endpoint! Host: {nextTcpTarget.Host}; Port: {nextTcpTarget.Port}; Details: {setEndpointEx.Message} ({setEndpointEx.GetType().Name})");
+                            else
+                                Logger.Warn($"Could not set fallback endpoint number {targetFallbackIndex}! Host: {nextTcpTarget.Host}; Port: {nextTcpTarget.Port}; Details: {setEndpointEx.Message} ({setEndpointEx.GetType().Name})");
+                        }
                     }
                 }
             }
