@@ -185,6 +185,14 @@ namespace BSAG.IOCTalk.Composition
             return localReg;
         }
 
+        public LocalSessionRegistration<InterfaceType> RegisterLocalSessionService<InterfaceType, ImplementationType>()
+            where ImplementationType : class, InterfaceType
+        {
+            localShare.MapInterfaceImplementationType<InterfaceType, ImplementationType>();
+
+            return RegisterLocalSessionService<InterfaceType>();
+        }
+
         public void RegisterLocalSessionService(Type interfaceType)
         {
             if (!interfaceType.IsInterface)
