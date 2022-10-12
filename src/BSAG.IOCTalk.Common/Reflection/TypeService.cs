@@ -959,7 +959,7 @@ namespace BSAG.IOCTalk.Common.Reflection
 
                     return currentResultProvider.Getter(value);
                 }
-                else 
+                else
                 {
                     // void task
                     return null;
@@ -1164,14 +1164,17 @@ namespace BSAG.IOCTalk.Common.Reflection
 
             // add System.Runtime workaround
             string fwPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
-            string runtimeWorkaroundPath = Path.Combine(fwPath, "System.Runtime.dll");
-            if (File.Exists(runtimeWorkaroundPath))
+            if (fwPath != null)
             {
-                referenceLocations.Add(runtimeWorkaroundPath);
-            }
-            else
-            {
-                Console.WriteLine($"netcore framework directory path not found! path: {runtimeWorkaroundPath}");
+                string runtimeWorkaroundPath = Path.Combine(fwPath, "System.Runtime.dll");
+                if (File.Exists(runtimeWorkaroundPath))
+                {
+                    referenceLocations.Add(runtimeWorkaroundPath);
+                }
+                else
+                {
+                    Console.WriteLine($"netcore framework directory path not found! path: {runtimeWorkaroundPath}");
+                }
             }
 
             // add given type assemblies

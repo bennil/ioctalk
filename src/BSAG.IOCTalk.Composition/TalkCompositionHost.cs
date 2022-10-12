@@ -14,6 +14,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 
 namespace BSAG.IOCTalk.Composition
 {
@@ -50,6 +51,10 @@ namespace BSAG.IOCTalk.Composition
         private IContract currentContract;
         private bool isInitalized = false;
 
+
+        private static int compositionHostAutoNameCounter = 0;
+        private string name;
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -59,17 +64,23 @@ namespace BSAG.IOCTalk.Composition
         // TalkCompositionHost constructors
         // ----------------------------------------------------------------------------------------
 
-        public TalkCompositionHost()
+        public TalkCompositionHost(string name = null)
         {
             // create own local share for remote connection
             localShare = new LocalShareContext();
             localShare.AddSubContainer(this);
+
+            SetAutoNameIfNecessary(name);
         }
 
-        public TalkCompositionHost(LocalShareContext localShareContext)
+
+
+        public TalkCompositionHost(LocalShareContext localShareContext, string name = null)
         {
             this.localShare = localShareContext;
             localShare.AddSubContainer(this);
+
+            SetAutoNameIfNecessary(name);
         }
 
         // ----------------------------------------------------------------------------------------
@@ -108,6 +119,8 @@ namespace BSAG.IOCTalk.Composition
             get { return localShare; }
             set { throw new NotSupportedException("parent container set only by constructor!"); }
         }
+
+        public string Name => name;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -954,6 +967,18 @@ namespace BSAG.IOCTalk.Composition
             }
 
             return false;
+        }
+
+        private void SetAutoNameIfNecessary(string name)
+        {
+            if (name is null)
+            {
+                this.name = "ioctalkHost" + Interlocked.Increment(ref compositionHostAutoNameCounter);
+            }
+            else
+            {
+                this.name = name;
+            }
         }
 
         // ----------------------------------------------------------------------------------------

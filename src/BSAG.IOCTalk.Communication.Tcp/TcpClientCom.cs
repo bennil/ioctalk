@@ -30,6 +30,8 @@ namespace BSAG.IOCTalk.Communication.Tcp
         protected int port;
         private string endPointInfo;
         private DateTime? dnsResolveTimeUtc = null;
+        IPAddress[] multiDnsResolve = null;
+        int lastMultiDnsIndex = 0;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -123,6 +125,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
         public TimeSpan RenewDnsResolutionTime { get; set; } = TimeSpan.FromMinutes(5);
 
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -179,6 +182,16 @@ namespace BSAG.IOCTalk.Communication.Tcp
             {
                 errorMsg = $"Error connect to \"{EndPoint}\" Details: {ex.Message} {ex.GetType().Name}";
 
+                if (multiDnsResolve != null)
+                {
+                    lastMultiDnsIndex++;
+                    if (multiDnsResolve.Length <= lastMultiDnsIndex)
+                        lastMultiDnsIndex = 0;
+
+                    var alternativeDnsAddress = multiDnsResolve[lastMultiDnsIndex];
+                    EndPoint = new IPEndPoint(alternativeDnsAddress, port);
+                }
+
                 return false;
             }
 
@@ -209,9 +222,15 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
                 if (hostEntry.AddressList.Length > 0)
                 {
-                    var resolvedIp = hostEntry.AddressList[0];
+                    if (hostEntry.AddressList.Length > 1)
+                    {
+                        Logger.Info($"{hostEntry.AddressList.Length} DNS resolve items for host \"{hostEntry.HostName}\" ({string.Join("; ", hostEntry.AddressList.Select(a => a.ToString()))}");
+                        multiDnsResolve = hostEntry.AddressList;
+                    }
+
+                    var resolvedIp = hostEntry.AddressList[lastMultiDnsIndex < hostEntry.AddressList.Length ? lastMultiDnsIndex : 0];
                     this.EndPoint = new IPEndPoint(resolvedIp, port);
-                    endPointInfo = $"{host}:{port} ({resolvedIp})";
+                    endPointInfo = $"{host}:{port} ({resolvedIp}) {resolvedIp.AddressFamily}";
 
                     this.dnsResolveTimeUtc = DateTime.UtcNow;
                 }

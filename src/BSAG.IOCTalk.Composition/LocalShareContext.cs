@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 
 namespace BSAG.IOCTalk.Composition
 {
@@ -37,15 +38,22 @@ namespace BSAG.IOCTalk.Composition
 
         private List<Assembly> assemblies = new List<Assembly>();
         private List<IDiscoveryCondition> discoveryConditionItems;
-        private Dictionary<Type, Type> interfaceImplementationMapping;
+        private Dictionary<Type, Type> interfaceImplementationMapping = new Dictionary<Type, Type>();
 
         private ILogger logger;
         private bool isInitalized = false;
 
+        private static int localShareAutoNameCounter = 0;
+        private string name;
 
         public LocalShareContext()
         {
-            interfaceImplementationMapping = new Dictionary<Type, Type>();
+            SetAutoNameIfNecessary(null);
+        }
+
+        public LocalShareContext(string name = null)
+        {
+            SetAutoNameIfNecessary(name);
         }
 
 
@@ -102,6 +110,11 @@ namespace BSAG.IOCTalk.Composition
         }
 
         public ITalkContainer ParentContainer { get; set; }
+
+        /// <summary>
+        /// Gets the functional instance name
+        /// </summary>
+        public string Name => name;
 
         /// <summary>
         /// Assigns an interface type to a fixed implementation type. This prevents assembly scanning and improves discovery performance.
@@ -1063,6 +1076,16 @@ namespace BSAG.IOCTalk.Composition
             }
         }
 
-
+        private void SetAutoNameIfNecessary(string name)
+        {
+            if (name is null)
+            {
+                this.name = "ioctalkShare" + Interlocked.Increment(ref localShareAutoNameCounter);
+            }
+            else
+            {
+                this.name = name;
+            }
+        }
     }
 }

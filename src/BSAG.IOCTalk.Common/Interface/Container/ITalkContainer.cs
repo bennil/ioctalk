@@ -6,6 +6,8 @@ namespace BSAG.IOCTalk.Common.Interface.Container
 {
     public interface ITalkContainer
     {
+        string Name { get; }
+
         ITalkContainer ParentContainer { get; set; }
 
         void Init(bool initSubContainers);

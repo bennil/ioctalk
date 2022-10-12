@@ -253,7 +253,7 @@ namespace BSAG.IOCTalk.Communication.Common
         /// Gets the data stream logger.
         /// </summary>
         public IDataStreamLogger DataStreamLogger { get => dataStreamLogger; set => dataStreamLogger = value; }
-        
+
 
         /// <summary>
         /// Gets the sessions.
@@ -1438,7 +1438,7 @@ namespace BSAG.IOCTalk.Communication.Common
                 {
                     if (methodInfo.IsAsyncAwaitRemoteMethod)
                     {
-                        
+
                         if (returnObject is Task task)
                         {
                             await task;
@@ -1586,7 +1586,10 @@ namespace BSAG.IOCTalk.Communication.Common
         {
             try
             {
-                logger.Info("Remote caller processing started");
+                if (containerHost is ITalkContainer container)
+                    logger.Info($"Remote caller processing for \"{container.Name}\" started");
+                else
+                    logger.Info("Remote caller processing started");
 
                 var reader = callerQueue.Reader;
 
@@ -1601,11 +1604,17 @@ namespace BSAG.IOCTalk.Communication.Common
             }
             catch (Exception ex)
             {
-                logger.Error("Unexpected error! Caller processing will exit! Details: " + ex.ToString());
+                if (containerHost is ITalkContainer container)
+                    logger.Error($"Unexpected error! Caller processing \"{container.Name}\" will exit! Details: {ex}");
+                else
+                    logger.Error("Unexpected error! Caller processing will exit! Details: " + ex.ToString());
             }
             finally
             {
-                logger.Info("Caller processing stopped");
+                if (containerHost is ITalkContainer container)
+                    logger.Info($"Caller processing for \"{container.Name}\" stopped");
+                else
+                    logger.Info("Caller processing stopped");
             }
         }
 
