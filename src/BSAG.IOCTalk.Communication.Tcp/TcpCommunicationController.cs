@@ -1,22 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using BSAG.IOCTalk.Communication.Common;
+﻿using BSAG.IOCTalk.Common.Interface.Communication;
+using BSAG.IOCTalk.Common.Interface.Communication.Raw;
+using BSAG.IOCTalk.Common.Interface.Config;
+using BSAG.IOCTalk.Common.Interface.Container;
+using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Interface.Session;
-using BSAG.IOCTalk.Common.Interface.Communication;
-using System.Xml.Linq;
-using BSAG.IOCTalk.Common.Reflection;
-using System.Globalization;
+using BSAG.IOCTalk.Communication.Common;
+using BSAG.IOCTalk.Communication.Tcp.Config;
+using BSAG.IOCTalk.Communication.Tcp.Security;
 using BSAG.IOCTalk.Communication.Tcp.Utils;
+using System;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using BSAG.IOCTalk.Common.Interface.Config;
-using BSAG.IOCTalk.Common.Interface.Communication.Raw;
-using BSAG.IOCTalk.Communication.Tcp.Security;
-using BSAG.IOCTalk.Common.Interface.Logging;
-using BSAG.IOCTalk.Communication.Tcp.Config;
-using System.Net.Sockets;
+using System.Xml.Linq;
 
 namespace BSAG.IOCTalk.Communication.Tcp
 {
@@ -305,7 +301,14 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
             if (LogDataStream)
             {
-                dataStreamLogger.Init(this, host.Replace('.', '_') + "-" + port, Config != null ? Config.Root : null);
+                string containerName = string.Empty;
+                if (containerHost is ITalkContainer cont
+                    && cont.Name != null)
+                {
+                    containerName = cont.Name + "_";
+                }
+
+                dataStreamLogger.Init(this, $"{containerName}{host.Replace('.', '_')}-{port}", Config != null ? Config.Root : null);
             }
 
             // async client connect
@@ -346,7 +349,13 @@ namespace BSAG.IOCTalk.Communication.Tcp
 
             if (LogDataStream)
             {
-                dataStreamLogger.Init(this, "Service-" + servicePort, Config != null ? Config.Root : null);
+                string containerName = string.Empty;
+                if (containerHost is ITalkContainer cont
+                    && cont.Name != null)
+                {
+                    containerName = cont.Name + "_";
+                }
+                dataStreamLogger.Init(this, $"{containerName}Service-{servicePort}", Config != null ? Config.Root : null);
             }
 
             string errMsg;
