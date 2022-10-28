@@ -168,7 +168,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     SetEndPoint(this.host, this.port);
                 }
 
-                this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                this.socket = new Socket(EndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 this.InitSocketProperties(this.socket);
                 this.socket.Connect(EndPoint);
 
