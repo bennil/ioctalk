@@ -15,5 +15,8 @@ namespace BSAG.IOCTalk.Common.Interface.Container
         bool IsSubscriptionRegistered(Type serviceDelegateType);
 
         bool TryGetExport(Type type, Type injectTargetType, out object instance);
+
+        void MapInterfaceImplementationType<InterfaceType, ImplementationType>()
+            where ImplementationType : class, InterfaceType;
     }
 }

@@ -39,6 +39,8 @@ namespace BSAG.IOCTalk.Composition
 
         private Dictionary<Type, Type> interfaceTypeProxyImplCache = new Dictionary<Type, Type>();
         private Dictionary<string, Type> interfaceTypeCache;
+        private Dictionary<Type, Type> interfaceImplementationMapping = new Dictionary<Type, Type>();
+
         private Dictionary<int, SessionContract> sessionIdContractMapping = new Dictionary<int, SessionContract>();
         private LocalShareContext localShare;
         private Dictionary<Type, object> hostSessionsSharedInstances = new Dictionary<Type, object>();
@@ -175,7 +177,7 @@ namespace BSAG.IOCTalk.Composition
                 Type proxyImplementationType;
                 if (!interfaceTypeProxyImplCache.TryGetValue(interfaceType, out proxyImplementationType))
                 {
-                    if (forceProxyAutoCreation || !localShare.TryFindInterfaceImplementation(interfaceType, null, out proxyImplementationType))
+                    if (forceProxyAutoCreation || !TryFindInterfaceImplementation(interfaceType, null, out proxyImplementationType))
                     {
                         // auto generate proxy
                         proxyImplementationType = TypeService.BuildProxyImplementation(interfaceType); // "[System.Composition.Import]");
@@ -553,9 +555,16 @@ namespace BSAG.IOCTalk.Composition
 
                     // check if a local export is present for the type
                     object instance;
-                    if (TryGetExport(interfType, out instance))
+                    if (TryFindInterfaceImplementation(interfType, null, out Type implType))
                     {
-                        return instance.GetType();
+                        interfaceTypeCache[interfaceType] = implType;   // add string > implementation type mapping
+                        return implType;
+                    }
+                    else if (TryGetExport(interfType, out instance))
+                    {
+                        var exportType = instance.GetType();
+                        interfaceTypeCache[interfaceType] = exportType;
+                        return exportType;
                     }
                     else
                     {
@@ -582,17 +591,21 @@ namespace BSAG.IOCTalk.Composition
             return implementationType;
         }
 
+        [Obsolete("Use MapInterfaceImplementationType instead")]
         public void RegisterCustomInterfaceMapping<InterfaceType, ImplementationType>()
+            where ImplementationType : class, InterfaceType
         {
-            if (interfaceTypeCache == null)
-                interfaceTypeCache = new Dictionary<string, Type>();
+            //if (interfaceTypeCache == null)
+            //    interfaceTypeCache = new Dictionary<string, Type>();
 
-            Type interfaceType = typeof(InterfaceType);
+            //Type interfaceType = typeof(InterfaceType);
 
-            if (!interfaceType.IsInterface)
-                throw new ArgumentException("Given InterfaceType is not an interface!");
+            //if (!interfaceType.IsInterface)
+            //    throw new ArgumentException("Given InterfaceType is not an interface!");
 
-            interfaceTypeCache.Add(interfaceType.FullName, typeof(ImplementationType));
+            //interfaceTypeCache.Add(interfaceType.FullName, typeof(ImplementationType));
+
+            MapInterfaceImplementationType<InterfaceType, ImplementationType>();
         }
 
         public ISession GetSessionByServiceInstance(object serviceObjectInstance)
@@ -663,12 +676,12 @@ namespace BSAG.IOCTalk.Composition
                 }
             }
 
-            if (localShare.SharedLocalInstances.TryGetValue(type, out instance))
+            if (hostSessionsSharedInstances.TryGetValue(type, out instance))
             {
                 return true;
             }
 
-            if (hostSessionsSharedInstances.TryGetValue(type, out instance))
+            if (localShare.SharedLocalInstances.TryGetValue(type, out instance))
             {
                 return true;
             }
@@ -685,7 +698,7 @@ namespace BSAG.IOCTalk.Composition
                     }
                 }
 
-                if (!localShare.TryFindInterfaceImplementation(type, injectTargetType, out targetType))
+                if (TryFindInterfaceImplementation(type, injectTargetType, out targetType) == false)
                 {
                     // not found > check if multiple import
                     if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
@@ -979,6 +992,44 @@ namespace BSAG.IOCTalk.Composition
             {
                 this.name = name;
             }
+        }
+
+
+        /// <summary>
+        /// Assigns an interface type to a fixed implementation type. This prevents assembly scanning and improves discovery performance.
+        /// </summary>
+        /// <typeparam name="InterfaceType">The interface type</typeparam>
+        /// <typeparam name="ImplementationType">The implmentation type</typeparam>
+        public void MapInterfaceImplementationType<InterfaceType, ImplementationType>()
+            where ImplementationType : class, InterfaceType
+        {
+            MapInterfaceImplementationType(typeof(InterfaceType), typeof(ImplementationType));
+        }
+
+        /// <summary>
+        /// Assigns an interface type to a fixed implementation type. This prevents assembly scanning and improves discovery performance.
+        /// </summary>
+        /// <param name="interfaceType">The interface type</param>
+        /// <param name="implementationType">The implmentation type</param>
+        /// <exception cref="ArgumentException">Throws if unexpected types are received.</exception>
+        public void MapInterfaceImplementationType(Type interfaceType, Type implementationType)
+        {
+            if (interfaceType.IsInterface == false)
+                throw new ArgumentException($"Interface type expected. Actual: {interfaceType.FullName}", nameof(interfaceType));
+
+            if (implementationType.IsClass == false)
+                throw new ArgumentException($"Class type expected. Actual: {interfaceType.FullName}", nameof(implementationType));
+
+            interfaceImplementationMapping[interfaceType] = implementationType;
+        }
+
+
+        internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, out Type targetType)
+        {
+            if (interfaceImplementationMapping.TryGetValue(interfaceType, out targetType))
+                return true;
+            else
+                return localShare.TryFindInterfaceImplementation(interfaceType, injectTargetType, out targetType);  // redirect to parent container
         }
 
         // ----------------------------------------------------------------------------------------
