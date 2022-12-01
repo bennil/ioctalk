@@ -12,6 +12,7 @@ namespace IOCTalk.CodeGenerator
     public class IocTalkCodeGenerator : IIncrementalGenerator
     {
         private const string MethodNameRegisterRemoteService = "RegisterRemoteService";
+        private const string MethodNameRegisterLocalSessionService = "RegisterLocalSessionService";
 
         Dictionary<ITypeSymbol, ITypeSymbol>? interfaceClassImplementationMappings = null;
 
@@ -41,8 +42,12 @@ namespace IOCTalk.CodeGenerator
                  .Collect();
 
 
+            var localSessionServiceTypes = context.SyntaxProvider
+                        .CreateSyntaxProvider(CollectRegisterLocalSessionMethods, GetLocalSessionServiceInterface)
+                        .Where(type => type is not null)
+                        .Collect();
 
-            var combined = interfaceTypes.Combine(assemblyName).Combine(implementedInterfaces);
+            var combined = interfaceTypes.Combine(assemblyName).Combine(implementedInterfaces).Combine(localSessionServiceTypes);
 
             context.RegisterSourceOutput(combined, ExecuteGenerateCode);
         }
@@ -53,8 +58,6 @@ namespace IOCTalk.CodeGenerator
 
             if (syntaxNode is InvocationExpressionSyntax invokeExp)
             {
-                //var all = invokeExp.DescendantNodes().ToArray();
-
                 var genericName = invokeExp.DescendantNodes().OfType<GenericNameSyntax>().FirstOrDefault();
 
                 if (genericName != null)
@@ -63,7 +66,32 @@ namespace IOCTalk.CodeGenerator
 
                     if (genericNameStr.StartsWith(MethodNameRegisterRemoteService))
                     {
-                        // ioc talk generic gemote service registration
+                        // ioc talk generic remote service registration
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+
+
+        private bool CollectRegisterLocalSessionMethods(SyntaxNode syntaxNode, CancellationToken cancellationToken)
+        {
+            //Debug.WriteLine(syntaxNode.GetType().Name + ": " + syntaxNode.ToString());
+
+            if (syntaxNode is InvocationExpressionSyntax invokeExp)
+            {
+                var genericName = invokeExp.DescendantNodes().OfType<GenericNameSyntax>().FirstOrDefault();
+
+                if (genericName != null)
+                {
+                    string genericNameStr = genericName.ToString();
+
+                    if (genericNameStr.StartsWith(MethodNameRegisterLocalSessionService))
+                    {
+                        // ioc talk local session service implementation
                         return true;
                     }
                 }
@@ -99,6 +127,30 @@ namespace IOCTalk.CodeGenerator
         }
 
 
+        private ITypeSymbol? GetLocalSessionServiceInterface(GeneratorSyntaxContext context, CancellationToken cancellationToken)
+        {
+            var invokeExpr = (InvocationExpressionSyntax)context.Node;
+
+            var symbolInfo = context.SemanticModel.GetSymbolInfo(invokeExpr.Expression, cancellationToken);
+
+            if (symbolInfo.Symbol is IMethodSymbol method)
+            {
+                if (method.IsGenericMethod
+                    && method.Name.Equals(MethodNameRegisterLocalSessionService))
+                {
+                    var genericTypeArg0 = method.TypeArguments.FirstOrDefault();
+
+                    if (genericTypeArg0 != null)
+                    {
+                        return genericTypeArg0;
+                    }
+                }
+            }
+
+
+            return null;
+        }
+
 
 
         private bool CollectImplementedInterfaceClasses(SyntaxNode syntaxNode, CancellationToken cancellationToken)
@@ -120,33 +172,36 @@ namespace IOCTalk.CodeGenerator
                 // execute only once (caching) - no better way of collecting referenced interface implementations found yet
                 interfaceClassImplementationMappings = new Dictionary<ITypeSymbol, ITypeSymbol>(SymbolEqualityComparer.Default);
                 var assemblyName = context.SemanticModel.Compilation.AssemblyName;
-
-
-                var customTypes = context.SemanticModel.Compilation.SourceModule.ReferencedAssemblySymbols
-                    .Where(ras => ras.Name.StartsWith(assemblyName))
-                    .SelectMany(a =>
-                    {
-                        try
-                        {
-                            var main = a.Identity.Name.Split('.').Aggregate(a.GlobalNamespace, (s, c) => s.GetNamespaceMembers().Single(m => m.Name.Equals(c)));
-
-                            Debug.WriteLine(main.ToDisplayString());
-
-                            return GetAllClassTypes(main);
-                        }
-                        catch
-                        {
-                            return Enumerable.Empty<ITypeSymbol>();
-                        }
-                    });
-
-                foreach (var ct in customTypes)
+                if (assemblyName != null)
                 {
-                    if (ct.AllInterfaces.Any())
-                    {
-                        foreach (var interf in ct.AllInterfaces)
+                    assemblyName = GetMainNamespace(assemblyName);
+
+                    var customTypes = context.SemanticModel.Compilation.SourceModule.ReferencedAssemblySymbols
+                        .Where(ras => ras.Name.StartsWith(assemblyName))
+                        .SelectMany(a =>
                         {
-                            AddCustomMap(interf, ct);
+                            try
+                            {
+                                var main = a.Identity.Name.Split('.').Aggregate(a.GlobalNamespace, (s, c) => s.GetNamespaceMembers().Single(m => m.Name.Equals(c)));
+
+                                Debug.WriteLine(main.ToDisplayString());
+
+                                return GetAllClassTypes(main);
+                            }
+                            catch
+                            {
+                                return Enumerable.Empty<ITypeSymbol>();
+                            }
+                        });
+
+                    foreach (var ct in customTypes)
+                    {
+                        if (ct.AllInterfaces.Any())
+                        {
+                            foreach (var interf in ct.AllInterfaces)
+                            {
+                                AddCustomMap(interf, ct);
+                            }
                         }
                     }
                 }
@@ -169,7 +224,7 @@ namespace IOCTalk.CodeGenerator
                     {
                         foreach (var implInterf in typeInfo.AllInterfaces)
                         {
-                            AddCustomMap(typeInfo, implInterf);
+                            AddCustomMap(implInterf, typeInfo);
                         }
                     }
                 }
@@ -178,12 +233,26 @@ namespace IOCTalk.CodeGenerator
             return interfaceClassImplementationMappings;
         }
 
+        private static string GetMainNamespace(string? assemblyName)
+        {
+            string[] namespaceParts = assemblyName.Split('.');
+            if (namespaceParts.Length > 1)
+            {
+                // remove latest level
+                var startLevelsOnly = new string[namespaceParts.Length - 1];
+                Array.Copy(namespaceParts, startLevelsOnly, startLevelsOnly.Length);
+                assemblyName = string.Join(".", startLevelsOnly);
+            }
+
+            return assemblyName;
+        }
+
         private void AddCustomMap(ITypeSymbol interfaceType, ITypeSymbol implInterf)
         {
             if (interfaceType.ContainingNamespace == null
                 || interfaceType.ContainingNamespace.ToString().StartsWith("System") == false)
             {
-                interfaceClassImplementationMappings[implInterf] = interfaceType;
+                interfaceClassImplementationMappings[interfaceType] = implInterf;
             }
         }
 
@@ -200,21 +269,23 @@ namespace IOCTalk.CodeGenerator
         }
 
 
-        private void ExecuteGenerateCode(SourceProductionContext context, ((ImmutableArray<ITypeSymbol> proxyInterfaceTypes, string? assemblyName) input1, ImmutableArray<Dictionary<ITypeSymbol, ITypeSymbol>?> implementations) input)
+        //private void ExecuteGenerateCode(SourceProductionContext context, ((ImmutableArray<ITypeSymbol> proxyInterfaceTypes, string? assemblyName) input1, ImmutableArray<Dictionary<ITypeSymbol, ITypeSymbol>?> implementations) input)
+        private void ExecuteGenerateCode(SourceProductionContext context, (((ImmutableArray<ITypeSymbol> proxyInterfaceTypes, string? assemblyName) proxyInterfaceAssembly, ImmutableArray<Dictionary<ITypeSymbol, ITypeSymbol>?> implementations) proxyImpl, ImmutableArray<ITypeSymbol> localSessionInterfaceTypes) input)
         {
-            if (input.input1.proxyInterfaceTypes.IsDefaultOrEmpty)
+            if (input.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes.IsDefaultOrEmpty
+                && input.localSessionInterfaceTypes.IsDefaultOrEmpty)
                 return;
 
 
-            List<string> porxyInterfaceClassNames = new List<string>(input.input1.proxyInterfaceTypes.Length);
+            List<string> porxyInterfaceClassNames = new List<string>(input.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes.Length);
 
             List<ITypeSymbol> allDtoTypes = new List<ITypeSymbol>();
             List<string> allDtoImplementationNames = new List<string>();
 
-            var interfaceImplementations = input.implementations.FirstOrDefault();
+            var allInterfaceImplementations = input.proxyImpl.implementations.FirstOrDefault();
+            Dictionary<ITypeSymbol, ITypeSymbol> customInterfaceImplementations = new Dictionary<ITypeSymbol, ITypeSymbol>();
 
-
-            foreach (var type in input.input1.proxyInterfaceTypes.Distinct(SymbolEqualityComparer.Default)
+            foreach (var type in input.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes.Distinct(SymbolEqualityComparer.Default)
                                              .Cast<ITypeSymbol>())
             {
                 context.CancellationToken.ThrowIfCancellationRequested();
@@ -227,42 +298,72 @@ namespace IOCTalk.CodeGenerator
                        ? null
                        : $"{type.ContainingNamespace}.";
 
-                context.AddSource($"{typeNamespace}{type.Name}AutoGeneratedProxy.g.cs", code);
+                context.AddSource($"{typeNamespace}{type.Name}AutoGenProxy.g.cs", code);
 
-                // create data transfer object implementations (implementation not found anywhere?)
-                for (int dtoIndex = 0; dtoIndex < dtoTypes.Count; dtoIndex++)
+
+                foreach (var dtoType in dtoTypes)
                 {
-                    var dtoType = dtoTypes[dtoIndex];
-
-                    if (interfaceImplementations != null
-                        && interfaceImplementations.TryGetValue(dtoType, out ITypeSymbol actualType))
-                    {
-                        // do not auto implement already custom implemented interface
-                        dtoTypes.RemoveAt(dtoIndex);
-                        dtoIndex--;
-
-                        // skip but check for nested interfaces
-                        foreach (var member in dtoType.GetMembers())
-                        {
-                            if (member is IPropertySymbol pi)
-                                CheckForNestedDtoTypes(pi, dtoTypes);
-                        }
-                        continue;
-                    }
-
-                    string dtoSource = CreateDtoImplementationSource(dtoType, dtoTypes, out string className).ToString();
-                    allDtoImplementationNames.Add(className);
-
-                    context.AddSource($"{typeNamespace}{GetImplName(dtoType.Name)}AutoGeneratedDto.g.cs", dtoSource);
+                    if (allDtoTypes.Contains(dtoType) == false)
+                        allDtoTypes.Add(dtoType);
                 }
-
-                allDtoTypes.AddRange(dtoTypes);
             }
 
-            // Build interface implementation helper class
-            if (input.input1.assemblyName != null)
+
+            // collect local session dto mappings
+            // only nested types are collected because registration with class implmentation mapping is expected
+            foreach (var localSessionServiceInterface in input.localSessionInterfaceTypes.Distinct(SymbolEqualityComparer.Default)
+                                             .Cast<ITypeSymbol>())
             {
-                string mappingSource = BuildInterfaceImplementationMappingsSource(input.input1.proxyInterfaceTypes, input.input1.assemblyName, porxyInterfaceClassNames, allDtoTypes, allDtoImplementationNames, interfaceImplementations).ToString();
+                context.CancellationToken.ThrowIfCancellationRequested();
+
+                Debug.WriteLine($"{localSessionServiceInterface}");
+
+                GetDtoTypesByForMembersRecursive(localSessionServiceInterface, allDtoTypes);
+            }
+
+
+            // create data transfer object implementations (implementation not found anywhere?)
+            string containingNamespace = input.proxyImpl.proxyInterfaceAssembly.assemblyName;
+            for (int dtoIndex = 0; dtoIndex < allDtoTypes.Count; dtoIndex++)
+            {
+                var dtoInterfType = allDtoTypes[dtoIndex];
+
+                if (allInterfaceImplementations != null
+                    && allInterfaceImplementations.TryGetValue(dtoInterfType, out ITypeSymbol actualImplType))
+                {
+                    // do not auto implement already custom implemented interface
+                    allDtoTypes.RemoveAt(dtoIndex);
+                    dtoIndex--;
+
+                    // add to custom implmentation mapping
+                    customInterfaceImplementations[dtoInterfType] = actualImplType;
+
+                    // skip but check for nested interfaces
+                    foreach (var member in dtoInterfType.GetMembers())
+                    {
+                        if (member is IPropertySymbol pi)
+                            CheckForNestedDtoTypes(pi, allDtoTypes);
+                    }
+                    continue;
+                }
+
+
+                string dtoSource = CreateDtoImplementationSource(dtoInterfType, containingNamespace, allDtoTypes, out string className).ToString();
+                allDtoImplementationNames.Add(className);
+
+                var typeNamespace = dtoInterfType.ContainingNamespace.IsGlobalNamespace
+                                   ? null
+                                   : $"{dtoInterfType.ContainingNamespace}.";
+
+                context.AddSource($"{typeNamespace}{GetImplName(dtoInterfType.Name)}AutoGenDto.g.cs", dtoSource);
+            }
+
+
+
+            // Build interface implementation helper class
+            if (input.proxyImpl.proxyInterfaceAssembly.assemblyName != null)
+            {
+                string mappingSource = BuildInterfaceImplementationMappingsSource(input.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes, input.proxyImpl.proxyInterfaceAssembly.assemblyName, porxyInterfaceClassNames, allDtoTypes, allDtoImplementationNames, customInterfaceImplementations).ToString();
                 context.AddSource($"AutoGeneratedInterfaceImplementationMapping.g.cs", mappingSource);
             }
 
@@ -273,23 +374,27 @@ namespace IOCTalk.CodeGenerator
         {
             StringBuilder sb = new StringBuilder();
 
+            sb.AppendLine("using BSAG.IOCTalk.Common.Interface.Container;");
             sb.AppendLine("using BSAG.IOCTalk.Composition;");
             sb.AppendLine();
             sb.Append("namespace ");
             sb.AppendLine(assemblyName);
             sb.AppendLine("{");
 
-            sb.AppendLine("public static class AutoGeneratedRemoteProxyInterfaceImplementations { ");
+            sb.AppendLine("internal static class AutoGeneratedProxyInterfaceImplementations { ");
 
-            sb.AppendLine("     public static void UseAutoGeneratedRemoteProxyInterfaceImplementations(this LocalShareContext ctx)");
+            sb.AppendLine("     public static void UseAutoGeneratedProxyInterfaceImplementations(this TalkCompositionHost ctx)");
             sb.AppendLine("     {");
 
             if (interfImplementations != null && interfImplementations.Any())
             {
-                sb.AppendLine($"         // custom interface implementations (includes all assemblies starting with \"{assemblyName}\")");
+                sb.AppendLine($"         // custom interface implementations (includes all assemblies starting with \"{GetMainNamespace(assemblyName)}\")");
 
                 foreach (var customImpl in interfImplementations)
                 {
+                    if (proxyInterfaceTypes.Contains(customImpl.Key))
+                        continue;   // do not map proxy interface
+
                     sb.AppendLine($"         ctx.MapInterfaceImplementationType<{customImpl.Key}, {customImpl.Value}>();");
                 }
                 sb.AppendLine();
@@ -298,7 +403,7 @@ namespace IOCTalk.CodeGenerator
 
             if (proxyInterfaceTypes.Length > 0)
             {
-                sb.AppendLine("         // proxy mappings");
+                sb.AppendLine("         // remote proxy mappings");
 
                 for (int i = 0; i < proxyInterfaceTypes.Length; i++)
                 {
@@ -319,7 +424,7 @@ namespace IOCTalk.CodeGenerator
                     var interfaceType = dtoTypes[i];
                     var implementationType = dtoImplementationNames[i];
 
-                    sb.AppendLine($"         ctx.MapInterfaceImplementationType<{interfaceType}, {interfaceType.ContainingNamespace}.{implementationType}>();");
+                    sb.AppendLine($"         ctx.MapInterfaceImplementationType<{interfaceType}, {assemblyName}.{implementationType}>();");
                 }
             }
 
@@ -338,7 +443,7 @@ namespace IOCTalk.CodeGenerator
             if (!interfaceType.IsAbstract)
                 throw new Exception("Type must be an interface!");
 
-            className = GetImplName(interfaceType.Name) + "AutoGeneratedProxy";
+            className = GetImplName(interfaceType.Name) + "AutoGenProxy";
 
             StringBuilder source = new StringBuilder();
 
@@ -360,7 +465,7 @@ namespace IOCTalk.CodeGenerator
 
             // add communication service field
             source.AppendLine();
-            source.Append("     ");
+            //source.Append("     ");
             source.AppendLine("     private IGenericCommunicationService communicationService;");
             source.AppendLine("     private ISession session;");
             source.AppendLine();
@@ -413,6 +518,9 @@ namespace IOCTalk.CodeGenerator
                         if (isAsyncAwait)
                         {
                             isReturnRequired = containsAsyncResultValue;
+
+                            if (isReturnRequired)
+                                AddAsyncMethodReturnDtoItems(dtoItems, method);
                         }
                         returnType = GetSourceCodeTypeName(method.ReturnType);
 
@@ -502,19 +610,6 @@ namespace IOCTalk.CodeGenerator
                                 sbParameterTypes.Append(", ");
                             }
 
-                            //// check if assembly load is required
-                            //if (interfaceType.Assembly != paramType.Assembly
-                            //    && !paramType.FullName.StartsWith("System."))
-                            //{
-                            //    string assemblyPath = GetAssemblyPath(paramType);
-
-                            //    if (!referencedAssemblies.Contains(assemblyPath))
-                            //    {
-                            //        referencedAssemblies.Add(assemblyPath);
-                            //    }
-                            //}
-
-
                             if (param.Type.TypeKind == TypeKind.Interface)
                             {
                                 if (dtoItems.Contains(param.Type) == false)
@@ -603,7 +698,7 @@ namespace IOCTalk.CodeGenerator
 
 
 
-        private static StringBuilder CreateDtoImplementationSource(ITypeSymbol interfaceType, List<ITypeSymbol> dtoTypes, out string className, ITypeSymbol? parentType = null)
+        private static StringBuilder CreateDtoImplementationSource(ITypeSymbol interfaceType, string containingNamespace, List<ITypeSymbol> dtoTypes, out string className, ITypeSymbol? parentType = null)
         {
             //string assemblyName = $"IOCTalk.AutoGeneratedAssembly{interfaceType.Name}";
 
@@ -612,10 +707,11 @@ namespace IOCTalk.CodeGenerator
             code.AppendLine();
             code.Append("namespace ");
             //code.Append(assemblyName);
-            code.AppendLine(interfaceType.ContainingNamespace.ToString());
+            //code.AppendLine(interfaceType.ContainingNamespace.ToString());
+            code.AppendLine(containingNamespace);
             code.AppendLine();
             code.AppendLine("{");
-            className = $"{GetImplName(interfaceType.Name)}AutoGeneratedDto";
+            className = $"{GetImplName(interfaceType.Name)}AutoGenDto";
             code.Append($"   internal class {className}");
             code.Append(" : ");
             if (parentType != null)
@@ -663,6 +759,77 @@ namespace IOCTalk.CodeGenerator
             CheckForNestedDtoTypes(pi, dtoTypes);
         }
 
+        private static void GetDtoTypesByForMembersRecursive(ITypeSymbol interfaceType, List<ITypeSymbol> dtoItems)
+        {
+            if (interfaceType.TypeKind == TypeKind.Interface)
+            {
+                foreach (var member in interfaceType.GetMembers())
+                {
+                    if (member is IMethodSymbol method)
+                    {
+                        if (method.ReturnsVoid == false)
+                        {
+                            if (IsAsyncAwaitType(method.ReturnType, out bool containsAsyncResultValue))
+                            {
+                                if (containsAsyncResultValue)
+                                {
+                                    AddAsyncMethodReturnDtoItems(dtoItems, method);
+                                }
+                            }
+                            else if (method.ReturnType.TypeKind == TypeKind.Interface)
+                            {
+                                if (dtoItems.Contains(method.ReturnType) == false)
+                                {
+                                    dtoItems.Add(method.ReturnType);
+
+                                    GetDtoTypesByForMembersRecursive(method.ReturnType, dtoItems);
+                                }
+                            }
+                        }
+
+                        if (method.Parameters.Length > 0)
+                        {
+                            foreach (var param in method.Parameters)
+                            {
+                                if (param.Type.TypeKind == TypeKind.Interface)
+                                {
+                                    if (dtoItems.Contains(param.Type) == false)
+                                        dtoItems.Add(param.Type);
+                                }
+                            }
+                        }
+                    }
+                    else if (member is IPropertySymbol pi)
+                        CheckForNestedDtoTypes(pi, dtoItems);
+                }
+
+                foreach (var baseInterface in interfaceType.Interfaces)
+                {
+                    foreach (var baseMember in baseInterface.GetMembers())
+                    {
+                        if (baseMember is IPropertySymbol piBase)
+                            CheckForNestedDtoTypes(piBase, dtoItems);
+                    }
+                }
+            }
+        }
+
+        private static void AddAsyncMethodReturnDtoItems(List<ITypeSymbol> dtoItems, IMethodSymbol method)
+        {
+            foreach (var genericArgType in ((INamedTypeSymbol)method.ReturnType).TypeArguments)
+            {
+                if (genericArgType.TypeKind == TypeKind.Interface)
+                {
+                    if (dtoItems.Contains(genericArgType) == false)
+                    {
+                        dtoItems.Add(genericArgType);
+
+                        GetDtoTypesByForMembersRecursive(genericArgType, dtoItems);
+                    }
+                }
+            }
+        }
+
         private static void CheckForNestedDtoTypes(IPropertySymbol pi, List<ITypeSymbol> dtoTypes)
         {
             if (pi.Type.IsAbstract
@@ -675,13 +842,25 @@ namespace IOCTalk.CodeGenerator
 
         private static string GetSourceCodeTypeName(ITypeSymbol type)
         {
-            if (type is INamedTypeSymbol nts
+            if (type is IArrayTypeSymbol arrayType)
+            {
+                return $"{GetSourceNamespace(arrayType.ElementType.ContainingNamespace)}{arrayType.ElementType.Name}[]";
+            }
+            else if (type is INamedTypeSymbol nts
                 && nts.IsGenericType)
             {
-                return $"{type.ContainingNamespace}.{type.Name}<{string.Join(", ", nts.TypeArguments.Select(ta => GetSourceCodeTypeName(ta)))}>";
+                return $"{GetSourceNamespace(type.ContainingNamespace)}{type.Name}<{string.Join(", ", nts.TypeArguments.Select(ta => GetSourceCodeTypeName(ta)))}>";
             }
             else
-                return $"{type.ContainingNamespace}.{type.Name}";
+                return $"{GetSourceNamespace(type.ContainingNamespace)}{type.Name}";
+        }
+
+        private static string GetSourceNamespace(INamespaceSymbol namespaceSymbol)
+        {
+            if (namespaceSymbol.Name == "System" || namespaceSymbol.IsGlobalNamespace)
+                return string.Empty;
+            else
+                return $"{namespaceSymbol}.";
         }
 
         private static string GetImplName(string interfaceName)

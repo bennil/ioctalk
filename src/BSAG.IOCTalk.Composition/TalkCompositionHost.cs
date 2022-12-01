@@ -739,7 +739,7 @@ namespace BSAG.IOCTalk.Composition
             object[] outParams;
             ParameterInfo[] outParamsInfo;
             instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
-            localShare.CheckOutParamsSubscriptions(instance, outParams, this, type);
+            localShare.CheckOutParamsSubscriptions(instance, outParams, this, type, injectTargetType);
 
             localShare.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
 

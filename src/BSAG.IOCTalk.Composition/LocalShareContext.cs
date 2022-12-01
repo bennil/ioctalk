@@ -467,7 +467,7 @@ namespace BSAG.IOCTalk.Composition
             object[] outParams;
             ParameterInfo[] outParamsInfo;
             instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
-            this.CheckOutParamsSubscriptions(instance, outParams, null, type);
+            this.CheckOutParamsSubscriptions(instance, outParams, null, type, injectTargetType);
 
             this.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
 
@@ -646,7 +646,7 @@ namespace BSAG.IOCTalk.Composition
                                 else
                                     itemInstance = TypeService.CreateInstance(implType, this.DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
 
-                                CheckOutParamsSubscriptions(itemInstance, outParams, host, targetInterfaceType);
+                                CheckOutParamsSubscriptions(itemInstance, outParams, host, targetInterfaceType, injectTargetType);
                                 targetCollection.Add(itemInstance);
 
                                 RegisterSharedConstructorInstances(targetInterfaceType, itemInstance, outParams, outParamsInfo);
@@ -733,7 +733,7 @@ namespace BSAG.IOCTalk.Composition
 
 
 
-        internal void CheckOutParamsSubscriptions(object instance, object[] outParams, TalkCompositionHost host, Type targetInterface)
+        internal void CheckOutParamsSubscriptions(object instance, object[] outParams, TalkCompositionHost host, Type targetInterface, Type injectTargetType)
         {
             if (outParams != null)
             {
@@ -768,7 +768,7 @@ namespace BSAG.IOCTalk.Composition
 
                                 if (!CheckIfSubscriptionInterfaceIsRegistered(serviceDelegateType))
                                 {
-                                    throw new InvalidOperationException($"Cannot subscribe session events for {serviceDelegateType.FullName}! No registration was found in the assigned container hosts. Are you missing a RegisterRemoteService<{serviceDelegateType.Name}>()?");
+                                    throw new InvalidOperationException($"Cannot subscribe session events for {serviceDelegateType.FullName} in {injectTargetType}! No registration was found in the assigned container hosts. Are you missing a RegisterRemoteService<{serviceDelegateType.Name}>()?");
                                 }
                             }
 
@@ -791,7 +791,7 @@ namespace BSAG.IOCTalk.Composition
 
                                 if (!CheckIfSubscriptionInterfaceIsRegistered(serviceDelegateType))
                                 {
-                                    throw new InvalidOperationException($"Cannot subscribe session events for {serviceDelegateType.FullName}! No registration was found in the assigned container hosts. Are you missing a RegisterRemoteService<{serviceDelegateType.Name}>()?");
+                                    throw new InvalidOperationException($"Cannot subscribe session events for {serviceDelegateType.FullName} in {injectTargetType}! No registration was found in the assigned container hosts. Are you missing a RegisterRemoteService<{serviceDelegateType.Name}>()?");
                                 }
                             }
 
