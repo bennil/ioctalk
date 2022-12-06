@@ -239,6 +239,17 @@ namespace BSAG.IOCTalk.Composition
         }
 
         /// <summary>
+        /// Registers a single instance of the local implmentation for the given interface and a specific implementation type.
+        /// </summary>
+        /// <typeparam name="InterfaceType">The interface service type</typeparam>
+        /// <typeparam name="ImplementationType">The implementation type</typeparam>
+        public void RegisterLocalSharedService<InterfaceType, ImplementationType>()
+            where ImplementationType : class, InterfaceType
+        {
+            localShare.RegisterLocalSharedService<InterfaceType, ImplementationType>();
+        }
+
+        /// <summary>
         /// Creates a single instance of the local implmentation of the given interface.
         /// </summary>
         /// <param name="interfaceType"></param>

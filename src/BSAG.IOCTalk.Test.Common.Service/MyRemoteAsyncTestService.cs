@@ -32,6 +32,11 @@ namespace BSAG.IOCTalk.Test.Common.Service
             return Task.CompletedTask;
         }
 
+        public Task<IDataTransferTest> ComplexRoundtrip(IDataTransferTest test)
+        {
+            return Task.FromResult<IDataTransferTest>(test);
+        }
+
         public static int RunSomeWorkCounter { get; set; }
     }
 }

@@ -14,6 +14,7 @@ using BSAG.IOCTalk.Common.Interface.Reflection;
 using BSAG.IOCTalk.Common.Reflection;
 using System.Reflection;
 using BSAG.IOCTalk.Common.Interface.Session;
+using BSAG.IOCTalk.Communication.Common;
 
 namespace BSAG.IOCTalk.Serialization.Binary
 {
@@ -326,7 +327,10 @@ namespace BSAG.IOCTalk.Serialization.Binary
                                 if (context.ArrayIndex == 0
                                     || !context.ArrayIndex.HasValue)
                                 {
-                                    resultType = invokeInfo.InterfaceMethod.ReturnType;
+                                    if (invokeInfo.IsAsyncAwaitRemoteMethod)
+                                        resultType = TypeService.GetAsyncAwaitResultType(invokeInfo.InterfaceMethod.ReturnType);
+                                    else
+                                        resultType = invokeInfo.InterfaceMethod.ReturnType;
                                 }
                                 else
                                 {
@@ -411,7 +415,10 @@ namespace BSAG.IOCTalk.Serialization.Binary
                                     {
                                         // first arrar item contains method return type 
                                         // or payload only inlcudes return object
-                                        resultType = invokeState.Method.ReturnType;
+                                        if (invokeState.MethodSource.IsAsyncAwaitRemoteMethod)
+                                            resultType = TypeService.GetAsyncAwaitResultType(invokeState.Method.ReturnType);
+                                        else
+                                            resultType = invokeState.Method.ReturnType;
                                     }
                                 }
                                 else

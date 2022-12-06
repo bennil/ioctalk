@@ -24,11 +24,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\BSAG.IOCTalk.Common.Test\BSAG.IOCTalk.Common.Test.csproj" />
 		<ProjectReference Include="..\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
 		<ProjectReference Include="..\BSAG.IOCTalk.Communication.Common\BSAG.IOCTalk.Communication.Common.csproj" />
 		<ProjectReference Include="..\BSAG.IOCTalk.Communication.Tcp\BSAG.IOCTalk.Communication.Tcp.csproj" />
 		<ProjectReference Include="..\BSAG.IOCTalk.Composition\BSAG.IOCTalk.Composition.csproj" />
 		<ProjectReference Include="..\BSAG.IOCTalk.Logging\BSAG.IOCTalk.Logging.csproj" />
+		<ProjectReference Include="..\BSAG.IOCTalk.Serialization.Binary\BSAG.IOCTalk.Serialization.Binary.csproj" />
 		<ProjectReference Include="..\BSAG.IOCTalk.Serialization.Json\BSAG.IOCTalk.Serialization.Json.csproj" />
 		<ProjectReference Include="..\BSAG.IOCTalk.Test.Common.Service\BSAG.IOCTalk.Test.Common.Service.csproj" />
 		<ProjectReference Include="..\BSAG.IOCTalk.Test.Interface\BSAG.IOCTalk.Test.Interface.csproj" />

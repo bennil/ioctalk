@@ -17,5 +17,8 @@ namespace BSAG.IOCTalk.Test.Interface
 
 
         Task SimpleCall();
+
+
+        Task<IDataTransferTest> ComplexRoundtrip(IDataTransferTest test);
     }
 }

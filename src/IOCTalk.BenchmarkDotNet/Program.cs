@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Running;
 using System;
 
 namespace IOCTalk.BenchmarkDotNet
@@ -10,7 +11,10 @@ namespace IOCTalk.BenchmarkDotNet
             Console.WriteLine("Start ioctalk benchmarks...");
 
 
-            var summary = BenchmarkRunner.Run<RemoteCalls>();
+            // Debug only
+            //BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, new DebugInProcessConfig());
+
+            var summary = BenchmarkRunner.Run<RemoteCallsBenchmark>();
         }
     }
 }

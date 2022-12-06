@@ -33,6 +33,9 @@ namespace BSAG.IOCTalk.Test.Common.Service
 
         public int ComplexCall(int number, IDataTransferTest data)
         {
+            if (number == -1) // skip check if -1
+                return -1; 
+
             if (data.ID != number)
                 throw new InvalidOperationException();
 
