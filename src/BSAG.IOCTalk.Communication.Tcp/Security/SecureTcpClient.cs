@@ -137,7 +137,10 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
                 var networkStream = new NetworkStream(this.socket, true);
                 this.tlsStream = new SslStream(networkStream, false, OnValidateServerCertificate);
 
-                Logger.Info("Authenticate client...");
+                if (ServerName == null)
+                    ServerName = host;
+
+                Logger.Info($"Authenticate client for \"{ServerName}\"...");
 
                 if (ProvideClientCertificate)
                 {
@@ -216,13 +219,13 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
 
                     if (!isInChain)
                     {
-                        this.Logger.Error(string.Format("Certificate error: {0} - local cert also not in chain", sslPolicyErrors));
+                        this.Logger.Error($"Certificate error: {sslPolicyErrors} - local cert also not in chain; Certificate: {certificate}");
                     }
                     return isInChain;
                 }
                 else
                 {
-                    this.Logger.Error(string.Format("Certificate error: {0}", sslPolicyErrors));
+                    this.Logger.Error($"Certificate error: {sslPolicyErrors}; Certificate: {certificate}");
                     return false;
                 }
             }

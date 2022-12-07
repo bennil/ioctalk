@@ -417,7 +417,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                     while (!this.communication.Connect(out errMsg))
                     {
                         if (Logger != null)
-                            Logger.Warn($"Connection refused {communication?.EndPoint}! {errMsg}");
+                            Logger.Warn($"Connection refused {communication?.EndPointInfo}! {errMsg}");
 
                         await Task.Delay(ClientReconnectInterval);
 
