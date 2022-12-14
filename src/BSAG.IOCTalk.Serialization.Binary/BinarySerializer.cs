@@ -13,6 +13,7 @@ using BSAG.IOCTalk.Common.Attributes;
 using BSAG.IOCTalk.Serialization.Binary.Stream;
 using BSAG.IOCTalk.Serialization.Binary.Utils;
 using System.Reflection;
+using System.Buffers;
 
 namespace BSAG.IOCTalk.Serialization.Binary
 {
@@ -88,6 +89,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             //todo: can be optimized with static generic caching
             Serialize(writer, valueObj, type, contextObject);
         }
+                
 
         public byte[] Serialize(object obj, object contextObject)
         {
@@ -157,6 +159,12 @@ namespace BSAG.IOCTalk.Serialization.Binary
         public object Deserialize(byte[] messageBytes, object contextObject)
         {
             var reader = new StreamReader(messageBytes);
+            return Deserialize(reader, contextObject);
+        }
+
+        public object Deserialize(byte[] messageBytes, int length, object contextObject)
+        {
+            var reader = new StreamReader(messageBytes, length);
             return Deserialize(reader, contextObject);
         }
 

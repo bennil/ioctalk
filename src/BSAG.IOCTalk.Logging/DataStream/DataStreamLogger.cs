@@ -193,6 +193,13 @@ namespace BSAG.IOCTalk.Logging.DataStream
         }
 
 
+        public void LogStreamMessage(int sessionId, bool isReceive, byte[] messageData, int messageLength, bool encodeBase64)
+        {
+            if (!queueWriter.TryWrite(new StreamLogItem(sessionId, isReceive, messageData, messageLength, encodeBase64)))
+                log.Warn("Could not write data stream item to queue!");
+        }
+
+
         /// <summary>
         /// Logs the stream message.
         /// </summary>
@@ -329,6 +336,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
                 log.Error(ex.ToString());
             }
         }
+
 
 
         #endregion

@@ -5,6 +5,7 @@ using System.Text;
 using BSAG.IOCTalk.Common.Interface.Container;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
+using System.Buffers;
 
 namespace BSAG.IOCTalk.Common.Interface.Communication
 {
@@ -45,12 +46,23 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         byte[] SerializeToBytes(IGenericMessage message, object contextObject);
 
 
+        void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject);
+
+
         /// <summary>
         /// Deserializes from byte array.
         /// </summary>
         /// <param name="messageBytes">The message bytes.</param>
         /// <returns></returns>
         IGenericMessage DeserializeFromBytes(byte[] messageBytes, object contextObject);
+
+        /// <summary>
+        /// Deserializes from byte array.
+        /// </summary>
+        /// <param name="messageBytesBuffer">The message bytes.</param>
+        /// <param name="messageLength">The message length within the buffer.</param>
+        /// <returns></returns>
+        IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject);
 
         /// <summary>
         /// Deserializes from byte array.

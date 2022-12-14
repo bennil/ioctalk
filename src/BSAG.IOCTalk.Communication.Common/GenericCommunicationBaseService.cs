@@ -103,6 +103,7 @@ namespace BSAG.IOCTalk.Communication.Common
         private InvokeThreadModel invokeThreadModel = InvokeThreadModel.CallerThread;
         private Channel<Tuple<ISession, IGenericMessage>> callerQueue;
         protected Channel<Tuple<int, byte[]>> receiverQueue;
+        protected bool supportsReceiverQueue = true;
         protected bool isActive = true;
 
         private long receivedMessageCounter = 0;
@@ -422,6 +423,7 @@ namespace BSAG.IOCTalk.Communication.Common
             try
             {
                 // create session
+                description += $" ({containerHost.Name})";
                 newSession = new Session(this, sessionId, description);
 
                 if (newSession != null)
@@ -631,13 +633,16 @@ namespace BSAG.IOCTalk.Communication.Common
 
             this.serializer.RegisterContainerHost(containerHost);
 
-            BoundedChannelOptions receiverChannelOptions = new BoundedChannelOptions(2048); // todo: verify max count
-            receiverChannelOptions.FullMode = BoundedChannelFullMode.Wait;
-            receiverChannelOptions.SingleReader = true;
-            receiverChannelOptions.SingleWriter = true;
+            if (supportsReceiverQueue)
+            {
+                BoundedChannelOptions receiverChannelOptions = new BoundedChannelOptions(2048); // todo: verify max count
+                receiverChannelOptions.FullMode = BoundedChannelFullMode.Wait;
+                receiverChannelOptions.SingleReader = true;
+                receiverChannelOptions.SingleWriter = true;
 
-            receiverQueue = Channel.CreateBounded<Tuple<int, byte[]>>(receiverChannelOptions);
-            Task.Run(ReceiverProcessTask);
+                receiverQueue = Channel.CreateBounded<Tuple<int, byte[]>>(receiverChannelOptions);
+                Task.Run(ReceiverProcessTask);
+            }
         }
 
 
@@ -1094,7 +1099,7 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
-        private void WaitForPendingSessionById(int sessionId, out ISession session)
+        protected void WaitForPendingSessionById(int sessionId, out ISession session)
         {
             if (Interlocked.Read(ref pendingSessionCreationCount) > 0)
             {

@@ -18,6 +18,11 @@ namespace BSAG.IOCTalk.Common.Interface.Container
         /// </summary>
         object DIContainer { get; }
 
+        /// <summary>
+        /// Gets the name of the container host.
+        /// </summary>
+        string Name { get; }
+
 
         /// <summary>
         /// Initalizes the generic communication.

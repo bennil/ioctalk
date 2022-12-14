@@ -14,7 +14,8 @@ namespace IOCTalk.BenchmarkDotNet
             // Debug only
             //BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, new DebugInProcessConfig());
 
-            var summary = BenchmarkRunner.Run<RemoteCallsBenchmark>();
+            //var summary = BenchmarkRunner.Run<RemoteCallsBenchmark>();
+            var summary = BenchmarkRunner.Run<RemoteCallsBenchmarkNetTcp>();
         }
     }
 }

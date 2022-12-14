@@ -8,9 +8,13 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
+		<TargetFramework>netstandard2.1</TargetFramework>
 		<Version>2.3.0</Version>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />

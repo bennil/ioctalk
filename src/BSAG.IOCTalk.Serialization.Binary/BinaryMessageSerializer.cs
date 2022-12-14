@@ -15,6 +15,7 @@ using BSAG.IOCTalk.Common.Reflection;
 using System.Reflection;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Communication.Common;
+using System.Buffers;
 
 namespace BSAG.IOCTalk.Serialization.Binary
 {
@@ -67,6 +68,11 @@ namespace BSAG.IOCTalk.Serialization.Binary
             return (IGenericMessage)serializer.Deserialize(messageBytes, contextObject);
         }
 
+        public IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject)
+        {
+            return (IGenericMessage)serializer.Deserialize(messageBytesBuffer, messageLength, contextObject);
+        }
+
 
         public IGenericMessage DeserializeFromBytes(ArraySegment<byte> messageBytesSegment, object contextObject)
         {
@@ -84,6 +90,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             return serializer.Serialize<IGenericMessage>(message, contextObject);
         }
 
+                
         public string SerializeToString(IGenericMessage message, object contextObject)
         {
             throw new NotImplementedException();
@@ -447,7 +454,6 @@ namespace BSAG.IOCTalk.Serialization.Binary
                 return serializer.DetermineSpecialInterfaceType(sourceType, defaultInterfaceType, context); ;
             }
         }
-
 
     }
 }

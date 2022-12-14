@@ -20,6 +20,9 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         //     Write array of bytes verbatim
         void WriteBytes(ArraySegment<byte> data);
 
+
+        void WriteBytes(byte[] data);
+
         //
         // Summary:
         //     Write a double

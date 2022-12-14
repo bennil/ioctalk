@@ -67,6 +67,18 @@ namespace BSAG.IOCTalk.Logging.DataStream
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="StreamLogItem" /> class.
+        /// </summary>
+        /// <param name="sessionId">The session id.</param>
+        /// <param name="isReceive">if set to <c>true</c> [is receive].</param>
+        /// <param name="messageData">The message data.</param>
+        /// <param name="encodeBase64">if set to <c>true</c> [encode base64].</param>
+        public StreamLogItem(int sessionId, bool isReceive, byte[] messageData, int msgLength, bool encodeBase64)
+            : this(sessionId, isReceive, encodeBase64 ? Convert.ToBase64String(messageData, 0, msgLength) : Encoding.Default.GetString(messageData, 0, msgLength))
+        {
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="StreamLogItem"/> class.
         /// </summary>
         /// <param name="sessionId">The session id.</param>

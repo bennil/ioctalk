@@ -18,6 +18,7 @@ using System.Collections.Concurrent;
 using BSAG.IOCTalk.Common.Attributes;
 using BSAG.IOCTalk.Common.Exceptions;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
+using System.Buffers;
 
 namespace BSAG.IOCTalk.Serialization.Json
 {
@@ -155,6 +156,14 @@ namespace BSAG.IOCTalk.Serialization.Json
             return Encoding.UTF8.GetBytes(jsonString);
         }
 
+        public void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject)
+        {
+            // this serializer is not optimzed for IBufferWriter<byte> writer
+            // Uses legacy method to serialize bytes
+            writer.WriteBytes(SerializeToBytes(message, contextObject));
+        }
+
+
         /// <summary>
         /// Deserializes from byte array.
         /// </summary>
@@ -167,6 +176,11 @@ namespace BSAG.IOCTalk.Serialization.Json
             return (IGenericMessage)serializer.Deserialize(jsonString, typeof(GenericMessage), contextObject);
         }
 
+        public IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject)
+        {
+            string jsonString = Encoding.UTF8.GetString(messageBytesBuffer, 0, messageLength);
+            return (IGenericMessage)serializer.Deserialize(jsonString, typeof(GenericMessage), contextObject);
+        }
 
         /// <summary>
         /// Deserializes from byte array.
@@ -442,6 +456,8 @@ namespace BSAG.IOCTalk.Serialization.Json
 
             return json.Substring(startIndex, endIndex - startIndex);
         }
+
+
 
         // ----------------------------------------------------------------------------------------
         #endregion
