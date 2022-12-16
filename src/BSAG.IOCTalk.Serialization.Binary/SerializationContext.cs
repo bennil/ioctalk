@@ -1,7 +1,9 @@
 ﻿using BSAG.IOCTalk.Common.Attributes;
+using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Serialization.Binary.TypeStructure;
 using BSAG.IOCTalk.Serialization.Binary.TypeStructure.Interface;
 using BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values;
+using BSAG.IOCTalk.Serialization.Binary.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,11 +19,17 @@ namespace BSAG.IOCTalk.Serialization.Binary
     {
         private IUnknowContextTypeResolver unknowContextTypeResolver;
 
-        public SerializationContext(BinarySerializer serializer, IUnknowContextTypeResolver unknowContextTypeResolver, bool isDeserialize)
+        private Dictionary<Type, IValueItem> differentTargetTypes = new Dictionary<Type, IValueItem>();
+        private HashSet<uint> publishedMetaInfosPerInstance = new HashSet<uint>();
+        private Dictionary<Type, List<string>> stringHashItemProperties = new Dictionary<Type, List<string>>();
+        private Dictionary<uint, string> stringHashValues;
+
+        public SerializationContext(BinarySerializer serializer, bool isDeserialize, object externalContext)
         {
             this.serializer = serializer;
-            this.unknowContextTypeResolver = unknowContextTypeResolver;
+            this.unknowContextTypeResolver = serializer.UnknowContextTypeResolver;
             this.IsDeserialize = isDeserialize;
+            this.ExternalContext = externalContext;
         }
 
 
@@ -77,11 +85,34 @@ namespace BSAG.IOCTalk.Serialization.Binary
             }
         }
 
+        //public IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType)
+        //{
+        //    return unknowContextTypeResolver.DetermineSpecialInterfaceType(objectType, defaultInterfaceType, this);
+        //    //return serializer.DetermineSpecialInterfaceType(objectType, defaultInterfaceType, this);
+        //}
+
+
         public IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType)
         {
-            return unknowContextTypeResolver.DetermineSpecialInterfaceType(objectType, defaultInterfaceType, this);
-            //return serializer.DetermineSpecialInterfaceType(objectType, defaultInterfaceType, this);
+            IValueItem result;
+            if (differentTargetTypes.TryGetValue(objectType, out result))
+            {
+                return result;
+            }
+
+            Type diffType = null;
+            // check expose sub type attribute
+            var exposureAttributes = objectType.GetCustomAttributes(typeof(ExposeSubTypeAttribute), false);
+            if (exposureAttributes.Length > 0)
+            {
+                diffType = ((ExposeSubTypeAttribute)exposureAttributes[0]).Type;
+            }
+
+            var differentTargetStructure = RegisterDifferentTargetType(objectType, defaultInterfaceType, diffType);
+            return differentTargetStructure;
+
         }
+
 
         public Type DetermineTargetType(Type interfaceType)
         {
@@ -98,10 +129,6 @@ namespace BSAG.IOCTalk.Serialization.Binary
             return serializer.GetByTypeId(typeId);
         }
 
-        public bool IsWriteTypeMetaInfoRequired(uint typeId)
-        {
-            return serializer.IsWriteTypeMetaInfoRequired(typeId);
-        }
 
 
         public void Reset(object externalContext)
@@ -111,6 +138,123 @@ namespace BSAG.IOCTalk.Serialization.Binary
             this.ParentObject = null;
             this.ArrayIndex = null;
         }
-        
+
+
+        public bool TryGetDifferentTargetType(Type objectType, out IValueItem targetItem)
+        {
+            return differentTargetTypes.TryGetValue(objectType, out targetItem);
+        }
+
+
+        public IValueItem RegisterDifferentTargetType(Type objectType, Type defaultInterfaceType, Type diffType)
+        {
+            if (diffType != null)
+            {
+                if (diffType != defaultInterfaceType)
+                {
+                    var differentTargetStructure = serializer.GetByType(diffType, this);
+                    if (differentTargetStructure is ComplexStructure)
+                    {
+                        ((ComplexStructure)differentTargetStructure).CheckDifferentType = false;
+                    }
+                    differentTargetTypes[objectType] = differentTargetStructure;
+                    return differentTargetStructure;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                differentTargetTypes[objectType] = null;
+                return null;
+            }
+        }
+
+        public bool IsWriteTypeMetaInfoRequired(uint typeId)
+        {
+            if (publishedMetaInfosPerInstance.Contains(typeId))
+            {
+                return false;
+            }
+            else
+            {
+                publishedMetaInfosPerInstance.Add(typeId);
+                return true;
+            }
+        }
+
+
+
+
+
+
+
+
+        public void RegisterStringHashProperty(Type type, string propertyName)
+        {
+            if (stringHashValues == null)
+                stringHashValues = new Dictionary<uint, string>();
+
+            List<string> props;
+            if (!stringHashItemProperties.TryGetValue(type, out props))
+            {
+                props = new List<string>();
+                stringHashItemProperties.Add(type, props);
+            }
+
+            if (!props.Contains(propertyName))
+                props.Add(propertyName);
+        }
+
+        public bool IsStringHashProperty(Type type, string propertyName)
+        {
+            List<string> props;
+            if (stringHashItemProperties.TryGetValue(type, out props))
+            {
+                return props.Contains(propertyName);
+            }
+            return false;
+        }
+
+        public bool IsWriteHashStringRequired(string stringValue, out uint stringHashCode)
+        {
+            stringHashCode = Hashing.CreateHash(stringValue);
+
+            if (stringHashValues.ContainsKey(stringHashCode))
+            {
+                return false;
+            }
+            else
+            {
+                RegisterStringHashCodeValue(stringValue, stringHashCode);
+                return true;
+            }
+        }
+
+        public void RegisterStringHashCodeValue(string stringValue, uint stringHashCode)
+        {
+            string existingStr;
+            if (stringHashValues.TryGetValue(stringHashCode, out existingStr))
+            {
+                if (!stringValue.Equals(existingStr))
+                {
+                    throw new InvalidOperationException($"String hash duplicate for {stringHashCode} - cached string: \"{existingStr}\" - new string: \"{stringValue}\"");
+                }
+            }
+            else
+            {
+                stringHashValues.Add(stringHashCode, stringValue);
+            }
+        }
+
+        public string GetHashString(uint hashCode)
+        {
+            string result;
+            stringHashValues.TryGetValue(hashCode, out result);
+            return result;
+        }
+
     }
 }

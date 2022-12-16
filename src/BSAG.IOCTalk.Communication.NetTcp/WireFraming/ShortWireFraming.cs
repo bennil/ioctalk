@@ -16,6 +16,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
     {
         public static readonly byte MessageTypeOffset = 5;
 
+        private const int HeaderSize = 4;
+
         static readonly byte MessageTypeJson = (byte)(MessageTypeOffset + (byte)RawMessageFormat.JSON);
         static readonly byte MessageTypeBinary = (byte)(MessageTypeOffset + (byte)RawMessageFormat.Binary);
 
@@ -51,6 +53,14 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
                 return false;
             }
 
+            if (buffer.FirstSpan.Length < HeaderSize)
+            {
+                // not enough data to read header
+                messagePayload = default;
+                rawMessageFormat = default;
+                return false;
+            }
+
             var firstMsgTypeByte = buffer.FirstSpan[0];
 
             if (firstMsgTypeByte == messageFormatByte)
@@ -73,16 +83,15 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
                     rawMessageFormat = messageFormat;
 
 
-                    //var endMessagePos = buffer.GetPosition(messagePayload.Length);
                     buffer = buffer.Slice(messagePayload.End);  // consume buffer data
 
                     return true;
                 }
-                else
-                {
-                    // buffer does not contain complete message yet
-                    //todo: dead data parts check?
-                }
+                //else
+                //{
+                //    // buffer does not contain complete message yet
+                //    //todo: dead data parts check?
+                //}
             }
             else
             {

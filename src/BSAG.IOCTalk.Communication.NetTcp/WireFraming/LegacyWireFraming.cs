@@ -15,6 +15,9 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
 {
     public sealed class LegacyWireFraming : AbstractWireFraming
     {
+        private const int HeaderSize = 10;
+
+
         /// <summary>
         /// Specifies the min start message byte count
         /// </summary>
@@ -53,6 +56,13 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
         {
             if (buffer.IsEmpty)
             {
+                messagePayload = default;
+                rawMessageFormat = default;
+                return false;
+            }
+            else if (buffer.FirstSpan.Length < HeaderSize)
+            {
+                // not enough data to read header
                 messagePayload = default;
                 rawMessageFormat = default;
                 return false;

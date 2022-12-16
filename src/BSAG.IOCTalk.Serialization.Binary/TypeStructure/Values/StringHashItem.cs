@@ -51,7 +51,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             {
                 uint stringHashCode = reader.ReadUInt32();
 
-                string stringResult = context.Serializer.GetHashString(stringHashCode);
+                string stringResult = context.GetHashString(stringHashCode);
 
                 if (stringResult != null)
                 {
@@ -67,7 +67,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
                 string stringValue = reader.ReadString();
                 uint stringHashCode = reader.ReadUInt32();
 
-                context.Serializer.RegisterStringHashCodeValue(stringValue, stringHashCode);
+                context.RegisterStringHashCodeValue(stringValue, stringHashCode);
 
                 return stringValue;
             }
@@ -97,7 +97,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
 
                 string stringValue = (string)value;
                 uint stringHashCode;
-                if (context.Serializer.IsWriteHashStringRequired(stringValue, out stringHashCode))
+                if (context.IsWriteHashStringRequired(stringValue, out stringHashCode))
                 {
                     writer.WriteUInt8(ValueItem.HashCodeString);
                     writer.WriteString(stringValue);

@@ -47,6 +47,13 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Interface
         /// <value>The index of the array.</value>
         int? ArrayIndex { get; set; }
 
+        
+        /// <summary>
+        /// Gets the serializer.
+        /// </summary>
+        /// <value>The serializer.</value>
+        BinarySerializer Serializer { get; }
+
         /// <summary>
         /// Determines the type of the target.
         /// </summary>
@@ -54,10 +61,23 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Interface
         /// <returns>Type.</returns>
         Type DetermineTargetType(Type interfaceType);
 
-        /// <summary>
-        /// Gets the serializer.
-        /// </summary>
-        /// <value>The serializer.</value>
-        BinarySerializer Serializer { get; }
+
+        bool TryGetDifferentTargetType(Type objectType, out IValueItem targetItem);
+
+        IValueItem RegisterDifferentTargetType(Type objectType, Type defaultInterfaceType, Type diffType);
+
+
+        //IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType);
+
+
+        string GetHashString(uint hashCode);
+
+        void RegisterStringHashCodeValue(string stringValue, uint stringHashCode);
+        
+        void RegisterStringHashProperty(Type type, string propertyName);
+
+        bool IsWriteHashStringRequired(string stringValue, out uint stringHashCode);
+
+        bool IsStringHashProperty(Type type, string propertyName);
     }
 }

@@ -46,7 +46,7 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         byte[] SerializeToBytes(IGenericMessage message, object contextObject);
 
 
-        void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject);
+        void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject, int sessionId);
 
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <param name="messageBytesBuffer">The message bytes.</param>
         /// <param name="messageLength">The message length within the buffer.</param>
         /// <returns></returns>
-        IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject);
+        IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject, int sessionId);
 
         /// <summary>
         /// Deserializes from byte array.
@@ -85,5 +85,11 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// Gets the serializer raw message format.
         /// </summary>
         RawMessageFormat MessageFormat { get; }
+
+        /// <summary>
+        /// Cleans session related serializer caching
+        /// </summary>
+        /// <param name="sessionId"></param>
+        void DisposeSession(int sessionId);
     }
 }

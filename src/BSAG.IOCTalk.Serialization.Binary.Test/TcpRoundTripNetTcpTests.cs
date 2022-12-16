@@ -2,7 +2,8 @@
 using BSAG.IOCTalk.Common.Session;
 using BSAG.IOCTalk.Common.Test;
 using BSAG.IOCTalk.Common.Test.TestObjects;
-using BSAG.IOCTalk.Communication.Tcp;
+using BSAG.IOCTalk.Communication.NetTcp;
+using BSAG.IOCTalk.Communication.NetTcp.WireFraming;
 using BSAG.IOCTalk.Composition;
 using BSAG.IOCTalk.Test.Common.Service;
 using BSAG.IOCTalk.Test.Interface;
@@ -18,12 +19,12 @@ using Xunit.Abstractions;
 
 namespace BSAG.IOCTalk.Serialization.Binary.Test
 {
-    public class TcpRoundTripTests
+    public class TcpRoundTripNetTcpTests
     {
         TaskCompletionSource<bool> onConnectionEstablished;
         readonly ITestOutputHelper xUnitLog;
 
-        public TcpRoundTripTests(ITestOutputHelper xUnitLog)
+        public TcpRoundTripNetTcpTests(ITestOutputHelper xUnitLog)
         {
             this.xUnitLog = xUnitLog;
         }
@@ -41,12 +42,12 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             var ct = new CancellationTokenSource(timeoutMs);
             ct.Token.Register(() => onConnectionEstablished.TrySetCanceled(), useSynchronizationContext: false);
 
-            int port = 33256;
+            int port = 33257;
             var log = new UnitTestLogger(xUnitLog);
 
-            TcpCommunicationController tcpClient;
-            TcpCommunicationController tcpBackendService;
-            MyRemoteAsyncTestService localService;
+            BSAG.IOCTalk.Communication.NetTcp.TcpCommunicationController tcpClient;
+            BSAG.IOCTalk.Communication.NetTcp.TcpCommunicationController tcpBackendService;
+            MyRemoteAsyncTestService2 localService;
             {
                 // init service
                 var compositionHostService = new TalkCompositionHost("UnitTestService");
@@ -54,18 +55,17 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
                 compositionHostService.RegisterLocalSharedService<ILogger>(log);
 
-                compositionHostService.RegisterLocalSharedService<IMyRemoteAsyncAwaitTestService, MyRemoteAsyncTestService>();
+                compositionHostService.RegisterLocalSharedService<IMyRemoteAsyncAwaitTestService, MyRemoteAsyncTestService2>();
 
-
-                tcpBackendService = new TcpCommunicationController(log);
-                tcpBackendService.Serializer = new BinaryMessageSerializer();
+                
+                tcpBackendService = new BSAG.IOCTalk.Communication.NetTcp.TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
                 tcpBackendService.LogDataStream = false;
 
                 compositionHostService.InitGenericCommunication(tcpBackendService);
 
                 tcpBackendService.InitService(port);
 
-                localService = (MyRemoteAsyncTestService)compositionHostService.GetExport<IMyRemoteAsyncAwaitTestService>();
+                localService = (MyRemoteAsyncTestService2)compositionHostService.GetExport<IMyRemoteAsyncAwaitTestService>();
             }
 
             {
@@ -76,8 +76,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
                 compositionHostClient.RegisterRemoteService<IMyRemoteAsyncAwaitTestService>();
 
-                tcpClient = new TcpCommunicationController(log);
-                tcpClient.Serializer = new BinaryMessageSerializer();
+                tcpClient = new BSAG.IOCTalk.Communication.NetTcp.TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
                 tcpClient.LogDataStream = false;
                 tcpClient.RequestTimeoutSeconds = 15;
 
@@ -101,10 +100,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             Assert.Equal(expected, response2);
 
             // without return value
-            MyRemoteAsyncTestService.RunSomeWorkCounter = 0;
+            MyRemoteAsyncTestService2.RunSomeWorkCounter = 0;
             await currentAsyncAwaitTestServiceClientProxyInstance.RunSomeWork();
 
-            Assert.Equal(1, MyRemoteAsyncTestService.RunSomeWorkCounter);
+            Assert.Equal(1, MyRemoteAsyncTestService2.RunSomeWorkCounter);
 
             tcpClient.Shutdown();
             tcpBackendService.Shutdown();
@@ -138,7 +137,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             var ct = new CancellationTokenSource(timeoutMs);
             ct.Token.Register(() => onConnectionEstablished.TrySetCanceled(), useSynchronizationContext: false);
 
-            int port = 33254;
+            int port = 33258;
             var log = new UnitTestLogger(xUnitLog);
 
             TcpCommunicationController tcpClient;
@@ -156,8 +155,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostService.RegisterLocalSharedService<IStressTestService>();
 
 
-                tcpBackendService = new TcpCommunicationController(log);
-                tcpBackendService.Serializer = new BinaryMessageSerializer();
+                tcpBackendService = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
 
                 compositionHostService.InitGenericCommunication(tcpBackendService);
 
@@ -175,8 +173,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostClient.RegisterRemoteService<IStressTestService>();
                 compositionHostClient.RegisterAsyncVoidMethod<IStressTestService>(nameof(IStressTestService.AsyncCallTest));
 
-                tcpClient = new TcpCommunicationController(log);
-                tcpClient.Serializer = new BinaryMessageSerializer();
+                tcpClient = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
 
                 compositionHostClient.SessionCreated += OnCompositionHostClient_SessionCreated_StressTest;
 

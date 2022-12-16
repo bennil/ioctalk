@@ -28,7 +28,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             byte[] result = serializer.Serialize(simpleObj, null);
 
-            BaseTestObject resultObject = (BaseTestObject)serializer.Deserialize(result, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            BaseTestObject resultObject = (BaseTestObject)serializer.Deserialize(result, deserializationContext);
 
             Assert.Equal(simpleObj.BaseProperty, resultObject.BaseProperty);
         }
@@ -48,7 +49,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
 
-            BaseTestObject resultObject = (BaseTestObject)serializer2.Deserialize(result, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer2, true, null);
+            BaseTestObject resultObject = (BaseTestObject)serializer2.Deserialize(result, deserializationContext);
 
             Assert.Equal(simpleObj.BaseProperty, resultObject.BaseProperty);
         }
@@ -106,7 +108,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
                 var dataBytes = serializer.Serialize(testObj, null);
 
-                TestObject deserializedTestObj = (TestObject)serializer.Deserialize(dataBytes, null);
+                SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+                TestObject deserializedTestObj = (TestObject)serializer.Deserialize(dataBytes, deserializationContext);
 
                 Assert.Equal<int>(testObj.ID, deserializedTestObj.ID);
                 Assert.Equal(testObj.Description, deserializedTestObj.Description);
@@ -179,7 +182,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
                 var dataBytes = serializer.Serialize(interfRef, null);
 
-                InterfRefObject deserializedObj = (InterfRefObject)serializer.Deserialize(dataBytes, null);
+                SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+                InterfRefObject deserializedObj = (InterfRefObject)serializer.Deserialize(dataBytes, deserializationContext);
 
                 Assert.Equal(interfRef.BaseObject.TestBaseProperty, deserializedObj.BaseObject.TestBaseProperty);
 
@@ -216,7 +220,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var bytes = serializer.Serialize(interfRef, null);
 
-            InterfRefObject deserializedObj = (InterfRefObject)serializer.Deserialize(bytes, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            InterfRefObject deserializedObj = (InterfRefObject)serializer.Deserialize(bytes, deserializationContext);
 
             Assert.Equal(((ITestInterfaceBase)interfRef.BaseObjectInstance).TestBaseProperty, ((ITestInterfaceBase)deserializedObj.BaseObjectInstance).TestBaseProperty);
 
@@ -269,7 +274,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
                 var data = serializer.Serialize(collHolder, null);
 
-                TestInterfaceImpl1Collections deserializedObj = (TestInterfaceImpl1Collections)serializer.Deserialize(data, null);
+                SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+                TestInterfaceImpl1Collections deserializedObj = (TestInterfaceImpl1Collections)serializer.Deserialize(data, deserializationContext);
 
                 Assert.Equal<int>(collHolder.Array.Length, deserializedObj.Array.Length);
                 for (int i = 0; i < collHolder.Array.Length; i++)
@@ -360,7 +366,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
                 BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
 
-                TestInterfaceImpl1Collections deserializedObj = (TestInterfaceImpl1Collections)serializer2.Deserialize(data, null);
+                SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+                TestInterfaceImpl1Collections deserializedObj = (TestInterfaceImpl1Collections)serializer2.Deserialize(data, deserializationContext);
 
                 Assert.Equal<int>(collHolder.Array.Length, deserializedObj.Array.Length);
                 for (int i = 0; i < collHolder.Array.Length; i++)
@@ -432,7 +439,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var data = serializer.Serialize(testObj, null);
 
-            TestObject deserializedObj = (TestObject)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            TestObject deserializedObj = (TestObject)serializer.Deserialize(data, deserializationContext);
 
             {
                 Assert.Equal<int>(testObj.ObjectArray.Length, deserializedObj.ObjectArray.Length);
@@ -469,7 +477,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var data = serializer.Serialize(objArray, null);
 
-            var deserializedArr = (object[])serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            var deserializedArr = (object[])serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(array[0], deserializedArr[0]);
             Assert.Equal(array[1], deserializedArr[1]);
@@ -500,7 +509,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
 
-            var deserializedArr = (object[])serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            var deserializedArr = (object[])serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(array[0], deserializedArr[0]);
             Assert.Equal(array[1], deserializedArr[1]);
@@ -530,7 +540,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
 
-            var deserializedArr = (byte[])serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            var deserializedArr = (byte[])serializer.Deserialize(data, deserializationContext);
 
             for (int i = 0; i < array.Length; i++)
             {
@@ -553,7 +564,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
 
-            var deserializedList = (IList<SubObject>)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            var deserializedList = (IList<SubObject>)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(list[0].SubId, deserializedList[0].SubId);
             Assert.Equal(list[0].SubDescr, deserializedList[0].SubDescr);
@@ -575,7 +587,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var data = serializer.Serialize(testObj, null);
 
-            TestObject deserializedObj = (TestObject)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            TestObject deserializedObj = (TestObject)serializer.Deserialize(data, deserializationContext);
 
             {
                 Assert.Equal<int>(testObj.ObjectArray.Length, deserializedObj.ObjectArray.Length);
@@ -606,7 +619,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             BinarySerializer.ClearGlobalStructureCache();
 
-            EnumTestObject deserializedObj = (EnumTestObject)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            EnumTestObject deserializedObj = (EnumTestObject)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal<MessageType>(testObject.Type, deserializedObj.Type);
             Assert.Equal<TypeCode>((TypeCode)testObject.InObjectEnum, (TypeCode)deserializedObj.InObjectEnum);
@@ -626,7 +640,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             BinarySerializer.ClearGlobalStructureCache();
 
-            GenericMessage deserializedMsg = (GenericMessage)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            GenericMessage deserializedMsg = (GenericMessage)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal<MessageType>(msg.Type, deserializedMsg.Type);
             Assert.Equal(((EnumTestObject)msg.Payload).InObjectEnum, ((EnumTestObject)deserializedMsg.Payload).InObjectEnum);
@@ -642,7 +657,9 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             noPropertiesHolder.Dummy = "Test324545fd43";
 
             var data = serializer.Serialize(noPropertiesHolder, null);
-            NoPropertiesTestHolder deserializedObj = (NoPropertiesTestHolder)serializer.Deserialize(data, null);
+
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            NoPropertiesTestHolder deserializedObj = (NoPropertiesTestHolder)serializer.Deserialize(data, deserializationContext);
 
             Assert.NotNull(deserializedObj.NoPropertiesObject);
             Assert.Equal(noPropertiesHolder.Dummy, deserializedObj.Dummy);
@@ -659,7 +676,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             msg.Name = "Test";
             byte[] result = serializer.Serialize(msg, null);
 
-            IGenericMessage resultMsg = (IGenericMessage)serializer.Deserialize(result, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            IGenericMessage resultMsg = (IGenericMessage)serializer.Deserialize(result, deserializationContext);
 
             Assert.Equal(msg.Name, resultMsg.Name);
         }
@@ -677,12 +695,13 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             // Binary meta and payload data of PropertyExtended instance without Name property
             byte[] data = new byte[] { 176, 149, 221, 227, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 60, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 69, 120, 116, 101, 110, 100, 101, 100, 1, 0, 3, 0, 3, 0, 0, 0, 2, 73, 68, 0, 1, 5, 0, 0, 0 };
 
-            PropertyExtended resultObject = (PropertyExtended)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            PropertyExtended resultObject = (PropertyExtended)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(exptectedId, resultObject.ID);
 
             // 2. Check caching
-            PropertyExtended resultObject2 = (PropertyExtended)serializer.Deserialize(data, null);
+            PropertyExtended resultObject2 = (PropertyExtended)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(exptectedId, resultObject2.ID);
         }
@@ -709,7 +728,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             // Binary meta and payload data of PropertyExtended instance without Name property
             byte[] data = new byte[] { 180, 32, 156, 29, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 59, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 82, 101, 109, 111, 118, 101, 100, 2, 0, 3, 0, 3, 0, 0, 0, 2, 73, 68, 0, 2, 0, 2, 0, 0, 0, 4, 78, 97, 109, 101, 1, 1, 7, 0, 0, 0, 3, 4, 116, 101, 115, 116 };
 
-            PropertyRemoved resultObject = (PropertyRemoved)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            PropertyRemoved resultObject = (PropertyRemoved)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(exptectedId, resultObject.ID);
         }
@@ -739,7 +759,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             // Binary meta and payload data of PropertyExtended instance without Name property
             byte[] data = new byte[] { 243, 125, 29, 83, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 67, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 100, 65, 100, 118, 97, 110, 99, 101, 100, 4, 0, 10, 0, 10, 0, 0, 0, 8, 82, 101, 109, 111, 118, 101, 100, 49, 0, 4, 0, 4, 0, 0, 0, 10, 85, 110, 99, 104, 97, 110, 103, 101, 100, 49, 0, 2, 0, 2, 0, 0, 0, 8, 82, 101, 109, 111, 118, 101, 100, 50, 1, 2, 0, 2, 0, 0, 0, 10, 85, 110, 99, 104, 97, 110, 103, 101, 100, 50, 1, 1, 0, 0, 0, 0, 126, 132, 46, 65, 1, 3, 19, 114, 101, 109, 111, 118, 101, 100, 32, 100, 117, 109, 109, 121, 32, 118, 97, 108, 117, 101, 3, 15, 116, 101, 115, 116, 32, 105, 116, 32, 52, 50, 51, 52, 51, 50, 53 };
 
-            PropertyChangedAdvanced resultObject = (PropertyChangedAdvanced)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            PropertyChangedAdvanced resultObject = (PropertyChangedAdvanced)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(expUnchanged1, resultObject.Unchanged1);
             Assert.Equal(expUnchanged2, resultObject.Unchanged2);
@@ -765,7 +786,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             // Binary meta and payload data of PropertyChangeIntToLong instance with int property
             byte[] data = new byte[] { 60, 9, 90, 236, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 67, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 73, 110, 116, 84, 111, 76, 111, 110, 103, 1, 0, 3, 0, 3, 0, 0, 0, 14, 78, 117, 109, 98, 101, 114, 80, 114, 111, 112, 101, 114, 116, 121, 0, 1, 157, 123, 243, 25 };
 
-            PropertyChangeIntToLong resultObject = (PropertyChangeIntToLong)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            PropertyChangeIntToLong resultObject = (PropertyChangeIntToLong)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(expectedNumber, resultObject.NumberProperty);
         }
@@ -788,7 +810,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             // Binary meta and payload data of PropertyChangeIntToLong instance with int property
             byte[] data = new byte[] { 130, 237, 223, 38, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 73, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 68, 111, 117, 98, 108, 101, 84, 111, 68, 101, 99, 105, 109, 97, 108, 1, 0, 10, 0, 10, 0, 0, 0, 14, 78, 117, 109, 98, 101, 114, 80, 114, 111, 112, 101, 114, 116, 121, 0, 1, 0, 0, 0, 157, 123, 243, 185, 65 };
 
-            PropertyChangeDoubleToDecimal resultObject = (PropertyChangeDoubleToDecimal)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            PropertyChangeDoubleToDecimal resultObject = (PropertyChangeDoubleToDecimal)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(expectedNumber, resultObject.NumberProperty);
         }
@@ -813,7 +836,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             // Binary meta and payload data of PropertyChangedNullable instance with not nullable properties
             byte[] data = new byte[] { 27, 35, 82, 199, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 67, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 100, 78, 117, 108, 108, 97, 98, 108, 101, 1, 0, 3, 0, 3, 0, 0, 0, 9, 80, 114, 111, 112, 101, 114, 116, 121, 49, 0, 1, 188, 57, 143, 0 };
 
-            PropertyChangedNullable resultObject = (PropertyChangedNullable)serializer.Deserialize(data, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            PropertyChangedNullable resultObject = (PropertyChangedNullable)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(expectedProperty1, resultObject.Property1);
         }
@@ -851,7 +875,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             byte[] result = serializer.Serialize(typeRefItem, null);
 
-            TypeDescription resultObject = (TypeDescription)serializer.Deserialize(result, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            TypeDescription resultObject = (TypeDescription)serializer.Deserialize(result, deserializationContext);
 
             Assert.Equal(typeRefItem.TypeReference, resultObject.TypeReference);
             Assert.Equal(typeRefItem.TypeReference2, resultObject.TypeReference2);
@@ -862,10 +887,14 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
         [Fact]
         public void TestMethodBinary_MethodDescriptionSerialization()
         {
-            BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
+            var unknownTypeResovler = new UnknowTestTypeResolver();
+            BinarySerializer serializer = new BinarySerializer(unknownTypeResovler);
 
             // register string hash property
-            serializer.RegisterStringHashProperty(typeof(StringHashTestItem), nameof(StringHashTestItem.HashString));
+            SerializationContext serializeContext = new SerializationContext(serializer, false, null);
+            SerializationContext deserializeContext = new SerializationContext(serializer, true, null);
+            serializeContext.RegisterStringHashProperty(typeof(StringHashTestItem), nameof(StringHashTestItem.HashString));
+            deserializeContext.RegisterStringHashProperty(typeof(StringHashTestItem), nameof(StringHashTestItem.HashString));
 
             StringHashTestItem hastStringObj = new StringHashTestItem();
             hastStringObj.HashString = "Some common data string";
@@ -873,7 +902,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             {
                 byte[] result = serializer.Serialize(hastStringObj, null);
 
-                StringHashTestItem deserialized = (StringHashTestItem)serializer.Deserialize(result, null);
+                SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+                StringHashTestItem deserialized = (StringHashTestItem)serializer.Deserialize(result, deserializeContext);
 
                 Assert.Equal(hastStringObj.HashString, deserialized.HashString);
             }
@@ -881,7 +911,9 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             {
                 byte[] result2 = serializer.Serialize(hastStringObj, null);
 
-                StringHashTestItem deserialized2 = (StringHashTestItem)serializer.Deserialize(result2, null);
+                BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
+                SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+                StringHashTestItem deserialized2 = (StringHashTestItem)serializer2.Deserialize(result2, deserializeContext);
 
                 Assert.Equal(hastStringObj.HashString, deserialized2.HashString);
             }
@@ -915,7 +947,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
         private static void DeserializeAndCheck(BinaryMessageSerializer msgSerializer, GenericMessage orgMsg, byte[] bytes)
         {
-            GenericMessage deserializedMsg = (GenericMessage)msgSerializer.DeserializeFromBytes(bytes, null);
+            GenericMessage deserializedMsg = (GenericMessage)msgSerializer.DeserializeFromBytes(bytes, bytes.Length, null, 0);
 
             Assert.Equal(orgMsg.Type, deserializedMsg.Type);
             Assert.Equal(orgMsg.Target, deserializedMsg.Target);
@@ -943,12 +975,12 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             BinaryMessageSerializer msgSerializerNew = new BinaryMessageSerializer();
 
-            GenericMessage deserializedMsg = (GenericMessage)msgSerializerNew.DeserializeFromBytes(bytes, null);
+            GenericMessage deserializedMsg = (GenericMessage)msgSerializerNew.DeserializeFromBytes(bytes, bytes.Length, null, 0);
             object[] payloadArr = (object[])deserializedMsg.Payload;
 
             ITestItem testItemDeserialized = (ITestItem)payloadArr.First();
 
-            Assert.Equal(testItem.ID, testItemDeserialized.ID);          
+            Assert.Equal(testItem.ID, testItemDeserialized.ID);
             Assert.Equal(testItem.Name, testItemDeserialized.Name);
         }
 
@@ -970,8 +1002,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             var bytes = msgSerializer.SerializeToBytes(msg, null);
 
             BinaryMessageSerializer msgSerializerNewDeserialize = new BinaryMessageSerializer();
-            
-            GenericMessage deserializedMsg = (GenericMessage)msgSerializerNewDeserialize.DeserializeFromBytes(bytes, null);
+
+            GenericMessage deserializedMsg = (GenericMessage)msgSerializerNewDeserialize.DeserializeFromBytes(bytes, bytes.Length, null, 0);
             object[] payloadArr = (object[])deserializedMsg.Payload;
 
             ITestItem testItemDeserialized = (ITestItem)payloadArr.First();
@@ -989,7 +1021,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var bytesMsg2 = msgSerializer.SerializeToBytes(msg2, null);
 
-            GenericMessage deserializedMsg2 = (GenericMessage)msgSerializerNewDeserialize.DeserializeFromBytes(bytesMsg2, null);
+            GenericMessage deserializedMsg2 = (GenericMessage)msgSerializerNewDeserialize.DeserializeFromBytes(bytesMsg2, bytesMsg2.Length, null, 0);
 
             ITestItem deserializedTest2 = (ITestItem)deserializedMsg2.Payload;
 

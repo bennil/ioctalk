@@ -505,7 +505,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 int headerSize = writer.WrittenCount;
 
                 // serialize message payload
-                serializer.Serialize(writer, message, context);
+                serializer.Serialize(writer, message, context, receiverSessionId);
                 int payloadSize = writer.WrittenCount - headerSize;
 
                 // write footer / header length
@@ -537,7 +537,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 int headerSize = writer.WrittenCount;
 
                 // serialize message payload
-                serializer.Serialize(writer, message, context);
+                serializer.Serialize(writer, message, context, receiverSessionId);
                 int payloadSize = writer.WrittenCount - headerSize;
 
                 // write footer / header length
@@ -597,7 +597,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                             dataStreamLogger.LogStreamMessage(sessionId, true, messagePayloadArray, msgLength, serializer.MessageFormat != IOCTalk.Common.Interface.Communication.Raw.RawMessageFormat.JSON);
                         }
 
-                        message = serializer.DeserializeFromBytes(messagePayloadArray, msgLength, session);
+                        message = serializer.DeserializeFromBytes(messagePayloadArray, msgLength, session, sessionId);
                     }
                     finally
                     {

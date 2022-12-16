@@ -156,7 +156,7 @@ namespace BSAG.IOCTalk.Serialization.Json
             return Encoding.UTF8.GetBytes(jsonString);
         }
 
-        public void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject)
+        public void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject, int sessionId)
         {
             // this serializer is not optimzed for IBufferWriter<byte> writer
             // Uses legacy method to serialize bytes
@@ -176,7 +176,7 @@ namespace BSAG.IOCTalk.Serialization.Json
             return (IGenericMessage)serializer.Deserialize(jsonString, typeof(GenericMessage), contextObject);
         }
 
-        public IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject)
+        public IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject, int sessionId)
         {
             string jsonString = Encoding.UTF8.GetString(messageBytesBuffer, 0, messageLength);
             return (IGenericMessage)serializer.Deserialize(jsonString, typeof(GenericMessage), contextObject);
@@ -455,6 +455,12 @@ namespace BSAG.IOCTalk.Serialization.Json
             }
 
             return json.Substring(startIndex, endIndex - startIndex);
+        }
+
+
+        public void DisposeSession(int sessionId)
+        {
+            // do nothing (no session dependent serializer)
         }
 
 

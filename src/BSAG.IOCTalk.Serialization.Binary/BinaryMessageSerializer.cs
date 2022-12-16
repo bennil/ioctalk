@@ -16,6 +16,7 @@ using System.Reflection;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Communication.Common;
 using System.Buffers;
+using BSAG.IOCTalk.Common.Session;
 
 namespace BSAG.IOCTalk.Serialization.Binary
 {
@@ -28,14 +29,14 @@ namespace BSAG.IOCTalk.Serialization.Binary
         private static readonly Type objectArrayType = typeof(object[]);
         private ConcurrentDictionary<int, ParameterInfo[]> methodParameterCache = new ConcurrentDictionary<int, ParameterInfo[]>();
 
+        ConcurrentDictionary<int, SessionSerializerContext> serializeSessionContext = new ConcurrentDictionary<int, SessionSerializerContext>();
+
         public bool IsMissingFieldsInSourceDataAllowed { get; set; } = true;
 
 
         public BinaryMessageSerializer()
         {
             serializer = new BinarySerializer(this);
-            serializer.RegisterStringHashProperty(typeof(IGenericMessage), nameof(IGenericMessage.Target));
-            serializer.RegisterStringHashProperty(typeof(IGenericMessage), nameof(IGenericMessage.Name));
         }
 
         /// <summary>
@@ -50,6 +51,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             }
         }
 
+        public BinarySerializer Serializer => serializer;
 
         /// <summary>
         /// Registers the container host.
@@ -60,23 +62,26 @@ namespace BSAG.IOCTalk.Serialization.Binary
             this.containerHost = containerHost;
 
             // Register message type
-            serializer.GetByType(typeof(IGenericMessage), new SerializationContext(serializer, this, false));
+            serializer.GetByType(typeof(IGenericMessage), new SerializationContext(serializer, false, null));
         }
 
         public IGenericMessage DeserializeFromBytes(byte[] messageBytes, object contextObject)
         {
-            return (IGenericMessage)serializer.Deserialize(messageBytes, contextObject);
+            throw new NotImplementedException();
+            //return (IGenericMessage)serializer.Deserialize(messageBytes, contextObject);
         }
 
-        public IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject)
+        public IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject, int sessionId)
         {
-            return (IGenericMessage)serializer.Deserialize(messageBytesBuffer, messageLength, contextObject);
+            SessionSerializerContext sessionCtx = GetOrCreateSessionContext(contextObject, sessionId);
+            return (IGenericMessage)serializer.Deserialize(messageBytesBuffer, messageLength, sessionCtx.DeserializeContext);
         }
 
 
         public IGenericMessage DeserializeFromBytes(ArraySegment<byte> messageBytesSegment, object contextObject)
         {
-            return (IGenericMessage)serializer.Deserialize(messageBytesSegment, contextObject);
+            throw new NotImplementedException();
+            //return (IGenericMessage)serializer.Deserialize(messageBytesSegment, contextObject);
         }
 
         public IGenericMessage DeserializeFromString(string messageString, object contextObject)
@@ -99,16 +104,33 @@ namespace BSAG.IOCTalk.Serialization.Binary
 
 
 
-        public void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject)
+        public void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject, int sessionId)
         {
-            serializer.Serialize<IGenericMessage>(writer, message, contextObject);
+            SessionSerializerContext sessionCtx = GetOrCreateSessionContext(contextObject, sessionId);
+            serializer.Serialize(writer, message, typeof(IGenericMessage), sessionCtx.SerializeContext);
         }
 
-        public IGenericMessage Deserialize(IStreamReader reader, object contextObject)
+        public IGenericMessage Deserialize(IStreamReader reader, object contextObject, int sessionId)
         {
-            return (IGenericMessage)serializer.Deserialize(reader, contextObject);
+            SessionSerializerContext sessionCtx = GetOrCreateSessionContext(contextObject, sessionId);
+            return (IGenericMessage)serializer.Deserialize(reader, sessionCtx.DeserializeContext);
         }
 
+        private SessionSerializerContext GetOrCreateSessionContext(object contextObject, int sessionId)
+        {
+            SessionSerializerContext sessionCtx;
+            if (serializeSessionContext.TryGetValue(sessionId, out sessionCtx))
+            {
+                sessionCtx.DeserializeContext.Reset(contextObject);
+            }
+            else
+            {
+                sessionCtx = new SessionSerializerContext(serializer, contextObject);
+                serializeSessionContext[sessionId] = sessionCtx;
+            }
+
+            return sessionCtx;
+        }
 
         public Type DetermineTargetType(Type sourceType, ISerializeContext context)
         {
@@ -283,7 +305,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             // reverse lookup interfaces
             Type resultType = null;
             IValueItem specialTarget;
-            if (serializer.TryGetDifferentTargetType(sourceType, out specialTarget)
+            if (context.TryGetDifferentTargetType(sourceType, out specialTarget)
                 && specialTarget != null)
             {
                 return specialTarget;
@@ -447,13 +469,17 @@ namespace BSAG.IOCTalk.Serialization.Binary
 
             if (resultType != null)
             {
-                return serializer.RegisterDifferentTargetType(sourceType, defaultInterfaceType, resultType, context);
+                return context.RegisterDifferentTargetType(sourceType, defaultInterfaceType, resultType);
             }
             else
             {
-                return serializer.DetermineSpecialInterfaceType(sourceType, defaultInterfaceType, context); ;
+                return context.DetermineSpecialInterfaceType(sourceType, defaultInterfaceType);
             }
         }
 
+        public void DisposeSession(int sessionId)
+        {
+            serializeSessionContext.TryRemove(sessionId, out _);
+        }
     }
 }

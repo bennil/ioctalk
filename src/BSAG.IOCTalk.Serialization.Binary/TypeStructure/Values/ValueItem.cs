@@ -44,7 +44,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             if (type.Equals(typeof(string)))
             {
                 if (declaringType != null
-                    && ctx.Serializer.IsStringHashProperty(declaringType, name))
+                    && ctx.IsStringHashProperty(declaringType, name))
                 {
                     return new StringHashItem(name, getter, setter);
                 }

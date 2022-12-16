@@ -16,7 +16,7 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <param name="writer">The writer.</param>
         /// <param name="message">The message.</param>
         /// <param name="contextObject">The context object.</param>
-        void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject);
+        void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject, int sessionId);
 
 
         /// <summary>
@@ -25,6 +25,6 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <param name="reader">The reader.</param>
         /// <param name="contextObject">The context object.</param>
         /// <returns>IEnumerable&lt;IGenericMessage&gt;.</returns>
-        IGenericMessage Deserialize(IStreamReader reader, object contextObject);
+        IGenericMessage Deserialize(IStreamReader reader, object contextObject, int sessionId);
     }
 }

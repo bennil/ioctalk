@@ -522,6 +522,9 @@ namespace BSAG.IOCTalk.Communication.Common
                     {
                         SessionTerminated(this, new SessionEventArgs(session, session.Contract));
                     }
+
+                    serializer?.DisposeSession(sessionId);
+
                     return true;
                 }
                 else
@@ -1049,7 +1052,7 @@ namespace BSAG.IOCTalk.Communication.Common
                     dataStreamLogger.LogStreamMessage(sessionId, true, messageBytes, serializer.MessageFormat != IOCTalk.Common.Interface.Communication.Raw.RawMessageFormat.JSON);
                 }
 
-                IGenericMessage message = serializer.DeserializeFromBytes(messageBytes, session);
+                IGenericMessage message = serializer.DeserializeFromBytes(messageBytes, messageBytes.Length, session, sessionId);
 
                 await ProcessReceivedMessage(session, message).ConfigureAwait(false);
             }
