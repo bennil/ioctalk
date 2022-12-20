@@ -13,7 +13,6 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Buffers;
 using BSAG.IOCTalk.Communication.NetTcp.WireFraming;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace BSAG.IOCTalk.Communication.NetTcp
 {

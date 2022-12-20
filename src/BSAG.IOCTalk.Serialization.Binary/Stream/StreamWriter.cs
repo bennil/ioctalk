@@ -29,7 +29,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Stream
         /// Writes the bool.
         /// </summary>
         /// <param name="value">The value.</param>
-        public void WriteBool(bool value)
+        public new void WriteBool(bool value)
         {
             base.WriteUInt8((byte)(value ? 1 : 0));
         }
@@ -38,7 +38,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Stream
         /// Writes the int16.
         /// </summary>
         /// <param name="value">The value.</param>
-        public void WriteInt16(short value)
+        public new void WriteInt16(short value)
         {
             base.WriteUInt16(unchecked((UInt16)value));
         }
@@ -47,7 +47,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Stream
         /// Writes the int32.
         /// </summary>
         /// <param name="value">The value.</param>
-        public void WriteInt32(int value)
+        public new void WriteInt32(int value)
         {
             base.WriteUInt32(unchecked((UInt32)value));
         }
@@ -56,7 +56,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Stream
         /// Writes the int64.
         /// </summary>
         /// <param name="value">The value.</param>
-        public void WriteInt64(long value)
+        public new void WriteInt64(long value)
         {
             base.WriteUInt64(unchecked((UInt64)value));
         }
@@ -65,7 +65,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Stream
         /// Writes the int8.
         /// </summary>
         /// <param name="value">The value.</param>
-        public void WriteInt8(sbyte value)
+        public new void WriteInt8(sbyte value)
         {
             base.WriteUInt8(unchecked((Byte)value));
         }
@@ -74,7 +74,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Stream
         /// Writes the string.
         /// </summary>
         /// <param name="value">The value.</param>
-        public void WriteString(string value)
+        public new void WriteString(string value)
         {
             if (value.Length == 0)
             {

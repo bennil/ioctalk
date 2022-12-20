@@ -42,7 +42,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
         }
 
 
-        public bool AutoCreateMissingTypes { get; set; } = true;
+        public bool AutoCreateMissingTypes { get; set; } = false;
 
         public Assembly[] CustomLookupAssemblies { get; set; }
 

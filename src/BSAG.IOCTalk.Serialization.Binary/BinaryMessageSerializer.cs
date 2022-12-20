@@ -62,7 +62,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             this.containerHost = containerHost;
 
             // Register message type
-            serializer.GetByType(typeof(IGenericMessage), new SerializationContext(serializer, false, null));
+            serializer.GetByType(typeof(IGenericMessage), new SerializationContext(serializer, false));
         }
 
         public IGenericMessage DeserializeFromBytes(byte[] messageBytes, object contextObject)
@@ -73,7 +73,8 @@ namespace BSAG.IOCTalk.Serialization.Binary
 
         public IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject, int sessionId)
         {
-            SessionSerializerContext sessionCtx = GetOrCreateSessionContext(contextObject, sessionId);
+            SessionSerializerContext sessionCtx = GetOrCreateSessionContext(sessionId);
+            sessionCtx.DeserializeContext.Reset(contextObject);
             return (IGenericMessage)serializer.Deserialize(messageBytesBuffer, messageLength, sessionCtx.DeserializeContext);
         }
 
@@ -106,26 +107,24 @@ namespace BSAG.IOCTalk.Serialization.Binary
 
         public void Serialize(IStreamWriter writer, IGenericMessage message, object contextObject, int sessionId)
         {
-            SessionSerializerContext sessionCtx = GetOrCreateSessionContext(contextObject, sessionId);
+            SessionSerializerContext sessionCtx = GetOrCreateSessionContext(sessionId);
+            sessionCtx.SerializeContext.Reset(contextObject);
             serializer.Serialize(writer, message, typeof(IGenericMessage), sessionCtx.SerializeContext);
         }
 
         public IGenericMessage Deserialize(IStreamReader reader, object contextObject, int sessionId)
         {
-            SessionSerializerContext sessionCtx = GetOrCreateSessionContext(contextObject, sessionId);
+            SessionSerializerContext sessionCtx = GetOrCreateSessionContext(sessionId);
+            sessionCtx.DeserializeContext.Reset(contextObject);
             return (IGenericMessage)serializer.Deserialize(reader, sessionCtx.DeserializeContext);
         }
 
-        private SessionSerializerContext GetOrCreateSessionContext(object contextObject, int sessionId)
+        private SessionSerializerContext GetOrCreateSessionContext(int sessionId)
         {
             SessionSerializerContext sessionCtx;
-            if (serializeSessionContext.TryGetValue(sessionId, out sessionCtx))
+            if (serializeSessionContext.TryGetValue(sessionId, out sessionCtx) == false)
             {
-                sessionCtx.DeserializeContext.Reset(contextObject);
-            }
-            else
-            {
-                sessionCtx = new SessionSerializerContext(serializer, contextObject);
+                sessionCtx = new SessionSerializerContext(serializer);
                 serializeSessionContext[sessionId] = sessionCtx;
             }
 
@@ -473,7 +472,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             }
             else
             {
-                return context.DetermineSpecialInterfaceType(sourceType, defaultInterfaceType);
+                return null;
             }
         }
 

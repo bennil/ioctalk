@@ -5,7 +5,6 @@ using System.Text;
 using BSAG.IOCTalk.Common.Interface.Container;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
-using System.Buffers;
 
 namespace BSAG.IOCTalk.Common.Interface.Communication
 {

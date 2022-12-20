@@ -3,6 +3,7 @@ using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Reflection;
 using System;
 using System.Collections.Generic;
+using System.Security;
 using System.Text;
 
 namespace BSAG.IOCTalk.Composition
@@ -36,31 +37,16 @@ namespace BSAG.IOCTalk.Composition
                 Type interfType;
                 if (TypeService.TryGetTypeByName(interfaceType, out interfType))
                 {
+                    if (interfType.IsInterface == false)
+                        throw new SecurityException($"Given type \"{interfType.FullName}\" is not an interface!");
+
                     if (!TryGetSessionInstanceInternalFunctionalOnly(interfType, out result))
                     {
-                        //// check local services
-                        //int foundIndex = Array.IndexOf<Type>(source.LocalServiceInterfaceTypes, interfType);
-                        //if (foundIndex >= 0)
-                        //{
-                        //    result = LocalServices[foundIndex];
-                        //}
-                        //else
-                        //{
-                        //    // check remote services
-                        //    foundIndex = Array.IndexOf<Type>(source.RemoteServiceInterfaceTypes, interfType);
-                        //    if (foundIndex >= 0)
-                        //    {
-                        //        result = RemoteServices[foundIndex];
-                        //    }
-                        //    else
-                        //    {
                         // not found in session context > check if local share instance
                         if (!source.TryGetExport(interfType, out result))
                         {
                             throw new InvalidOperationException($"Can't find implementation for {interfaceType}");
                         }
-                        //    }
-                        //}
                     }
 
                     interfaceTypeNameInstanceCache[interfaceType] = result;

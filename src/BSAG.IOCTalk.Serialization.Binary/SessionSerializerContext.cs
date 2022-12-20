@@ -9,10 +9,10 @@ namespace BSAG.IOCTalk.Serialization.Binary
     internal class SessionSerializerContext
     {
 
-        public SessionSerializerContext(BinarySerializer serializer, object externalContext) 
+        public SessionSerializerContext(BinarySerializer serializer) 
         {
-            SerializeContext = new SerializationContext(serializer, false, externalContext);
-            DeserializeContext = new SerializationContext(serializer, true, externalContext);
+            SerializeContext = new SerializationContext(serializer, false);
+            DeserializeContext = new SerializationContext(serializer, true);
 
             SerializeContext.RegisterStringHashProperty(typeof(IGenericMessage), nameof(IGenericMessage.Target));
             SerializeContext.RegisterStringHashProperty(typeof(IGenericMessage), nameof(IGenericMessage.Name));

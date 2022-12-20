@@ -24,12 +24,12 @@ namespace BSAG.IOCTalk.Serialization.Binary
         private Dictionary<Type, List<string>> stringHashItemProperties = new Dictionary<Type, List<string>>();
         private Dictionary<uint, string> stringHashValues;
 
-        public SerializationContext(BinarySerializer serializer, bool isDeserialize, object externalContext)
+        public SerializationContext(BinarySerializer serializer, bool isDeserialize, object contextObj = null)
         {
             this.serializer = serializer;
             this.unknowContextTypeResolver = serializer.UnknowContextTypeResolver;
             this.IsDeserialize = isDeserialize;
-            this.ExternalContext = externalContext;
+            this.ExternalContext = contextObj;
         }
 
 
@@ -85,14 +85,20 @@ namespace BSAG.IOCTalk.Serialization.Binary
             }
         }
 
-        //public IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType)
-        //{
-        //    return unknowContextTypeResolver.DetermineSpecialInterfaceType(objectType, defaultInterfaceType, this);
-        //    //return serializer.DetermineSpecialInterfaceType(objectType, defaultInterfaceType, this);
-        //}
-
-
         public IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType)
+        {
+            var result = unknowContextTypeResolver.DetermineSpecialInterfaceType(objectType, defaultInterfaceType, this);
+            
+            if (result == null)
+            {
+                result = DetermineSpecialInterfaceTypeFallback(objectType, defaultInterfaceType);
+            }
+
+            return result;
+        }
+
+
+        public IValueItem DetermineSpecialInterfaceTypeFallback(Type objectType, Type defaultInterfaceType)
         {
             IValueItem result;
             if (differentTargetTypes.TryGetValue(objectType, out result))

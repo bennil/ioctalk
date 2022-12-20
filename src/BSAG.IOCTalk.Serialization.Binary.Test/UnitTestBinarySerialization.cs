@@ -12,6 +12,9 @@ using BSAG.IOCTalk.Communication.Common;
 using BSAG.IOCTalk.Serialization.Binary.Test.Model;
 using Xunit;
 using System.Linq;
+using BSAG.IOCTalk.Common.Interface.Reflection;
+using BSAG.IOCTalk.Common.Reflection;
+using BSAG.IOCTalk.Composition;
 
 namespace BSAG.IOCTalk.Serialization.Binary.Test
 {
@@ -962,6 +965,9 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
         {
             BinaryMessageSerializer msgSerializer = new BinaryMessageSerializer();
 
+            TalkCompositionHost containerHost = new TalkCompositionHost("TestContainer");
+            msgSerializer.RegisterContainerHost(containerHost);
+
             var testItem = new TestItem() { ID = 5, Name = "Test it" };
 
             GenericMessage msg = new GenericMessage();
@@ -971,7 +977,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             msg.RequestId = 1;
             msg.Payload = new object[] { testItem };
 
-            var bytes = msgSerializer.SerializeToBytes(msg, null);
+            IInvokeMethodInfo invokeInfo = new InvokeMethodInfo(typeof(ITestService), nameof(ITestService.CallTest), new Type[] { typeof(ITestItem) });
+            var bytes = msgSerializer.SerializeToBytes(msg, invokeInfo);
 
             BinaryMessageSerializer msgSerializerNew = new BinaryMessageSerializer();
 

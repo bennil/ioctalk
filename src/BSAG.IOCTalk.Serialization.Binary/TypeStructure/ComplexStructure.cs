@@ -25,7 +25,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
         private Action<object, object> setter;
         //private bool isReadTypeIdExpected;
         private bool isObject;
-        private bool isTolerantLayout;
+        //private bool isTolerantLayout;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ComplexStructure"/> class.
@@ -203,7 +203,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
         internal static ComplexStructure CreateTolerantLayoutStructure(Type type, ISerializeContext ctx)
         {
             ComplexStructure tolerantLayoutStructure = new ComplexStructure();
-            tolerantLayoutStructure.isTolerantLayout = true;    // mark as tolerant layout (for debug use only)
+            //tolerantLayoutStructure.isTolerantLayout = true;    // mark as tolerant layout (for debug use only)
             tolerantLayoutStructure.type = type;
             if (type.IsInterface || type.IsAbstract)
             {
