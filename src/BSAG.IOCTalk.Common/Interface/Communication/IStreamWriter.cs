@@ -69,5 +69,10 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         // Summary:
         //     Write an UInt8
         void WriteUInt8(byte value);
+
+        /// <summary>
+        /// Write variable encoded 32-bit unsigned integer
+        /// </summary>
+        void WriteVarUInt32(uint value);
     }
 }

@@ -15,6 +15,7 @@ using System.Linq;
 using BSAG.IOCTalk.Common.Interface.Reflection;
 using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Composition;
+using BSAG.IOCTalk.Common.Test.TestObjects;
 
 namespace BSAG.IOCTalk.Serialization.Binary.Test
 {
@@ -1034,6 +1035,27 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             Assert.Equal(testItem.ID, deserializedTest2.ID);
             Assert.Equal(testItem.Name, deserializedTest2.Name);
+        }
+
+
+        [Fact]
+        public void TestMethodDateTimeOffsetSerialize()
+        {
+            BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
+
+            DateTimeOffsetTest dtoTest = new DateTimeOffsetTest();
+            dtoTest.Time1 = DateTimeOffset.Now;
+            dtoTest.Time2 = null;
+            dtoTest.Duration = TimeSpan.MaxValue;
+
+            byte[] result = serializer.Serialize(dtoTest, null);
+
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            DateTimeOffsetTest resultObject = (DateTimeOffsetTest)serializer.Deserialize(result, deserializationContext);
+
+            Assert.Equal(dtoTest.Time1, resultObject.Time1);
+            Assert.Equal(dtoTest.Time2, resultObject.Time2);
+            Assert.Equal(dtoTest.Duration, resultObject.Duration);
         }
     }
 }

@@ -210,5 +210,12 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <returns>System.Int32.</returns>
         int ReadLength();
 
+
+        /// <summary>
+        /// Read variable encoded 32-bit unsigned integer
+        /// </summary>
+        /// <exception cref="EndOfStreamException"/>
+        uint ReadVarUInt32();
+
     }
 }

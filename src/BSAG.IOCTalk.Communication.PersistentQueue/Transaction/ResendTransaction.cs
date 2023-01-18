@@ -12,7 +12,15 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
 
         public ResendTransaction()
         {
+            this.CreatedUtc = DateTime.UtcNow;
         }
+
+        public DateTime CreatedUtc { get; private set; }
+
+        /// <summary>
+        /// Indicates at least one transactional non reachable call
+        /// </summary>
+        public bool OfflineContextOccured { get; set; } = false;
 
         public List<TrxContextValue> ContextValues { get; private set; }
 

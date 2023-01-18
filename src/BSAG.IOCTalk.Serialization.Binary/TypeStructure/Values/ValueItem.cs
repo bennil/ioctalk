@@ -114,6 +114,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             {
                 item = new DateTimeItem(name, getter, setter);
             }
+            else if (type.Equals(typeof(DateTimeOffset)))
+            {
+                item = new DateTimeOffsetItem(name, getter, setter);
+            }
             else if (type.Equals(typeof(TimeSpan)))
             {
                 item = new TimeSpanItem(name, getter, setter);

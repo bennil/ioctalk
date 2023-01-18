@@ -47,7 +47,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
         public IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType, ISerializeContext ctx)
         {
-            return ctx.DetermineSpecialInterfaceType(objectType, defaultInterfaceType);
+            return null;
         }
 
         //public Type DetermineInterfaceType(Type type)

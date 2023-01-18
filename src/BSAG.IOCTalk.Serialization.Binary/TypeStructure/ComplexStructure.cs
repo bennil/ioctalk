@@ -360,7 +360,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                 else
                 {
                     // write complex object type id for null value
-                    writer.WriteInt32((int)ItemType.ComplexObject);
+                    writer.WriteUInt32((uint)ItemType.ComplexObject);
                     writer.WriteUInt8(ValueItem.NullValueIdent);
                 }
             }

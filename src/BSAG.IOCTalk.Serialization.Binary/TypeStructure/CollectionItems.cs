@@ -173,7 +173,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
             // Collection structure:
             // TypeID UInt32
             // ContentType Byte
-            // Count Int32
+            // Count VarUInt32
             // Items...
             if (getter == null)
             {
@@ -198,7 +198,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                 if (isArray)
                 {
                     Array array = (Array)value;
-                    writer.WriteInt32(array.Length);
+                    writer.WriteVarUInt32((uint)array.Length);
                     items = array;
 
                     if (isByteArray)
@@ -210,19 +210,19 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                 else if (value is ICollection)
                 {
                     ICollection collection = (ICollection)value;
-                    writer.WriteInt32(collection.Count);
+                    writer.WriteVarUInt32((uint)collection.Count);
                     items = collection;
                 }
                 else
                 {
                     items = (IEnumerable)value;
 
-                    int count = 0;
+                    uint count = 0;
                     foreach (var item in items)
                     {
                         count++;
                     }
-                    writer.WriteInt32(count);
+                    writer.WriteVarUInt32(count);
                 }
 
                 context.Key = this.Name;
@@ -245,7 +245,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
 
             if (contentType == ValueItem.CollectionObjectIdent)
             {
-                int count = reader.ReadInt32();
+                int count = (int)reader.ReadVarUInt32();
 
                 if (isArray)
                 {

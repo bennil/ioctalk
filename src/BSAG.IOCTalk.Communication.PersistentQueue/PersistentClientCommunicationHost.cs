@@ -315,17 +315,28 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
         private object InvokeMethodInternalActiveSession(object source, IInvokeMethodInfo invokeInfo, object[] parameters, ISession realSession, ref bool methodAlreadyPersisted, out PersistentMethod pm)
         {
-            lastActiveInvokeUtc = DateTime.UtcNow;
-
             if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out pm))
             {
                 if (pm.Transaction != null)
                 {
-                    PersistPendingMethodInvoke(invokeInfo, parameters, pm, true, false, realSession, "transaction");
+                    if (pm.Transaction.CurrentTransaction != null
+                        && pm.Transaction.CurrentTransaction.OfflineContextOccured == true)
+                    {
+                        // open offline transaction in online context
+                        // complete offline transaction file before resend stored transactions
+                        return PersistPendingMethodInvoke(invokeInfo, parameters, pm, isOnlineTry: false, false, realSession, "transaction");
+                        // return: skip online try (done by resend transaction file)
+                    }
+                    else
+                    {
+                        PersistPendingMethodInvoke(invokeInfo, parameters, pm, isOnlineTry: true, false, realSession, "transaction");
+                    }
+
                     methodAlreadyPersisted = true;
                 }
             }
 
+            lastActiveInvokeUtc = DateTime.UtcNow;
             var returnValue = underlyingCom.InvokeMethod(source, invokeInfo, realSession, parameters);
 
             if (pm != null
@@ -361,17 +372,28 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 PersistentMethod pm = null;
                 try
                 {
-                    lastActiveInvokeUtc = DateTime.UtcNow;
-
                     if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out pm))
                     {
                         if (pm.Transaction != null)
                         {
-                            PersistPendingMethodInvoke(invokeInfo, parameters, pm, true, false, realSession, "transaction");
+                            if (pm.Transaction.CurrentTransaction != null
+                                && pm.Transaction.CurrentTransaction.OfflineContextOccured == true)
+                            {
+                                // open offline transaction in online context
+                                // complete offline transaction file before resend stored transactions
+                                return PersistPendingMethodInvoke(invokeInfo, parameters, pm, isOnlineTry: false, false, realSession, "transaction");
+                                // return: skip online try (done by resend transaction file)
+                            }
+                            else
+                            {
+                                PersistPendingMethodInvoke(invokeInfo, parameters, pm, isOnlineTry: true, false, realSession, "transaction");
+                            }
+
                             methodAlreadyPersisted = true;
                         }
                     }
 
+                    lastActiveInvokeUtc = DateTime.UtcNow;
                     var returnValue = await underlyingCom.InvokeMethodAsync(source, invokeInfo, realSession, parameters);
 
                     if (pm != null
@@ -532,18 +554,26 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
             if (isOnlineTry == false && isTransaction)
             {
-                // Oflline transaction
-                if (persistentMeth.Transaction.CurrentTransaction != null
-                     && persistentMeth.Transaction.CommitTransactionMethod == persistentMeth)
+                if (persistentMeth.Transaction.CurrentTransaction != null)
                 {
-                    // Offline call for commit transaction method
+                    if (persistentMeth.Transaction.CurrentTransaction.OfflineContextOccured == false)
+                    {
+                        // mark transaction as (partly) offline (no further direct online calls - only by resend queue file)
+                        persistentMeth.Transaction.CurrentTransaction.OfflineContextOccured = true;
+                    }
 
-                    // clear previous succesfully performed online calls
-                    persistentMeth.Transaction.CurrentTransaction.ClearSendIndicatorPositions();
+                    // Oflline transaction commit
+                    if (persistentMeth.Transaction.CommitTransactionMethod == persistentMeth)
+                    {
+                        // Offline call for commit transaction method
 
-                    persistentMeth.Transaction.CommitTransaction();
+                        // clear previous succesfully performed online calls
+                        persistentMeth.Transaction.CurrentTransaction.ClearSendIndicatorPositions();
 
-                    Logger.Debug($"Offline write transaction committed - method: {persistentMeth.MethodName}");
+                        persistentMeth.Transaction.CommitTransaction();
+
+                        Logger.Debug($"Offline write transaction committed - method: {persistentMeth.MethodName}");
+                    }
                 }
             }
 
@@ -590,6 +620,43 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             {
                 try
                 {
+                    // check for open transactions (connection established during transaction method calls)
+                    foreach (var pmType in persistentMethods.Values)
+                    {
+                        foreach (var pm in pmType.Values)
+                        {
+                            if (pm.Transaction != null
+                                && pm.Transaction.CurrentTransaction != null)
+                            {
+                                var trxAge = DateTime.UtcNow - pm.Transaction.CurrentTransaction.CreatedUtc;
+
+                                if (trxAge.TotalMinutes < 10)
+                                {
+                                    Logger.Info($"Pause resend until recently created offline transaction \"{pm.Transaction.Name}\" is completed...");
+                                    DateTime startWaitUtc = DateTime.UtcNow;
+                                    while (pm.Transaction.CurrentTransaction != null)
+                                    {
+                                        await Task.Delay(ResendDelay);
+
+                                        if ((DateTime.UtcNow - startWaitUtc).TotalMinutes > 3)
+                                        {
+                                            Logger.Warn("Recently created offline transaction did not complete after 3 minutes! Continue resend processing...");
+                                            break;
+                                        }
+
+                                        if (newSession.IsActive == false)
+                                            return; // sesison lost > resend exit
+                                    }
+
+                                    if (pm.Transaction.CurrentTransaction == null)
+                                    {
+                                        Logger.Debug("Transaction wait completed");
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (ResendInExecOrderBeforeOtherInvokes)
                     {
                         if (resendTryCount > 5
@@ -605,6 +672,9 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                         // pause to allow realtime calls going first
                         await Task.Delay(ResendDelay);
                     }
+
+                    if (newSession.IsActive == false)
+                        return; // sesison lost > resend exit
 
                     lastResendTryUtc = DateTime.UtcNow;
                     resendTryCount++;
