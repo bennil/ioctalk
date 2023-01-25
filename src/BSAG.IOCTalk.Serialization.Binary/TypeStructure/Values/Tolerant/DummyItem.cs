@@ -81,7 +81,18 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values.Tolerant
         public object ReadValue(IStreamReader reader, ISerializeContext context)
         {
             // read source type to step over unknown data
-            return sourceTypeItem.ReadValue(reader, context); ;
+            if (IsNullable == true
+                && sourceTypeItem.IsNullable == false)
+            {
+                return NullableRead(reader, () =>
+                {
+                    return sourceTypeItem.ReadValue(reader, context);
+                });
+            }
+            else
+            {
+                return sourceTypeItem.ReadValue(reader, context);
+            }
         }
 
         /// <summary>
@@ -101,6 +112,29 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values.Tolerant
         /// <param name="value">The value.</param>
         public void WriteValue(IStreamWriter writer, ISerializeContext context, object value)
         {
+        }
+
+        protected object NullableRead(IStreamReader reader, Func<object> readFunc)
+        {
+            if (IsNullable)
+            {
+                byte contentType = reader.ReadUInt8();
+                switch (contentType)
+                {
+                    case ValueItem.SingleValueIdent:
+                        return readFunc();
+
+                    case ValueItem.NullValueIdent:
+                        return null;
+
+                    default:
+                        throw new InvalidOperationException($"Type ident {contentType} not expected!");
+                }
+            }
+            else
+            {
+                return readFunc();
+            }
         }
     }
 }

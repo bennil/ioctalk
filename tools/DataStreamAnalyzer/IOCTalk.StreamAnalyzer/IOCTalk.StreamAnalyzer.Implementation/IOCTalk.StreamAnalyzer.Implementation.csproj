@@ -41,27 +41,26 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BSAG.IOCTalk.Common, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\src\BSAG.IOCTalk.Serialization.Binary\bin\Debug\netstandard2.0\BSAG.IOCTalk.Common.dll</HintPath>
+    <Reference Include="BSAG.IOCTalk.Common, Version=2.3.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.3.9\lib\netstandard2.0\BSAG.IOCTalk.Common.dll</HintPath>
     </Reference>
-    <Reference Include="BSAG.IOCTalk.Communication.Common, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Communication.Common.dll</HintPath>
+    <Reference Include="BSAG.IOCTalk.Communication.Common, Version=2.3.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.3.9\lib\netstandard2.0\BSAG.IOCTalk.Communication.Common.dll</HintPath>
     </Reference>
-    <Reference Include="BSAG.IOCTalk.Communication.PersistentQueue, Version=2.0.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Communication.PersistentQueue.dll</HintPath>
+    <Reference Include="BSAG.IOCTalk.Communication.PersistentQueue, Version=2.3.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.3.9\lib\netstandard2.0\BSAG.IOCTalk.Communication.PersistentQueue.dll</HintPath>
     </Reference>
-    <Reference Include="BSAG.IOCTalk.Communication.Tcp, Version=2.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Communication.Tcp.dll</HintPath>
+    <Reference Include="BSAG.IOCTalk.Communication.Tcp, Version=2.3.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.3.9\lib\netstandard2.0\BSAG.IOCTalk.Communication.Tcp.dll</HintPath>
     </Reference>
-    <Reference Include="BSAG.IOCTalk.Composition, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Composition.dll</HintPath>
+    <Reference Include="BSAG.IOCTalk.Composition, Version=2.3.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.3.9\lib\netstandard2.0\BSAG.IOCTalk.Composition.dll</HintPath>
     </Reference>
-    <Reference Include="BSAG.IOCTalk.Logging, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Logging.dll</HintPath>
+    <Reference Include="BSAG.IOCTalk.Logging, Version=2.3.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.3.9\lib\netstandard2.0\BSAG.IOCTalk.Logging.dll</HintPath>
     </Reference>
-    <Reference Include="BSAG.IOCTalk.Serialization.Json, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.0.4\lib\netstandard2.0\BSAG.IOCTalk.Serialization.Json.dll</HintPath>
+    <Reference Include="BSAG.IOCTalk.Serialization.Json, Version=2.3.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ioctalk-standard-AheadOfTimeOnly.2.3.9\lib\netstandard2.0\BSAG.IOCTalk.Serialization.Json.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=3.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.3.3.1\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
@@ -88,13 +87,16 @@
       <HintPath>..\packages\System.Reflection.Metadata.1.6.0\lib\netstandard2.0\System.Reflection.Metadata.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.5.2\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
     <Reference Include="System.Text.Encoding.CodePages, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Text.Encoding.CodePages.4.5.1\lib\net461\System.Text.Encoding.CodePages.dll</HintPath>
     </Reference>
+    <Reference Include="System.Threading.Channels, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Channels.5.0.0\lib\net461\System.Threading.Channels.dll</HintPath>
+    </Reference>
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.3\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll</HintPath>
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />

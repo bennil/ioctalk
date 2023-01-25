@@ -820,13 +820,27 @@ namespace IOCTalk.CodeGenerator
             {
                 if (genericArgType.TypeKind == TypeKind.Interface)
                 {
-                    if (dtoItems.Contains(genericArgType) == false)
+                    AddDtoType(dtoItems, genericArgType);
+                }
+                else if (genericArgType.TypeKind == TypeKind.Array)
+                {
+                    var arrType = (IArrayTypeSymbol)genericArgType;
+                    
+                    if (arrType.ElementType.TypeKind == TypeKind.Interface)
                     {
-                        dtoItems.Add(genericArgType);
-
-                        GetDtoTypesByForMembersRecursive(genericArgType, dtoItems);
+                        AddDtoType(dtoItems, arrType.ElementType);
                     }
                 }
+            }
+        }
+
+        private static void AddDtoType(List<ITypeSymbol> dtoItems, ITypeSymbol genericArgType)
+        {
+            if (dtoItems.Contains(genericArgType) == false)
+            {
+                dtoItems.Add(genericArgType);
+
+                GetDtoTypesByForMembersRecursive(genericArgType, dtoItems);
             }
         }
 

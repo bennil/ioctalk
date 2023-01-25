@@ -131,7 +131,7 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                     }
                                 }
 
-                                IGenericMessage message = ParseMessage(dataPart, currentSession.Format);
+                                IGenericMessage message = ParseMessage(dataPart, currentSession.Format, currentSession);
 
                                 // Flow rate
                                 if (currentSession.PendingFlowRate == null)
@@ -488,7 +488,7 @@ namespace IOCTalk.StreamAnalyzer.Implementation
             return true;
         }
 
-        private static IGenericMessage ParseMessage(string textMsg, RawMessageFormat format)
+        private static IGenericMessage ParseMessage(string textMsg, RawMessageFormat format, StreamSession session)
         {
             IGenericMessage message;
             if (format == RawMessageFormat.Binary)
@@ -498,7 +498,7 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                 if (binarySerializer == null)
                     binarySerializer = new BinaryMessageSerializer();
 
-                message = binarySerializer.DeserializeFromBytes(binaryData, null);
+                message = binarySerializer.DeserializeFromBytes(binaryData, binaryData.Length, null, session.SessionId);
             }
             else
             {

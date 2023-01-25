@@ -89,6 +89,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                         // read actual structure and try map to old/new structure
                         ComplexStructure tolerantLayoutStructure = ComplexStructure.CreateTolerantLayoutStructure(type, ctx);
 
+                        string lastNoMatchPropertyInfo = null;
                         for (int i = 0; i < itemCount; i++)
                         {
                             ItemType itemType = (ItemType)reader.ReadInt16();         // ItemType Enum
@@ -157,12 +158,22 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                                         // Read incoming Char and convert to local String property
                                         converter = v => new string(new char[] { (char)v });
                                     }
+                                    else if (itemType == ItemType.String
+                                        && nameMatchingItem.Type == ItemType.StringHash)
+                                    {
+                                        // Read incoming string as StringHash result
+                                        converter = v => v?.ToString();
+                                    }
 
                                     if (converter != null)
                                     {
                                         tolerantLayoutStructure.AddTolerantLayoutConverterProperty(nameMatchingItem, ctx, propertyName, itemType, propertyTypeId, isNullable, converter);
                                     }
+                                    else
+                                        lastNoMatchPropertyInfo = $"Last Property: {propertyName}; Type: {itemType} <> {nameMatchingItem.Type}; PropertyTypeId: {propertyTypeId} <> {nameMatchingItem.TypeId}";
                                 }
+                                else
+                                    lastNoMatchPropertyInfo = $"Last Unknown Property: {propertyName}; Type: {itemType}; PropertyTypeId: {propertyTypeId}";
                             }
                             else
                             {
@@ -183,7 +194,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                         else
                         {
                             // Can't map old/new structure to incoming type meta data
-                            throw new FormatException($"The incoming binary format does not match the loaded type {type.FullName}! An tolerant mapping was not possible. Please update the remote or local interface assemblies. Expected Type Id: {result.TypeId}; Received Type Id: {typeId}");
+                            throw new FormatException($"The incoming binary format does not match the loaded type {type.FullName}! An tolerant mapping was not possible. Please update the remote or local interface assemblies. Expected Type Id: {result.TypeId}; Received Type Id: {typeId}; {lastNoMatchPropertyInfo}");
                         }
                     }
                 }
