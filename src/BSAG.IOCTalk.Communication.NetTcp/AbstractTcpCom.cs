@@ -421,6 +421,13 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 case SocketError.NetworkDown:
                 case SocketError.NetworkUnreachable:
                 case SocketError.NetworkReset:
+
+                case (SocketError)100:      // Linux/Android: Network is down
+                case (SocketError)101:      // Linux/Android: Network is unreachable
+                case (SocketError)102:      // Linux/Android: Network dropped connection on reset
+                case (SocketError)103:      // Linux/Android: Software caused connection abort
+                case (SocketError)104:      // Linux/Android: Connection reset by peer
+
                     Close(state.Client, $"{nameof(SocketException)} ErrorCode: {errorCode}");
                     break;
 

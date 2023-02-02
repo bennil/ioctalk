@@ -118,6 +118,11 @@ namespace BSAG.IOCTalk.Communication.NetTcp.Security
         /// </summary>
         public string LocalCertFilename { get; set; }
 
+        /// <summary>
+        /// Gets or sets a custom remote certificate validation method
+        /// </summary>
+        public RemoteCertificateValidationCallback CustomRemoteCertificationValidation { get; set; }
+
         #endregion
 
         #region methods
@@ -137,7 +142,10 @@ namespace BSAG.IOCTalk.Communication.NetTcp.Security
                 this.socket.Connect(EndPoint);
 
                 var networkStream = new NetworkStream(this.socket, true);
-                this.tlsStream = new SslStream(networkStream, false, OnValidateServerCertificate);
+                if (CustomRemoteCertificationValidation != null)
+                    this.tlsStream = new SslStream(networkStream, false, CustomRemoteCertificationValidation);
+                else
+                    this.tlsStream = new SslStream(networkStream, false, OnValidateServerCertificate);
 
                 if (ServerName == null)
                     ServerName = host;

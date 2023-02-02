@@ -772,6 +772,9 @@ namespace BSAG.IOCTalk.Composition
             if (string.Compare(parameterName, "sessionId", true) == 0)
             {
                 // return current session id
+                if (currentSession is null)
+                    throw new NullReferenceException($"Unable to inject \"{parameterName}\" to {injectTargetType.FullName} because no session in current context is available! Type: {type}");
+
                 return currentSession.SessionId;
             }
             else
