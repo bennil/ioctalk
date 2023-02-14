@@ -38,8 +38,9 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
         {
             onConnectionEstablished = new TaskCompletionSource<bool>();
 
-            const int timeoutMs = 20000;
-            var ct = new CancellationTokenSource(timeoutMs);
+            TimeSpan timeout = TimeSpan.FromSeconds(15);
+
+            var ct = new CancellationTokenSource((int)timeout.TotalMilliseconds);
             ct.Token.Register(() => onConnectionEstablished.TrySetCanceled(), useSynchronizationContext: false);
 
             int port = 33257;
@@ -78,7 +79,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
                 tcpClient = new BSAG.IOCTalk.Communication.NetTcp.TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
                 tcpClient.LogDataStream = false;
-                tcpClient.RequestTimeoutSeconds = 15;
+                tcpClient.RequestTimeout = timeout;
 
                 compositionHostClient.SessionCreated += OnCompositionHostClient_SessionCreated_AsyncTest;
 
@@ -104,6 +105,12 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             await currentAsyncAwaitTestServiceClientProxyInstance.RunSomeWork();
 
             Assert.Equal(1, MyRemoteAsyncTestService2.RunSomeWorkCounter);
+
+            // with async array return
+            int expectedArrayLength = 10;
+            var response3 = await currentAsyncAwaitTestServiceClientProxyInstance.GetDataAsync3(expectedArrayLength);
+            Assert.Equal(expectedArrayLength, response3.Length);
+
 
             tcpClient.Shutdown();
             tcpBackendService.Shutdown();

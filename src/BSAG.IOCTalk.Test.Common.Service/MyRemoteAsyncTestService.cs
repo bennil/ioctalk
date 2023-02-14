@@ -37,6 +37,23 @@ namespace BSAG.IOCTalk.Test.Common.Service
             return Task.FromResult<IDataTransferTest>(test);
         }
 
+        public Task<IDataTransferTest[]> GetDataAsync3(int expected)
+        {
+            var responseArr = new IDataTransferTest[expected];
+
+            for (int i = 0; i < expected; i++)
+            {
+                var item = new DTTest()
+                {
+                    ID = i,
+                    Name = $"Testobject{i + 1}"
+                };
+                responseArr[i] = item;
+            }
+
+            return Task<IDataTransferTest[]>.FromResult(responseArr);
+        }
+
         public static int RunSomeWorkCounter { get; set; }
     }
 }

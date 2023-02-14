@@ -226,6 +226,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                 }
 
                 context.Key = this.Name;
+                object oldParentObj = context.ParentObject;
+                context.ParentObject = value;
 
                 int index = 0;
                 foreach (var item in items)
@@ -235,6 +237,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                     index++;
                 }
                 context.ArrayIndex = null;
+                context.ParentObject = oldParentObj;
             }
         }
 

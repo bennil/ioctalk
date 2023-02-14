@@ -13,6 +13,9 @@ namespace BSAG.IOCTalk.Test.Interface
         Task<int> GetDataAsync2(int expected);
 
 
+        Task<IDataTransferTest[]> GetDataAsync3(int expected);
+
+
         Task RunSomeWork();
 
 
