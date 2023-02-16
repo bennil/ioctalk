@@ -136,6 +136,12 @@ namespace BSAG.IOCTalk.Communication.NetTcp.Security
         {
             try
             {
+                if (EndPoint == null
+                    || (dnsResolveTimeUtc.HasValue && (DateTime.UtcNow - dnsResolveTimeUtc.Value) > RenewDnsResolutionTime))  // renew outdated dns resolution
+                {
+                    // try get dns
+                    SetEndPoint(this.host, this.port);
+                }
 
                 this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 this.InitSocketProperties(this.socket);

@@ -30,7 +30,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         protected string host;
         protected int port;
         private string endPointInfo;
-        private DateTime? dnsResolveTimeUtc = null;
+        protected DateTime? dnsResolveTimeUtc = null;
         IPAddress[] multiDnsResolve = null;
         int lastMultiDnsIndex = 0;
 
