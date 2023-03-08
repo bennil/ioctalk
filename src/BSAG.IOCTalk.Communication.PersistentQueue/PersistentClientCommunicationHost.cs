@@ -1074,6 +1074,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             if (pm != null && pm.Transaction != null && pm.Transaction.CurrentTransaction != null)
             {
                 pm.Transaction.CurrentTransaction.AbortTransaction();
+                pm.Transaction.DismissTransaction();
 
                 Logger?.Info("Pending transaction aborted");
             }

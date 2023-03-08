@@ -506,6 +506,16 @@ namespace BSAG.IOCTalk.Common.Test
             // 4 calls because last online call threw a function exception resulting in a transaction abort
             Assert.Equal(4, dummyCom.InvokeCounter);
 
+            // begin new transaction without interruption
+            dummyCom.RaiseFunctionalException = false;
+            Guid startTrxReturn2 = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn2 });  // Push transaction data 
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn2 });  // Push transaction data 
+            persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn2 });  // Push transaction data 
+            persistComm.InvokeMethod(this, mInfoTrxCommit, session, new object[] { startTrxReturn2 });
+
+            Assert.Equal(9, dummyCom.InvokeCounter);
+
             // release resend session
             persistComm.RealUnderlyingSession.Close();
         }
