@@ -35,6 +35,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IOCTalk.CodeGenerator", "IO
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BSAG.IOCTalk.Communication.NetTcp", "BSAG.IOCTalk.Communication.NetTcp\BSAG.IOCTalk.Communication.NetTcp.csproj", "{0880B244-4B08-4152-9A51-1C9FA833EEF0}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IOCTalk.Communication.WebSocketListener", "IOCTalk.Communication.WebSocketListener\IOCTalk.Communication.WebSocketListener.csproj", "{4C1617C8-9366-41F7-A21F-C787CFC09EA9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IOCTalk.Communication.WebSocketClient", "IOCTalk.Communication.WebSocketClient\IOCTalk.Communication.WebSocketClient.csproj", "{BD345D6F-7394-422B-A74D-EF696416933C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IOCTalk.Communication.WebSocketFraming", "IOCTalk.Communication.WebSocketFraming\IOCTalk.Communication.WebSocketFraming.csproj", "{49825538-F443-4F8F-8CBE-2D6658FDC68D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOCTalk.UnitTests.Websockets", "UnitTests\IOCTalk.UnitTests.Websockets\IOCTalk.UnitTests.Websockets.csproj", "{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +109,22 @@ Global
 		{0880B244-4B08-4152-9A51-1C9FA833EEF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0880B244-4B08-4152-9A51-1C9FA833EEF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0880B244-4B08-4152-9A51-1C9FA833EEF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C1617C8-9366-41F7-A21F-C787CFC09EA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C1617C8-9366-41F7-A21F-C787CFC09EA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C1617C8-9366-41F7-A21F-C787CFC09EA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C1617C8-9366-41F7-A21F-C787CFC09EA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD345D6F-7394-422B-A74D-EF696416933C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD345D6F-7394-422B-A74D-EF696416933C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD345D6F-7394-422B-A74D-EF696416933C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD345D6F-7394-422B-A74D-EF696416933C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49825538-F443-4F8F-8CBE-2D6658FDC68D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49825538-F443-4F8F-8CBE-2D6658FDC68D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49825538-F443-4F8F-8CBE-2D6658FDC68D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49825538-F443-4F8F-8CBE-2D6658FDC68D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -110,6 +134,7 @@ Global
 		{2B7EAF82-8D99-42EE-9B72-1A03A67A00FA} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
 		{20AD9229-4A46-40FD-A3E4-8A16CF577188} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
 		{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
+		{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {53870CE6-F9E9-4FC3-A378-8E7A71F1DF33}

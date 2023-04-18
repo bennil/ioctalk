@@ -111,6 +111,7 @@ namespace BSAG.IOCTalk.Communication.Common
         private long lastReceivedMessageCounter = 0;
         private long lastSentMessageCounter = 0;
 
+        private static int lastConnectionSessionId = 0;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -1495,7 +1496,7 @@ namespace BSAG.IOCTalk.Communication.Common
                     {
                         // Send response message
                         GenericMessage responseMessage = new GenericMessage(message.RequestId, responseObject);
-                        baseCommunicationServiceSupport.SendMessage(responseMessage, session.SessionId, methodInfo);
+                        await baseCommunicationServiceSupport.SendMessageAsync(responseMessage, session.SessionId, methodInfo);
                         sentMessageCounter++;
                     }
                     catch (OperationCanceledException)
@@ -1763,6 +1764,16 @@ namespace BSAG.IOCTalk.Communication.Common
             // clean up the RegisterWaitHandle
             tcs.Task.ContinueWith((_, state) => ((RegisteredWaitHandle)state).Unregister(null), registration, TaskScheduler.Default);
             return tcs.Task;
+        }
+
+
+        /// <summary>
+        /// Gets the new connection session id.
+        /// </summary>
+        /// <returns></returns>
+        public static int GetNewConnectionSessionId()
+        {
+            return Interlocked.Increment(ref lastConnectionSessionId);
         }
 
         // ----------------------------------------------------------------------------------------

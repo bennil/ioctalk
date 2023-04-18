@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<Nullable>enable</Nullable>
+		<Version>1.0.0</Version>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="System.IO.Pipelines" Version="6.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
+		<ProjectReference Include="..\BSAG.IOCTalk.Communication.Common\BSAG.IOCTalk.Communication.Common.csproj" />
+		<ProjectReference Include="..\IOCTalk.Communication.WebSocketFraming\IOCTalk.Communication.WebSocketFraming.csproj" />
+	</ItemGroup>
+
+</Project>

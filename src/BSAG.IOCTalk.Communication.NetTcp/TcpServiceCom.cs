@@ -180,10 +180,10 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
                 Client client = new Client(clientSocket, new NetworkStream(clientSocket), new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, clientSocket.RemoteEndPoint, Logger);
                 clients.Add(client.SessionId, client);
+                
+                StartReceivingData(client);
 
                 OnConnectionEstablished(client);
-
-                StartReceivingData(client);
 
                 listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
             }

@@ -186,9 +186,9 @@ namespace BSAG.IOCTalk.Communication.NetTcp.Security
 
                 this.client = new Client(this.socket, this.tlsStream, new ConcurrentQueue<IGenericMessage>(), socket.LocalEndPoint, socket.RemoteEndPoint, Logger);
 
-                StartReceivingData(client);
-
                 OnConnectionEstablished(client);
+
+                StartReceivingData(client);
             }
             catch (Exception ex)
             {

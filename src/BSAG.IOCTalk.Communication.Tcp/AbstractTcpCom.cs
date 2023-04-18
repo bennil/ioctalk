@@ -28,8 +28,6 @@ namespace BSAG.IOCTalk.Communication.Tcp
         // AbstractTcpCom fields
         // ----------------------------------------------------------------------------------------
 
-        private static int lastConnectionSessionId = 0;
-
 
         protected Socket socket;
 
@@ -353,14 +351,6 @@ namespace BSAG.IOCTalk.Communication.Tcp
             }
         }
 
-        /// <summary>
-        /// Gets the new connection session id.
-        /// </summary>
-        /// <returns></returns>
-        public static int GetNewConnectionSessionId()
-        {
-            return Interlocked.Increment(ref lastConnectionSessionId);
-        }
 
         /// <summary>
         /// Sends the specified data bytes.

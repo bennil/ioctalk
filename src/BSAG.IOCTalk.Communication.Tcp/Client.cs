@@ -11,6 +11,7 @@ using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Exceptions;
 using System.IO;
 using System.Threading.Tasks;
+using BSAG.IOCTalk.Communication.Common;
 
 namespace BSAG.IOCTalk.Communication.Tcp
 {
@@ -66,7 +67,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
             this.remoteEndPoint = remoteEndPoint;
             this.queueReceivedPackets = queueReceivedPackets;
             this.connectTimeUtc = DateTime.UtcNow;
-            this.connectionSessionId = AbstractTcpCom.GetNewConnectionSessionId();
+            this.connectionSessionId = GenericCommunicationBaseService.GetNewConnectionSessionId();
         }
 
         // ----------------------------------------------------------------------------------------
