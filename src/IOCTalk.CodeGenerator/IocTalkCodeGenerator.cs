@@ -335,8 +335,9 @@ namespace IOCTalk.CodeGenerator
             {
                 var allInterfaceImplementations = input.combined.proxyImpl.implementations.FirstOrDefault();
 
-                foreach (var type in input.combined.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes.Distinct(SymbolEqualityComparer.Default)
-                                                 .Cast<ITypeSymbol>())
+                // remove duplicates
+                input.combined.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes = input.combined.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes.Distinct(SymbolEqualityComparer.Default).Cast<ITypeSymbol>().ToImmutableArray();
+                foreach (var type in input.combined.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes)
                 {
                     context.CancellationToken.ThrowIfCancellationRequested();
 
