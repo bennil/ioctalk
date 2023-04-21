@@ -23,10 +23,10 @@ namespace IOCTalk.CodeGenerator
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
 #if DEBUG
-            //if (!Debugger.IsAttached)
-            //{
-            //    Debugger.Launch();
-            //}
+            if (!Debugger.IsAttached)
+            {
+                Debugger.Launch();
+            }
 #endif
 
             // collect auto gen enabled call indicator
@@ -602,13 +602,10 @@ namespace IOCTalk.CodeGenerator
                             if (isReturnRequired)
                                 AddAsyncMethodReturnDtoItems(dtoItems, method);
                         }
-                        returnType = GetSourceCodeTypeName(method.ReturnType);
+                        else
+                            CheckAndAddDtoType(dtoItems, method.ReturnType);
 
-                        if (method.ReturnType.TypeKind == TypeKind.Interface)
-                        {
-                            if (dtoItems.Contains(method.ReturnType) == false)
-                                dtoItems.Add(method.ReturnType);
-                        }
+                        returnType = GetSourceCodeTypeName(method.ReturnType);
                     }
 
                     methodSource.AppendLine();
@@ -689,11 +686,7 @@ namespace IOCTalk.CodeGenerator
                                 sbParameterTypes.Append(", ");
                             }
 
-                            if (param.Type.TypeKind == TypeKind.Interface)
-                            {
-                                if (dtoItems.Contains(param.Type) == false)
-                                    dtoItems.Add(param.Type);
-                            }
+                            CheckAndAddDtoType(dtoItems, param.Type);
                         }
 
                         sbParameterValues.AppendLine(" };");
@@ -855,26 +848,15 @@ namespace IOCTalk.CodeGenerator
                                     AddAsyncMethodReturnDtoItems(dtoItems, method);
                                 }
                             }
-                            else if (method.ReturnType.TypeKind == TypeKind.Interface)
-                            {
-                                if (dtoItems.Contains(method.ReturnType) == false)
-                                {
-                                    dtoItems.Add(method.ReturnType);
-
-                                    GetDtoTypesByForMembersRecursive(method.ReturnType, dtoItems);
-                                }
-                            }
+                            else
+                                CheckAndAddDtoType(dtoItems, method.ReturnType);                            
                         }
 
                         if (method.Parameters.Length > 0)
                         {
                             foreach (var param in method.Parameters)
                             {
-                                if (param.Type.TypeKind == TypeKind.Interface)
-                                {
-                                    if (dtoItems.Contains(param.Type) == false)
-                                        dtoItems.Add(param.Type);
-                                }
+                                CheckAndAddDtoType(dtoItems, param.Type);
                             }
                         }
                     }
@@ -897,39 +879,43 @@ namespace IOCTalk.CodeGenerator
         {
             foreach (var genericArgType in ((INamedTypeSymbol)method.ReturnType).TypeArguments)
             {
-                if (genericArgType.TypeKind == TypeKind.Interface)
-                {
-                    AddDtoType(dtoItems, genericArgType);
-                }
-                else if (genericArgType.TypeKind == TypeKind.Array)
-                {
-                    var arrType = (IArrayTypeSymbol)genericArgType;
+                CheckAndAddDtoType(dtoItems, genericArgType);
+            }
+        }
 
-                    if (arrType.ElementType.TypeKind == TypeKind.Interface)
-                    {
-                        AddDtoType(dtoItems, arrType.ElementType);
-                    }
+        private static void CheckAndAddDtoType(List<ITypeSymbol> dtoItems, ITypeSymbol dtoType)
+        {
+            if (dtoType.TypeKind == TypeKind.Interface)
+            {
+                AddDtoType(dtoItems, dtoType);
+            }
+            else if (dtoType.TypeKind == TypeKind.Array)
+            {
+                var arrType = (IArrayTypeSymbol)dtoType;
+
+                if (arrType.ElementType.TypeKind == TypeKind.Interface)
+                {
+                    AddDtoType(dtoItems, arrType.ElementType);
                 }
             }
         }
 
-        private static void AddDtoType(List<ITypeSymbol> dtoItems, ITypeSymbol genericArgType)
+        private static void AddDtoType(List<ITypeSymbol> dtoItems, ITypeSymbol dtoType)
         {
-            if (dtoItems.Contains(genericArgType) == false)
+            if (dtoItems.Contains(dtoType) == false)
             {
-                dtoItems.Add(genericArgType);
+                dtoItems.Add(dtoType);
 
-                GetDtoTypesByForMembersRecursive(genericArgType, dtoItems);
+                GetDtoTypesByForMembersRecursive(dtoType, dtoItems);
             }
         }
 
         private static void CheckForNestedDtoTypes(IPropertySymbol pi, List<ITypeSymbol> dtoTypes)
         {
             if (pi.Type.IsAbstract
-                && pi.Type.IsReferenceType
-                && dtoTypes.Contains(pi.Type) == false)
+                && pi.Type.IsReferenceType)
             {
-                dtoTypes.Add(pi.Type);
+                CheckAndAddDtoType(dtoTypes, pi.Type);
             }
         }
 
