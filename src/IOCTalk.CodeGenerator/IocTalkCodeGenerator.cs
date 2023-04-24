@@ -496,7 +496,7 @@ namespace IOCTalk.CodeGenerator
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine("using BSAG.IOCTalk.Common.Interface.Container;");
+            sb.AppendLine("/*using BSAG.IOCTalk.Common.Interface.Container;");
             sb.AppendLine("using BSAG.IOCTalk.Composition;");
             sb.AppendLine();
             sb.Append("namespace ");
@@ -512,7 +512,7 @@ namespace IOCTalk.CodeGenerator
             sb.AppendLine("     }");
 
             sb.AppendLine(" }");
-            sb.AppendLine("}");
+            sb.AppendLine("}*/");
 
             return sb;
         }
