@@ -43,5 +43,9 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Interface
         StringHash = 16,
 
         DateTimeOffset = 17,
+
+        UInt32 = 18,
+
+        UInt64 = 19,
     }
 }

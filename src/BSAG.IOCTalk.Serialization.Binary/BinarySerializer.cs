@@ -67,6 +67,10 @@ namespace BSAG.IOCTalk.Serialization.Binary
             RegisterTypeMapping(typeof(DateTime), new DateTimeItem(null, null, null));
             RegisterTypeMapping(typeof(DateTimeOffset), new DateTimeOffsetItem(null, null, null));
             RegisterTypeMapping(typeof(Guid), new GuidItem(null, null, null));
+
+            RegisterTypeMapping(typeof(UInt32), new UInt32Item(null, null, null));
+            RegisterTypeMapping(typeof(UInt64), new UInt64Item(null, null, null));
+
         }
 
 

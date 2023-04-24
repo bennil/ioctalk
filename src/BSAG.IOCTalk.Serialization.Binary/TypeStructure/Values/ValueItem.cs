@@ -130,6 +130,14 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             {
                 item = new GuidItem(name, getter, setter);
             }
+            else if (type.Equals(typeof(UInt32)))
+            {
+                item = new UInt32Item(name, getter, setter);
+            }
+            else if (type.Equals(typeof(UInt64)))
+            {
+                item = new UInt64Item(name, getter, setter);
+            }
             else
             {
                 throw new NotSupportedException($"The type \"{type.FullName}\" is not supported for binary transmission!");
@@ -145,45 +153,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
                 return ((IObjectType)valueItem).RuntimeType;
             }
             else
-            {
-                switch (valueItem.Type)
-                {
-                    case ItemType.Int32:
-                        return typeof(Int32);
-
-                    case ItemType.Bool:
-                        return typeof(bool);
-
-                    case ItemType.Double:
-                        return typeof(double);
-
-                    case ItemType.Decimal:
-                        return typeof(decimal);
-
-                    case ItemType.Enum:
-                        return typeof(Enum);
-
-                    case ItemType.Int16:
-                        return typeof(Int16);
-
-                    case ItemType.Int64:
-                        return typeof(Int64);
-
-                    case ItemType.DateTime:
-                        return typeof(DateTime);
-
-                    case ItemType.TimeSpan:
-                        return typeof(TimeSpan);
-
-                    case ItemType.Char:
-                        return typeof(char);
-
-                    case ItemType.Guid:
-                        return typeof(Guid);
-
-                }
-
-                return null;
+            {             
+                return GetRuntimeType(valueItem.Type);
             }
         }
 
@@ -196,6 +167,9 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
 
                 case ItemType.Bool:
                     return typeof(bool);
+
+                case ItemType.Byte:
+                    return typeof(byte);
 
                 case ItemType.Double:
                     return typeof(double);
@@ -215,6 +189,9 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
                 case ItemType.DateTime:
                     return typeof(DateTime);
 
+                case ItemType.DateTimeOffset:
+                    return typeof(DateTimeOffset);
+
                 case ItemType.TimeSpan:
                     return typeof(TimeSpan);
 
@@ -223,6 +200,12 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
 
                 case ItemType.Guid:
                     return typeof(Guid);
+
+                case ItemType.UInt32:
+                    return typeof(UInt32);
+
+                case ItemType.UInt64:
+                    return typeof(UInt64);
 
             }
 
