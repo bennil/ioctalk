@@ -396,8 +396,11 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
 
                     writer.WriteUInt8(ValueItem.SingleObjectIdent);
 
+                    object oldParentParentObj = context.ParentParentObject;
                     object oldParentObj = context.ParentObject;
                     context.ParentObject = value;
+                    context.ParentParentObject = oldParentObj;
+                    context.ChildLevel++;
 
                     for (int itemIndex = 0; itemIndex < items.Count; itemIndex++)
                     {
@@ -408,7 +411,9 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                         item.WriteValue(writer, context, valueItem);
                     }
 
+                    context.ChildLevel--;
                     context.ParentObject = oldParentObj;
+                    context.ParentParentObject = oldParentParentObj;
                 }
             }
         }
@@ -498,8 +503,11 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                 case ValueItem.SingleObjectIdent:
                     object newObject = TypeService.CreateInstance(concreteTargetType);
 
+                    object oldParentParentObj = context.ParentParentObject;
                     object oldParentObj = context.ParentObject;
                     context.ParentObject = newObject;
+                    context.ParentParentObject = oldParentObj;
+                    context.ChildLevel++;
 
                     for (int itemIndex = 0; itemIndex < items.Count; itemIndex++)
                     {
@@ -509,7 +517,9 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                         item.SetItemValue(newObject, itemValue);
                     }
 
+                    context.ChildLevel--;
                     context.ParentObject = oldParentObj;
+                    context.ParentParentObject = oldParentParentObj;
 
                     return newObject;
 

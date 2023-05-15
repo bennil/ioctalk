@@ -96,7 +96,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             return serializer.Serialize<IGenericMessage>(message, contextObject);
         }
 
-                
+
         public string SerializeToString(IGenericMessage message, object contextObject)
         {
             throw new NotImplementedException();
@@ -316,42 +316,64 @@ namespace BSAG.IOCTalk.Serialization.Binary
                 {
                     resultType = typeof(IGenericMessage);
                 }
-                else if (context.ParentObject is IGenericMessage)
+                else if (context.ParentObject is IGenericMessage message)
                 {
-                    IGenericMessage message = (IGenericMessage)context.ParentObject;
+                    resultType = DetermineSpecialInterfaceTypeMessageContext(context, message);
+                }
+                else if (context.ParentParentObject is IGenericMessage message2
+                    && message2.Payload == context.ParentObject)
+                {
+                    resultType = DetermineSpecialInterfaceTypeMessageContext(context, message2);
+                }
+            }
 
-                    if (context.ExternalContext is IInvokeMethodInfo)
+            if (resultType != null)
+            {
+                return context.RegisterDifferentTargetType(sourceType, defaultInterfaceType, resultType);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private Type DetermineSpecialInterfaceTypeMessageContext(ISerializeContext context, IGenericMessage message)
+        {
+            Type resultType = null;
+
+            if (context.ChildLevel <= 2)
+            {
+                if (context.ExternalContext is IInvokeMethodInfo invokeInfo)
+                {
+                    // serialize context
+                    switch (message.Type)
                     {
-                        // serialize context
-                        IInvokeMethodInfo invokeInfo = (IInvokeMethodInfo)context.ExternalContext;
+                        case MessageType.MethodInvokeRequest:
+                        case MessageType.AsyncMethodInvokeRequest:
+                            if (context.ArrayIndex.HasValue)
+                            {
+                                var paramInfo = invokeInfo.ParameterInfos[context.ArrayIndex.Value];
 
-                        switch (message.Type)
-                        {
-                            case MessageType.MethodInvokeRequest:
-                            case MessageType.AsyncMethodInvokeRequest:
-                                if (context.ArrayIndex.HasValue)
+                                if (paramInfo.IsOut)
                                 {
-                                    var paramInfo = invokeInfo.ParameterInfos[context.ArrayIndex.Value];
-
-                                    if (paramInfo.IsOut)
-                                    {
-                                        // determine out parameter type
-                                        resultType = paramInfo.ParameterType.GetElementType();
-                                    }
-                                    else
-                                    {
-                                        resultType = paramInfo.ParameterType;
-                                    }
+                                    // determine out parameter type
+                                    resultType = paramInfo.ParameterType.GetElementType();
                                 }
-                                break;
-                            //else
-                            //{
-                            //    return objectArrayType;
-                            //}
+                                else
+                                {
+                                    resultType = paramInfo.ParameterType;
+                                }
+                            }
+                            break;
+                        //else
+                        //{
+                        //    return objectArrayType;
+                        //}
 
-                            case MessageType.MethodInvokeResponse:
+                        case MessageType.MethodInvokeResponse:
 
-
+                            if (context.ChildLevel <= 1)
+                            {
                                 if (context.ArrayIndex == 0
                                     || !context.ArrayIndex.HasValue)
                                 {
@@ -365,115 +387,107 @@ namespace BSAG.IOCTalk.Serialization.Binary
                                     // determine out parameter type
                                     resultType = invokeInfo.OutParameters[context.ArrayIndex.Value - 1].ParameterType.GetElementType();
                                 }
-                                break;
-                        }
+                            }
+                            break;
                     }
-                    else if (context.ExternalContext is ISession)
+                }
+                else if (context.ExternalContext is ISession session)
+                {
+                    // deserialize context
+
+                    switch (message.Type)
                     {
-                        // deserialize context
-                        ISession session = (ISession)context.ExternalContext;
+                        case MessageType.AsyncMethodInvokeRequest:
+                        case MessageType.MethodInvokeRequest:
 
-                        switch (message.Type)
-                        {
-                            case MessageType.AsyncMethodInvokeRequest:
-                            case MessageType.MethodInvokeRequest:
+                            if (context.ArrayIndex.HasValue)
+                            {
+                                int cacheKey = message.Target.GetHashCode();
+                                cacheKey = cacheKey * 23 + message.Name.GetHashCode();
 
-                                if (context.ArrayIndex.HasValue)
+                                ParameterInfo[] parameters;
+                                if (!methodParameterCache.TryGetValue(cacheKey, out parameters))
                                 {
-                                    int cacheKey = message.Target.GetHashCode();
-                                    cacheKey = cacheKey * 23 + message.Name.GetHashCode();
-
-                                    ParameterInfo[] parameters;
-                                    if (!methodParameterCache.TryGetValue(cacheKey, out parameters))
+                                    Type interfaceServiceType;
+                                    if (TypeService.TryGetTypeByName(message.Target, out interfaceServiceType))
                                     {
-                                        Type interfaceServiceType;
-                                        if (TypeService.TryGetTypeByName(message.Target, out interfaceServiceType))
+                                        MethodInfo mi = TypeService.GetMethodByName(interfaceServiceType, message.Name);
+                                        if (mi == null)
                                         {
-                                            MethodInfo mi = TypeService.GetMethodByName(interfaceServiceType, message.Name);
-                                            if (mi == null)
-                                            {
-                                                throw new InvalidOperationException(string.Format("The method: \"{0}\" is not specified in the interface: \"{1}\"", message.Name, interfaceServiceType.AssemblyQualifiedName));
-                                            }
-
-                                            parameters = mi.GetParameters();
-
-                                            methodParameterCache[cacheKey] = parameters;
+                                            throw new InvalidOperationException(string.Format("The method: \"{0}\" is not specified in the interface: \"{1}\"", message.Name, interfaceServiceType.AssemblyQualifiedName));
                                         }
-                                        else
-                                        {
-                                            throw new TypeLoadException(string.Format("The interface \"{0}\" could not be found!", message.Target));
-                                        }
+
+                                        parameters = mi.GetParameters();
+
+                                        methodParameterCache[cacheKey] = parameters;
                                     }
-
-                                    resultType = parameters[context.ArrayIndex.Value].ParameterType;
-                                }
-                                else
-                                {
-                                    resultType = objectArrayType;
-                                }
-                                break;
-
-                            case MessageType.MethodInvokeResponse:
-
-                                IInvokeState invokeState;
-                                if (session.PendingRequests.TryGetValue(message.RequestId, out invokeState))
-                                {
-                                    if (invokeState.OutParameterValues != null)
+                                    else
                                     {
-                                        if (context.ArrayIndex.HasValue)
-                                        {
-                                            if (context.ArrayIndex == 0)
-                                            {
-                                                resultType = invokeState.Method.ReturnType;
-                                            }
-                                            else
-                                            {
-                                                Type type = invokeState.MethodSource.OutParameters[context.ArrayIndex.Value - 1].ParameterType;
-                                                type = type.GetElementType();
-                                                resultType = type;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            resultType = objectArrayType;
-                                        }
+                                        throw new TypeLoadException(string.Format("The interface \"{0}\" could not be found!", message.Target));
                                     }
-                                    else if (context.ArrayIndex == 0
-                                        || !context.ArrayIndex.HasValue)
+                                }
+
+                                resultType = parameters[context.ArrayIndex.Value].ParameterType;
+                            }
+                            else
+                            {
+                                resultType = objectArrayType;
+                            }
+                            break;
+
+                        case MessageType.MethodInvokeResponse:
+
+                            IInvokeState invokeState;
+                            if (session.PendingRequests.TryGetValue(message.RequestId, out invokeState))
+                            {
+                                if (invokeState.OutParameterValues != null)
+                                {
+                                    if (context.ArrayIndex.HasValue)
                                     {
-                                        // first arrar item contains method return type 
-                                        // or payload only inlcudes return object
-                                        if (invokeState.MethodSource.IsAsyncAwaitRemoteMethod)
-                                            resultType = TypeService.GetAsyncAwaitResultType(invokeState.Method.ReturnType);
-                                        else
+                                        if (context.ArrayIndex == 0)
+                                        {
                                             resultType = invokeState.Method.ReturnType;
+                                        }
+                                        else
+                                        {
+                                            Type type = invokeState.MethodSource.OutParameters[context.ArrayIndex.Value - 1].ParameterType;
+                                            type = type.GetElementType();
+                                            resultType = type;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        resultType = objectArrayType;
                                     }
                                 }
-                                else
+                                else if (context.ArrayIndex == 0
+                                    || !context.ArrayIndex.HasValue)
                                 {
-                                    throw new InvalidOperationException("Pending request ID: " + message.RequestId + " message not found!");
+                                    // first arrar item contains method return type 
+                                    // or payload only inlcudes return object
+                                    if (invokeState.MethodSource.IsAsyncAwaitRemoteMethod)
+                                        resultType = TypeService.GetAsyncAwaitResultType(invokeState.Method.ReturnType);
+                                    else
+                                        resultType = invokeState.Method.ReturnType;
                                 }
-                                break;
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException("Pending request ID: " + message.RequestId + " message not found!");
+                            }
+                            break;
 
-                        }
                     }
-                    else if ((message.Type == MessageType.MethodInvokeRequest
-                            || message.Type == MessageType.AsyncMethodInvokeRequest)
-                            && !context.ArrayIndex.HasValue)
-                    {
-                        resultType = objectArrayType;
-                    }
+                }
+                else if ((message.Type == MessageType.MethodInvokeRequest
+                        || message.Type == MessageType.AsyncMethodInvokeRequest)
+                        && !context.ArrayIndex.HasValue)
+                {
+                    resultType = objectArrayType;
                 }
             }
 
-            if (resultType != null)
-            {
-                return context.RegisterDifferentTargetType(sourceType, defaultInterfaceType, resultType);
-            }
-            else
-            {
-                return null;
-            }
+            return resultType;
         }
 
         public void DisposeSession(int sessionId)

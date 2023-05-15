@@ -68,6 +68,14 @@ namespace BSAG.IOCTalk.Serialization.Binary
         /// </value>
         public object ParentObject { get; set; }
 
+        /// <summary>
+        /// Gets or sets the 2nd level parent object.
+        /// </summary>
+        public object ParentParentObject { get; set; }
+
+        
+        public int ChildLevel { get; set; }
+
 
         /// <summary>
         /// Gets or sets the index of the array.
@@ -84,6 +92,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
                 return serializer;
             }
         }
+
 
         public IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType)
         {
@@ -142,6 +151,8 @@ namespace BSAG.IOCTalk.Serialization.Binary
             this.ExternalContext = externalContext;
             this.Key = null;
             this.ParentObject = null;
+            this.ParentParentObject = null;
+            this.ChildLevel = 0;
             this.ArrayIndex = null;
         }
 

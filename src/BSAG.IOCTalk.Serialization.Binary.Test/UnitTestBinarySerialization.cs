@@ -981,7 +981,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             IInvokeMethodInfo invokeInfo = new InvokeMethodInfo(typeof(ITestService), nameof(ITestService.CallTest), new Type[] { typeof(ITestItem) });
             var bytes = msgSerializer.SerializeToBytes(msg, invokeInfo);
 
+            BinarySerializer.ClearGlobalStructureCache();
+
             BinaryMessageSerializer msgSerializerNew = new BinaryMessageSerializer();
+            msgSerializerNew.RegisterContainerHost(new DummyContainerHost());
 
             GenericMessage deserializedMsg = (GenericMessage)msgSerializerNew.DeserializeFromBytes(bytes, bytes.Length, null, 0);
             object[] payloadArr = (object[])deserializedMsg.Payload;

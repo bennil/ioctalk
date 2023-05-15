@@ -40,6 +40,15 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Interface
         /// </value>
         object ParentObject { get; set; }
 
+        /// <summary>
+        /// Gets or sets the parent level 2 serialization object.
+        /// </summary>
+        object ParentParentObject { get; set; }
+
+        /// <summary>
+        /// Gets or sets the child level
+        /// </summary>
+        int ChildLevel { get; set; }
 
         /// <summary>
         /// Gets or sets the index of the array.

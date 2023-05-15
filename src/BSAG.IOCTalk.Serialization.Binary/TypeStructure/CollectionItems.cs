@@ -226,8 +226,11 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                 }
 
                 context.Key = this.Name;
+                object oldParentParentObj = context.ParentParentObject;
                 object oldParentObj = context.ParentObject;
                 context.ParentObject = value;
+                context.ParentParentObject = oldParentObj;
+                context.ChildLevel++;
 
                 int index = 0;
                 foreach (var item in items)
@@ -236,8 +239,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                     itemStructure.WriteValue(writer, context, item);
                     index++;
                 }
+                context.ChildLevel--;
                 context.ArrayIndex = null;
                 context.ParentObject = oldParentObj;
+                context.ParentParentObject = oldParentParentObj;
             }
         }
 
