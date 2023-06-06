@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package >
 	<metadata>
-		<id>ioctalk-codegen-binary-tcp</id>
-		<version>2.3.25</version>
-		<title>ioctalk-codegen-binary-tcp</title>
+		<id>ioctalk-codegen-binary-json-tcp</id>
+		<version>2.3.26</version>
+		<title>ioctalk-codegen-binary-json-tcp</title>
 		<authors>ben</authors>
 		<owners>ben</owners>
 		<description>Implement microservices without any technical dependency in your functional service implementations. Use ioctalk dependency injection to communicate seamlessly with remote and local services.</description>
-		<releaseNotes>.NET Standard 2.1 version using improved tcp lib, binary serialization and proxy code generation at build time.</releaseNotes>
+		<releaseNotes>.NET Standard 2.1 version using improved tcp lib, binary and json serialization and proxy code generation at build time.</releaseNotes>
 		<projectUrl>https://github.com/bennil/ioctalk</projectUrl>
 		<license type="expression">Apache-2.0</license>
 		<dependencies>
@@ -23,6 +23,9 @@
 
 		<file src="..\BSAG.IOCTalk.Serialization.Binary\bin\Release\netstandard2.1\BSAG.IOCTalk.Serialization.Binary*.dll" target="lib\netstandard2.1" />
 		<file src="..\BSAG.IOCTalk.Serialization.Binary\bin\Release\netstandard2.1\BSAG.IOCTalk.Serialization.Binary*.pdb" target="lib\netstandard2.1" />
+
+		<file src="..\BSAG.IOCTalk.Serialization.Json\bin\Release\netstandard2.1\BSAG.IOCTalk.Serialization.Json*.dll" target="lib\netstandard2.1" />
+		<file src="..\BSAG.IOCTalk.Serialization.Json\bin\Release\netstandard2.1\BSAG.IOCTalk.Serialization.Json*.pdb" target="lib\netstandard2.1" />
 
 		<file src="..\BSAG.IOCTalk.Composition\bin\Release\netstandard2.1\BSAG.IOCTalk.Composition*.dll" target="lib\netstandard2.1" />
 		<file src="..\BSAG.IOCTalk.Composition\bin\Release\netstandard2.1\BSAG.IOCTalk.Composition*.pdb" target="lib\netstandard2.1" />
