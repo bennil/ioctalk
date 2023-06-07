@@ -67,8 +67,9 @@ namespace BSAG.IOCTalk.Serialization.Binary
 
         public IGenericMessage DeserializeFromBytes(byte[] messageBytes, object contextObject)
         {
-            throw new NotImplementedException();
-            //return (IGenericMessage)serializer.Deserialize(messageBytes, contextObject);
+            SessionSerializerContext sessionCtx = GetOrCreateSessionContext(0);
+            sessionCtx.DeserializeContext.Reset(contextObject);
+            return (IGenericMessage)serializer.Deserialize(messageBytes, messageBytes.Length, sessionCtx.DeserializeContext);
         }
 
         public IGenericMessage DeserializeFromBytes(byte[] messageBytesBuffer, int messageLength, object contextObject, int sessionId)
