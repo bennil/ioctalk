@@ -182,9 +182,6 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         {
             try
             {
-                if (sessionCreatedBeforeResendEvent != null)
-                    sessionCreatedBeforeResendEvent(sender, e);
-
                 lock (syncLock)
                 {
                     // release opened file
@@ -201,6 +198,9 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
                     Logger.Debug($"Persistent handler: new underlying session received. SessionID: {this.realUnderlyingSession.SessionId}");
                 }
+
+                if (sessionCreatedBeforeResendEvent != null)
+                    sessionCreatedBeforeResendEvent(sender, e);
 
                 var resendTask = Task.Run(() => ResendPendingMethodInvokes(e.Session));
 
