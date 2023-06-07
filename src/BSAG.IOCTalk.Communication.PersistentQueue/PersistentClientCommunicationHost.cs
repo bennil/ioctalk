@@ -674,7 +674,19 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                     }
 
                     if (newSession.IsActive == false)
-                        return; // sesison lost > resend exit
+                    {
+                        if (this.realUnderlyingSession != null
+                            && realUnderlyingSession.IsActive)
+                        {
+                            newSession = this.realUnderlyingSession;
+                            Logger.Info($"Use more recent session (ID: {newSession.SessionId}) for persistent file resend...");
+                        }
+                        else
+                        {
+                            Logger.Info("Skip resend because received session is no longer valid");
+                            return; // sesison lost > resend exit
+                        }
+                    }
 
                     lastResendTryUtc = DateTime.UtcNow;
                     resendTryCount++;
