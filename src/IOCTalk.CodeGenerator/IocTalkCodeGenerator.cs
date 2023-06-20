@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Operations;
 using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -15,9 +16,10 @@ namespace IOCTalk.CodeGenerator
         private const string MethodNameRegisterRemoteService = "RegisterRemoteService";
         private const string MethodNameRegisterLocalSessionService = "RegisterLocalSessionService";
 
-
+        private const string MethodNameIncludeDifferentImplementationAssembly = "IncludeDifferentImplementationAssembly";
 
         Dictionary<ITypeSymbol, ITypeSymbol>? interfaceClassImplementationMappings = null;
+        List<string> differentImplementationAssemblyNames = null;
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
@@ -205,20 +207,23 @@ namespace IOCTalk.CodeGenerator
                 // collect all referenced implementations
                 // execute only once (caching) - no better way of collecting referenced interface implementations found yet
                 interfaceClassImplementationMappings = new Dictionary<ITypeSymbol, ITypeSymbol>(SymbolEqualityComparer.Default);
+                differentImplementationAssemblyNames = new List<string>();
+
                 var assemblyName = context.SemanticModel.Compilation.AssemblyName;
                 if (assemblyName != null)
                 {
                     assemblyName = GetMainNamespace(assemblyName);
+                    FindAllIncludeDifferentAssemblyMethodCalls(context);
 
                     var customTypes = context.SemanticModel.Compilation.SourceModule.ReferencedAssemblySymbols
-                        .Where(ras => ras.Name.StartsWith(assemblyName))
+                        .Where(ras => ras.Name.StartsWith(assemblyName) || differentImplementationAssemblyNames.Contains(ras.Name))
                         .SelectMany(a =>
                         {
                             try
                             {
                                 var main = a.Identity.Name.Split('.').Aggregate(a.GlobalNamespace, (s, c) => s.GetNamespaceMembers().Single(m => m.Name.Equals(c)));
 
-                                Debug.WriteLine(main.ToDisplayString());
+                                //Debug.WriteLine(main.ToDisplayString());
 
                                 return GetAllClassTypes(main);
                             }
@@ -266,6 +271,80 @@ namespace IOCTalk.CodeGenerator
 
             return interfaceClassImplementationMappings;
         }
+
+        private void FindAllIncludeDifferentAssemblyMethodCalls(GeneratorSyntaxContext context)
+        {
+            foreach (var ti in context.SemanticModel.Compilation.SyntaxTrees)
+            {
+                SyntaxNode syntaxNode;
+                if (ti.TryGetRoot(out syntaxNode))
+                {
+                    foreach (var cn in syntaxNode.DescendantNodes())
+                    {
+                        if (cn is IdentifierNameSyntax identifierNameSyntax)
+                        {
+                            //Debug.WriteLine(cn.ToString());
+
+                            string? memberName = identifierNameSyntax.TryGetInferredMemberName();
+
+                            if (memberName == MethodNameIncludeDifferentImplementationAssembly)
+                            {
+                                var parentDeclaration = identifierNameSyntax.Parent?.Parent;
+
+                                if (parentDeclaration != null)
+                                {
+                                    var descendantNodes = parentDeclaration.DescendantNodes().ToArray();
+
+                                    for (int i = 0; i < descendantNodes.Length; i++)
+                                    {
+                                        var n = descendantNodes[i];
+
+                                        if (n.Equals(identifierNameSyntax))
+                                        {
+                                            // nameof syntax
+                                            if (descendantNodes.Length > i + 6
+                                                && descendantNodes[i + 4].ToString() == "nameof")
+                                            {
+                                                string differentAssemblyName = descendantNodes[i + 6].ToString();
+
+                                                if (differentImplementationAssemblyNames.Contains(differentAssemblyName) == false)
+                                                    differentImplementationAssemblyNames.Add(differentAssemblyName);
+
+                                            }
+                                            // simple string declaration syntax
+                                            else if (descendantNodes.Length > i + 3
+                                                && descendantNodes[i + 3] is LiteralExpressionSyntax les)
+                                            {
+                                                string diffAssemblyNameString = les.ToString().Trim('"');
+
+                                                if (differentImplementationAssemblyNames.Contains(diffAssemblyNameString) == false)
+                                                    differentImplementationAssemblyNames.Add(diffAssemblyNameString);
+                                            }
+
+
+                                            break;
+                                        }
+                                    }
+
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+        //static IEnumerable<SyntaxNode> IterateSyntaxNodes(SyntaxNode root)
+        //{
+        //    foreach (var item in root.nodes)
+        //    {
+
+        //    }
+        //}
 
         /// <summary>
         /// Gets the first two assembly namespace level
@@ -432,10 +511,10 @@ namespace IOCTalk.CodeGenerator
 
             sb.AppendLine("internal static class AutoGeneratedProxyInterfaceImplementations { ");
 
-            sb.AppendLine("     public static void RegisterAutoGeneratedProxyInterfaceMappings(this TalkCompositionHost ctx)");
+            sb.AppendLine("     public static FluentAutoGenApi RegisterAutoGeneratedProxyInterfaceMappings(this TalkCompositionHost ctx)");
             sb.AppendLine("     {");
 
-            sb.AppendLine($"         // custom interface implementations (includes all assemblies starting with \"{GetMainNamespace(assemblyName)}*\")");
+            sb.AppendLine($"         // custom interface implementations (includes all assemblies starting with \"{GetMainNamespace(assemblyName)}*\" or explicit by RegisterAutoGeneratedProxyInterfaceMappings().IncludeDifferentImplementationAssembly(nameof(x)))");
             if (interfImplementations != null && interfImplementations.Any())
             {
                 foreach (var customImpl in interfImplementations)
@@ -478,9 +557,25 @@ namespace IOCTalk.CodeGenerator
                 }
             }
 
+            sb.AppendLine("     return new FluentAutoGenApi();");
+
             sb.AppendLine("     }");
 
+
             sb.AppendLine(" }");
+
+            // fluent API - start
+            sb.AppendLine();
+            sb.AppendLine(" internal class FluentAutoGenApi");
+            sb.AppendLine(" {");
+            sb.AppendLine("     public FluentAutoGenApi IncludeDifferentImplementationAssembly(string assemblyName)");
+            sb.AppendLine("     {");
+            sb.AppendLine("         return this;    // no implementation - only used by code generator");
+            sb.AppendLine("     }");
+            sb.AppendLine(" }");
+            sb.AppendLine();
+            // fluent API - end
+
             sb.AppendLine("}");
 
             return sb;
