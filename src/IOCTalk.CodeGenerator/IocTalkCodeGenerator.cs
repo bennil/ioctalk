@@ -28,6 +28,8 @@ namespace IOCTalk.CodeGenerator
             //{
             //    Debugger.Launch();
             //}
+
+            LogToFileHelper.WriteLog("Initialize source generator");
 #endif
 
             // collect auto gen enabled call indicator
@@ -205,13 +207,19 @@ namespace IOCTalk.CodeGenerator
             if (interfaceClassImplementationMappings == null)
             {
                 // collect all referenced implementations
-                // execute only once (caching) - no better way of collecting referenced interface implementations found yet
                 interfaceClassImplementationMappings = new Dictionary<ITypeSymbol, ITypeSymbol>(SymbolEqualityComparer.Default);
                 differentImplementationAssemblyNames = new List<string>();
+
+                // ? caching dictionary did not work in larger solutions (executed multiple times in different context?) - no better way of collecting referenced interface implementations found yet
+
 
                 var assemblyName = context.SemanticModel.Compilation.AssemblyName;
                 if (assemblyName != null)
                 {
+#if DEBUG
+                    LogToFileHelper.WriteLog($"Referenced Assemblies Scan Root: {assemblyName}");
+#endif
+
                     assemblyName = GetMainNamespace(assemblyName);
                     FindAllIncludeDifferentAssemblyMethodCalls(context);
 
@@ -221,17 +229,22 @@ namespace IOCTalk.CodeGenerator
                         {
                             try
                             {
-                                var main = a.Identity.Name.Split('.').Aggregate(a.GlobalNamespace, (s, c) => s.GetNamespaceMembers().Single(m => m.Name.Equals(c)));
+#if DEBUG
+                                LogToFileHelper.WriteLog($"Namespaces in {assemblyName} count: {a.NamespaceNames.Count}");
+#endif
 
-                                //Debug.WriteLine(main.ToDisplayString());
+                                //var main = a.Identity.Name.Split('.').Aggregate(a.GlobalNamespace, (s, c) => s.GetNamespaceMembers().Single(m => m.Name.Equals(c)));
 
-                                return GetAllClassTypes(main);
+                                return GetAllClassTypes(a.GlobalNamespace);
                             }
-                            catch
+                            catch (Exception exMain)
                             {
+#if DEBUG
+                                LogToFileHelper.WriteLog("ReferencedAssemblySymbols Exception: " + exMain.ToString());
+#endif
                                 return Enumerable.Empty<ITypeSymbol>();
                             }
-                        });
+                        }).ToArray();
 
                     foreach (var ct in customTypes)
                     {
@@ -239,10 +252,13 @@ namespace IOCTalk.CodeGenerator
                         {
                             foreach (var interf in ct.AllInterfaces)
                             {
-                                AddCustomMap(interf, ct);
+                                AddCustomMap(interf, ct, true);
                             }
                         }
                     }
+#if DEBUG
+                    LogToFileHelper.WriteLog($"Referenced custom type count: {customTypes.Length}; {assemblyName}");
+#endif
                 }
             }
 
@@ -263,7 +279,7 @@ namespace IOCTalk.CodeGenerator
                     {
                         foreach (var implInterf in typeInfo.AllInterfaces)
                         {
-                            AddCustomMap(implInterf, typeInfo);
+                            AddCustomMap(implInterf, typeInfo, false);
                         }
                     }
                 }
@@ -365,25 +381,55 @@ namespace IOCTalk.CodeGenerator
             return assemblyName;
         }
 
-        private void AddCustomMap(ITypeSymbol interfaceType, ITypeSymbol implInterf)
+        private void AddCustomMap(ITypeSymbol interfaceType, ITypeSymbol implInterf, bool onlyPublic)
         {
-            if (interfaceType.ContainingNamespace == null
-                || interfaceType.ContainingNamespace.ToString().StartsWith("System") == false)
+            if (interfaceType.ContainingNamespace != null)
             {
-                interfaceClassImplementationMappings[interfaceType] = implInterf;
+                string namespaceStr = interfaceType.ContainingNamespace.ToString();
+                bool isIgnoreNamespace = namespaceStr.StartsWith("System") || namespaceStr.StartsWith("Microsoft");
+                if (isIgnoreNamespace == false)
+                {
+                    if (implInterf.DeclaredAccessibility == Accessibility.Public
+                        || (onlyPublic == false && implInterf.DeclaredAccessibility == Accessibility.Internal))
+                    {
+
+                        interfaceClassImplementationMappings[interfaceType] = implInterf;
+
+#if DEBUG
+                        LogToFileHelper.WriteLog($"Add custom map: {interfaceType} = {implInterf}");
+#endif
+                    }
+                }
             }
         }
 
         private static IEnumerable<ITypeSymbol> GetAllClassTypes(INamespaceSymbol root)
         {
+            int count = 0;
+            int countNested = 0;
+
             foreach (var namespaceOrTypeSymbol in root.GetMembers())
             {
-                if (namespaceOrTypeSymbol is INamespaceSymbol @namespace) foreach (var nested in GetAllClassTypes(@namespace)) yield return nested;
-
+                if (namespaceOrTypeSymbol is INamespaceSymbol @namespace)
+                {
+                    foreach (var nested in GetAllClassTypes(@namespace))
+                    {
+                        countNested++;
+                        yield return nested;
+                    }
+                }
                 else if (namespaceOrTypeSymbol is ITypeSymbol type
                     && type.IsAbstract == false
-                    && type.TypeKind == TypeKind.Class) yield return type;
+                    && type.TypeKind == TypeKind.Class)
+                {
+                    count++;
+                    yield return type;
+                }
             }
+
+#if DEBUG
+            LogToFileHelper.WriteLog($"GetAllClassTypes for: {root.ToDisplayString()}; count: {count}; nested count: {countNested}");
+#endif
         }
 
 
@@ -394,7 +440,9 @@ namespace IOCTalk.CodeGenerator
             bool isCodegenerationEnabled = input.enabledIndicator != null
                                             && input.enabledIndicator.Length > 0
                                             && input.enabledIndicator.All(ei => ei == true);
-
+#if DEBUG
+            LogToFileHelper.WriteLog($"isCodegenerationEnabled: {isCodegenerationEnabled}");
+#endif
             //if (input.combined.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes.IsDefaultOrEmpty
             //    && input.combined.localSessionInterfaceTypes.IsDefaultOrEmpty)
             //    return;
@@ -408,6 +456,10 @@ namespace IOCTalk.CodeGenerator
             if (isCodegenerationEnabled)
             {
                 var allInterfaceImplementations = input.combined.proxyImpl.implementations.FirstOrDefault();
+
+//#if DEBUG
+//                LogToFileHelper.WriteLog($"implementations dictionary count: {input.combined.proxyImpl.implementations.Length}; first count: {allInterfaceImplementations.Count}");
+//#endif
 
                 // remove duplicates
                 input.combined.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes = input.combined.proxyImpl.proxyInterfaceAssembly.proxyInterfaceTypes.Distinct(SymbolEqualityComparer.Default).Cast<ITypeSymbol>().ToImmutableArray();
@@ -441,7 +493,7 @@ namespace IOCTalk.CodeGenerator
                 {
                     context.CancellationToken.ThrowIfCancellationRequested();
 
-                    Debug.WriteLine($"{localSessionServiceInterface}");
+                    //Debug.WriteLine($"{localSessionServiceInterface}");
 
                     GetDtoTypesByForMembersRecursive(localSessionServiceInterface, allDtoTypes);
                 }
@@ -493,8 +545,14 @@ namespace IOCTalk.CodeGenerator
                 else
                     mappingSource = BuildEmptyRegistrationMappingsSource(containingNamespace).ToString();
 
+#if DEBUG
+                mappingSource += Environment.NewLine + "// Debug Source Gen Logging:" + Environment.NewLine;
+                mappingSource += LogToFileHelper.GetLogsCodeText();
+#endif
+
                 context.AddSource($"AutoGeneratedInterfaceImplementationMapping.g.cs", mappingSource);
             }
+
         }
 
 

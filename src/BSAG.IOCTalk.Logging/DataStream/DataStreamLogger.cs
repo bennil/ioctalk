@@ -289,11 +289,10 @@ namespace BSAG.IOCTalk.Logging.DataStream
                     }
 
                     // stop signal received
-                    sw.Close();
-
                     var stopLogger = new StreamLogItem(0, true, LoggerStoppedTag);
                     sw.WriteLine(stopLogger.CreateLogString());
                     sw.Flush();
+                    sw.Close();
 
                     log.Info("Data stream logging stopped");
                 }
