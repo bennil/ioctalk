@@ -50,7 +50,7 @@ namespace BSAG.IOCTalk.Common.Reflection
         /// <returns></returns>
         public static Type BuildInterfaceImplementationType(string interfaceTypeFullname)
         {
-            throw new NotSupportedException($"This IOCTalk.Common version is compiled with ahead of time only. This means you must provide a local implementation for the interface {interfaceTypeFullname}. If your platform supports roslyn runtime compilation you can switch to the full version.");
+            throw new NotSupportedException($"This IOCTalk.Common version is compiled with ahead of time only. This means you must provide a local implementation for the interface {interfaceTypeFullname}. If your platform supports source generators (recommended on .NET 7 or higher) or roslyn runtime compilation you can switch to another version.");
         }
 #elif CodeGen
         /// <summary>

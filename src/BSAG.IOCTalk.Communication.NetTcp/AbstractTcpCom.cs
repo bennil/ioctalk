@@ -425,6 +425,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 case (SocketError)102:      // Linux/Android: Network dropped connection on reset
                 case (SocketError)103:      // Linux/Android: Software caused connection abort
                 case (SocketError)104:      // Linux/Android: Connection reset by peer
+                case (SocketError)110:      // Linux/Android: Connection timed out
 
                     Close(state.Client, $"{nameof(SocketException)} ErrorCode: {errorCode}");
                     break;
