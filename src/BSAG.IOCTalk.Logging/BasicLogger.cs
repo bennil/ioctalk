@@ -1,8 +1,14 @@
-﻿using BSAG.IOCTalk.Common.Interface.Logging;
+﻿using BSAG.IOCTalk.Common.Interface.Communication;
+using BSAG.IOCTalk.Common.Interface.Container;
+using BSAG.IOCTalk.Common.Interface.Logging;
+using BSAG.IOCTalk.Common.Interface.Session;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Channels;
+using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace BSAG.IOCTalk.Logging
 {
@@ -22,8 +28,11 @@ namespace BSAG.IOCTalk.Logging
 
         public int LogLevelInt { get; set; } = 0;
 
+        Channel<string> logItemQueue;
+
+
         public BasicLogger()
-            :this("MAIN")
+            : this("MAIN")
         {
         }
 
@@ -31,6 +40,15 @@ namespace BSAG.IOCTalk.Logging
         {
             lock (syncObj)  // do not create in parallel
             {
+                BoundedChannelOptions channelOptions = new BoundedChannelOptions(2048);
+                channelOptions.FullMode = BoundedChannelFullMode.Wait;
+                channelOptions.SingleReader = true;
+                channelOptions.SingleWriter = false;
+
+                logItemQueue = Channel.CreateBounded<string>(channelOptions);
+
+                Task.Run(WriteLogItemsAsyncProcess);
+
                 this.LogRootPath = logRootPath;
                 this.KeepLogPeriodDays = keepLogPeriodDays;
 
@@ -100,14 +118,65 @@ namespace BSAG.IOCTalk.Logging
         private void OutputLogText(string message, string type)
         {
             string text = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {type}\t{message}";
-            Console.WriteLine(text);
-            fileWriter.WriteLine(text);
-            fileWriter.Flush();
+
+            logItemQueue.Writer.TryWrite(text);
+        }
+
+        async ValueTask WriteLogItemsAsyncProcess()
+        {
+            try
+            {
+                var reader = logItemQueue.Reader;
+
+                // todo: change to awat foreach and ReadAllAsync in future .net versions
+                while (await reader.WaitToReadAsync())
+                {
+                    if (reader.TryRead(out var text))
+                    {
+                        Console.WriteLine(text);
+                        fileWriter.WriteLine(text);
+
+                        if (reader.Count == 0)
+                            fileWriter.Flush();
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                DirectLogOutputIgnoreLogErrors("Unexpected BasicLogger error! Logging stopped! Details: " + ex.ToString());
+            }
+            finally
+            {
+                DirectLogOutputIgnoreLogErrors("BasicLogger stopped");
+            }
+
+        }
+
+        void DirectLogOutputIgnoreLogErrors(string message)
+        {
+            try
+            {
+                Console.WriteLine(message);
+
+                if (fileWriter != null)
+                {
+                    fileWriter.WriteLine(message);
+                    fileWriter.Flush();
+                }
+            }
+            catch (Exception)
+            {
+                // ignore
+            }
         }
 
 
         public void Dispose()
         {
+            if (logItemQueue != null)
+                logItemQueue.Writer.Complete();   // release caller queue thread
+
             if (fileWriter != null)
                 fileWriter.Close();
         }

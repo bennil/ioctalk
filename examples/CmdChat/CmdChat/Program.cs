@@ -1,5 +1,7 @@
-﻿using BSAG.IOCTalk.Communication.Tcp;
+﻿using BSAG.IOCTalk.Communication.NetTcp;
+using BSAG.IOCTalk.Communication.NetTcp.WireFraming;
 using BSAG.IOCTalk.Composition;
+using BSAG.IOCTalk.Serialization.Json;
 using CmdChat.Interface;
 using System;
 
@@ -19,7 +21,7 @@ namespace CmdChat.Server
             compositionHost.RegisterLocalSessionService<IChatService>();    // one instance for each session
             compositionHost.RegisterRemoteService<IChatClient>();           // one proxy instance for each session
 
-            var tcpBackendService = new TcpCommunicationController();
+            var tcpBackendService = new TcpCommunicationController(new LegacyWireFraming(), new JsonMessageSerializer());
             tcpBackendService.LogDataStream = true;
 
             compositionHost.InitGenericCommunication(tcpBackendService);

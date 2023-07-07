@@ -408,6 +408,10 @@ namespace BSAG.IOCTalk.Communication.Common
 
                 if (DataStreamLogger != null)
                     DataStreamLogger.Dispose();
+
+                if (logger != null
+                    && logger is IDisposable loggerDisposable)
+                    loggerDisposable.Dispose();
             }
         }
 

@@ -2,17 +2,17 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
     <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Communication.Common\BSAG.IOCTalk.Communication.Common.csproj" />
-    <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Communication.Tcp\BSAG.IOCTalk.Communication.Tcp.csproj" />
+    <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Communication.NetTcp\BSAG.IOCTalk.Communication.NetTcp.csproj" />
     <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Composition\BSAG.IOCTalk.Composition.csproj" />
     <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Logging\BSAG.IOCTalk.Logging.csproj" />
     <ProjectReference Include="..\..\..\src\BSAG.IOCTalk.Serialization.Json\BSAG.IOCTalk.Serialization.Json.csproj" />

@@ -508,14 +508,16 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 serializer.Serialize(writer, message, context, receiverSessionId);
                 int payloadSize = writer.WrittenCount - headerSize;
 
+                if (logDataStream)
+                {
+                    var payloadDataArray = writer.WrittenSpan.Slice(headerSize).ToArray();
+                    dataStreamLogger.LogStreamMessage(receiverSessionId, false, payloadDataArray, payloadDataArray.Length, serializer.MessageFormat != RawMessageFormat.JSON);
+                }
+
                 // write footer / header length
                 var startMessageData = writer.DataBuffer.AsSpan(0, headerSize);
                 wireFraming.CreateTransportMessageEnd(writer, payloadSize, startMessageData);
 
-                if (logDataStream)
-                {
-                    dataStreamLogger.LogStreamMessage(receiverSessionId, false, writer.DataBuffer, writer.WrittenCount, serializer.MessageFormat != RawMessageFormat.JSON);
-                }
 
                 communication.Send(writer.WrittenSpan, receiverSessionId);
             }
@@ -540,15 +542,17 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 serializer.Serialize(writer, message, context, receiverSessionId);
                 int payloadSize = writer.WrittenCount - headerSize;
 
+                if (logDataStream)
+                {
+                    var payloadDataArray = writer.WrittenSpan.Slice(headerSize).ToArray();
+                    dataStreamLogger.LogStreamMessage(receiverSessionId, false, payloadDataArray, payloadDataArray.Length, serializer.MessageFormat != RawMessageFormat.JSON);
+                }
+
                 // write footer / header length
                 var startMessageData = writer.DataBuffer.AsMemory(0, headerSize);
 
                 wireFraming.CreateTransportMessageEnd(writer, payloadSize, startMessageData.Span);
 
-                if (logDataStream)
-                {
-                    dataStreamLogger.LogStreamMessage(receiverSessionId, false, writer.DataBuffer, writer.WrittenCount, serializer.MessageFormat != RawMessageFormat.JSON);
-                }
 
                 await communication.SendAsync(writer.WrittenMemory, receiverSessionId);
             }

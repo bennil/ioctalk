@@ -62,7 +62,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="messageData">The message data.</param>
         /// <param name="encodeBase64">if set to <c>true</c> [encode base64].</param>
         public StreamLogItem(int sessionId, bool isReceive, byte[] messageData, bool encodeBase64)
-            : this(sessionId, isReceive, encodeBase64 ? Convert.ToBase64String(messageData) : Encoding.Default.GetString(messageData))
+            : this(sessionId, isReceive, encodeBase64 ? Convert.ToBase64String(messageData) : Encoding.UTF8.GetString(messageData))
         {
         }
 
@@ -74,7 +74,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="messageData">The message data.</param>
         /// <param name="encodeBase64">if set to <c>true</c> [encode base64].</param>
         public StreamLogItem(int sessionId, bool isReceive, byte[] messageData, int msgLength, bool encodeBase64)
-            : this(sessionId, isReceive, encodeBase64 ? Convert.ToBase64String(messageData, 0, msgLength) : Encoding.Default.GetString(messageData, 0, msgLength))
+            : this(sessionId, isReceive, encodeBase64 ? Convert.ToBase64String(messageData, 0, msgLength) : Encoding.UTF8.GetString(messageData, 0, msgLength))
         {
         }
 
@@ -85,7 +85,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         /// <param name="isReceive">if set to <c>true</c> [is receive].</param>
         /// <param name="messageData">The message data.</param>
         public StreamLogItem(int sessionId, bool isReceive, ArraySegment<byte> messageDataSeg, bool encodeBase64)
-            : this(sessionId, isReceive, encodeBase64 ? Convert.ToBase64String(messageDataSeg.Array, messageDataSeg.Offset, messageDataSeg.Count) : Encoding.Default.GetString(messageDataSeg.Array, messageDataSeg.Offset, messageDataSeg.Count))
+            : this(sessionId, isReceive, encodeBase64 ? Convert.ToBase64String(messageDataSeg.Array, messageDataSeg.Offset, messageDataSeg.Count) : Encoding.UTF8.GetString(messageDataSeg.Array, messageDataSeg.Offset, messageDataSeg.Count))
         {
         }
 

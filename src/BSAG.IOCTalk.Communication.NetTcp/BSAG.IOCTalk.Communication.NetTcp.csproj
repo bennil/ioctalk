@@ -9,7 +9,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
-		<Version>2.3.45</Version>
+		<Version>2.3.47</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
