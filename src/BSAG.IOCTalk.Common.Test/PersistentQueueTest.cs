@@ -17,6 +17,7 @@ using System.IO;
 using BSAG.IOCTalk.Communication.PersistentQueue.Transaction;
 using System.Threading.Tasks;
 using Xunit.Abstractions;
+using BSAG.IOCTalk.Composition;
 
 namespace BSAG.IOCTalk.Common.Test
 {
@@ -556,6 +557,26 @@ namespace BSAG.IOCTalk.Common.Test
         //}
 
 
+        //[Fact]
+        //public async Task ResendTempTest3()
+        //{
+        //    PersistentTestCommService dummyCom = new PersistentTestCommService(xUnitLog);
+        //    dummyCom.RaiseConnectionLost = false;
+
+        //    PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
+        //    persistComm.ResendDelay = TimeSpan.Zero;
+        //    persistComm.ResendSuspensionDelay = TimeSpan.Zero;
+        //    persistComm.ResendSuspensionGracePeriod = TimeSpan.Zero;
+
+        //    BSAG.IOCTalk.Common.Session.Session dummySession = new Session.Session(null, 0, "UnitTest Dummy Session");
+
+        //    TalkCompositionHost dummyHost = new TalkCompositionHost("UnitTestDummyHost");
+        //    dummyCom.RegisterContainerHost(dummyHost, null);
+
+        //    await persistComm.ResendFile(@"C:\temp\LieferscheinPushProblem_2023-07-11\MessageStore-Trx_Upload Doc Trx-20230711_152955_9462.pend", dummySession);
+        //}
+
+
         private static void CleanupPeristentDirectory(PersistentClientCommunicationHost persistComm)
         {
             string persistPath = Path.GetFullPath(persistComm.DirectoryPath);
@@ -572,14 +593,16 @@ namespace BSAG.IOCTalk.Common.Test
 
             private ITestOutputHelper xUnitLogger;
 
+            IGenericMessageSerializer serializer;
+
             public PersistentTestCommService(ITestOutputHelper xUnitLogger)
             {
                 this.xUnitLogger = xUnitLogger;
+                serializer = new BSAG.IOCTalk.Serialization.Json.JsonMessageSerializer();
             }
 
             public string SerializerTypeName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-            private IGenericMessageSerializer serializer = new BSAG.IOCTalk.Serialization.Json.JsonMessageSerializer();
             public IGenericMessageSerializer Serializer => serializer;
 
             public string LoggerTypeName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }

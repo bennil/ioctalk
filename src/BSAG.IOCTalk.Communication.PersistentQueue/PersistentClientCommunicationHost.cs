@@ -315,7 +315,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
 
         private object InvokeMethodInternalActiveSession(object source, IInvokeMethodInfo invokeInfo, object[] parameters, ISession realSession, ref bool methodAlreadyPersisted, out PersistentMethod pm)
         {
-            if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out pm))
+            if (TryGetPersistentMethod(invokeInfo.InterfaceMethod.DeclaringType, invokeInfo.InterfaceMethod.Name, out pm)
+                && methodAlreadyPersisted == false)
             {
                 if (pm.Transaction != null)
                 {
@@ -934,8 +935,6 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 }
                 while (stream.Position < stream.Length);
 
-                DismissOpenTransactions(pendFilePath, openReadTransactions);
-
                 // all messages in pending file sent
                 stream.Close();
                 stream.Dispose();
@@ -995,6 +994,8 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             }
             finally
             {
+                DismissOpenTransactions(pendFilePath, openReadTransactions);
+
                 if (stream != null)
                 {
                     try
@@ -1014,9 +1015,16 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                 Logger.Error($"Incomplete read transaction file {pendFilePath}! Dismiss {openReadTransactions.Count} open transactions.");
                 foreach (var item in openReadTransactions)
                 {
-                    if (item.CurrentTransaction != null)
+                    try
                     {
-                        item.DismissTransaction();
+                        if (item.CurrentTransaction != null)
+                        {
+                            item.DismissTransaction();
+                        }
+                    }
+                    catch (Exception dismissEx)
+                    {
+                        Logger.Error(dismissEx.ToString());
                     }
                 }
             }

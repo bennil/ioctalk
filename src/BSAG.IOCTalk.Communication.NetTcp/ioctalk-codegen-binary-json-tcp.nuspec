@@ -10,6 +10,7 @@
 		<releaseNotes>.NET Standard 2.1 version using improved tcp lib, binary and json serialization and proxy code generation at build time.</releaseNotes>
 		<projectUrl>https://github.com/bennil/ioctalk</projectUrl>
 		<license type="expression">Apache-2.0</license>
+		<readme>docs\README-ioctalk-codegen-binary-json-tcp.md</readme>
 		<dependencies>
 			<group targetFramework="netstandard2.1">
 				<dependency id="System.IO.Pipelines" version="7.0.0.0" />
@@ -39,5 +40,6 @@
 
 		<file src="..\IOCTalk.CodeGenerator\bin\Release\netstandard2.0\*" target="analyzers/dotnet/cs" />
 
+		<file src="docs\README-ioctalk-codegen-binary-json-tcp.md" target="docs\" />
 	</files>
 </package>

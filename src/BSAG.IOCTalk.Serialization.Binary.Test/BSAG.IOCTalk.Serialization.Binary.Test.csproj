@@ -1,28 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<IsTestProject>true</IsTestProject>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
 
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
+		<PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
+		<PackageReference Include="xunit" Version="2.5.0" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.5.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
-    <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
-    <PackageReference Include="xunit" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\BSAG.IOCTalk.Common.Test\BSAG.IOCTalk.Common.Test.csproj" />
-    <ProjectReference Include="..\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
-    <ProjectReference Include="..\BSAG.IOCTalk.Communication.NetTcp\BSAG.IOCTalk.Communication.NetTcp.csproj" />
-    <ProjectReference Include="..\BSAG.IOCTalk.Serialization.Binary\BSAG.IOCTalk.Serialization.Binary.csproj" />
-    <ProjectReference Include="..\BSAG.IOCTalk.Test.Common.Service\BSAG.IOCTalk.Test.Common.Service.csproj" />
-    <ProjectReference Include="..\BSAG.IOCTalk.Test.Interface\BSAG.IOCTalk.Test.Interface.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\BSAG.IOCTalk.Common.Test\BSAG.IOCTalk.Common.Test.csproj" />
+		<ProjectReference Include="..\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
+		<ProjectReference Include="..\BSAG.IOCTalk.Communication.NetTcp\BSAG.IOCTalk.Communication.NetTcp.csproj" />
+		<ProjectReference Include="..\BSAG.IOCTalk.Serialization.Binary\BSAG.IOCTalk.Serialization.Binary.csproj" />
+		<ProjectReference Include="..\BSAG.IOCTalk.Test.Common.Service\BSAG.IOCTalk.Test.Common.Service.csproj" />
+		<ProjectReference Include="..\BSAG.IOCTalk.Test.Interface\BSAG.IOCTalk.Test.Interface.csproj" />
+	</ItemGroup>
 
 </Project>
