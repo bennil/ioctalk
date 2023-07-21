@@ -420,7 +420,7 @@ namespace BSAG.IOCTalk.Communication.Common
         /// </summary>
         /// <param name="sessionId">The session id.</param>
         /// <param name="description">The description.</param>
-        public void CreateSession(int sessionId, string description)
+        public void CreateSession(int sessionId, string description, Action forceCloseCallback)
         {
             Interlocked.Increment(ref pendingSessionCreationCount);
             Session newSession = null;
@@ -429,7 +429,7 @@ namespace BSAG.IOCTalk.Communication.Common
             {
                 // create session
                 description += $" ({containerHost.Name})";
-                newSession = new Session(this, sessionId, description);
+                newSession = new Session(this, sessionId, description, forceCloseCallback);
 
                 if (newSession != null)
                 {

@@ -1,4 +1,5 @@
 ﻿using BSAG.IOCTalk.Common.Interface.Logging;
+using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Session;
 using BSAG.IOCTalk.Common.Test;
 using BSAG.IOCTalk.Common.Test.TestObjects;
@@ -58,7 +59,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
                 compositionHostService.RegisterLocalSharedService<IMyRemoteAsyncAwaitTestService, MyRemoteAsyncTestService2>();
 
-                
+
                 tcpBackendService = new BSAG.IOCTalk.Communication.NetTcp.TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
                 tcpBackendService.LogDataStream = false;
 
@@ -228,5 +229,113 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             currentStressTestServiceClientProxyInstance = e.SessionContract.GetSessionInstance<IStressTestService>();
             onConnectionEstablished.SetResult(true);
         }
+
+
+
+        ISession clientCloseTestSession;
+        int sessionTerminatedClientCount;
+        int sessionTerminatedServiceCount;
+
+        [Fact]
+        public async Task ClientServiceCloseClient()
+        {
+            onConnectionEstablished = new TaskCompletionSource<bool>();
+            sessionTerminatedClientCount = 0;
+            sessionTerminatedServiceCount = 0;
+
+            const int timeoutMs = 20000;
+            var ct = new CancellationTokenSource(timeoutMs);
+            ct.Token.Register(() => onConnectionEstablished.TrySetCanceled(), useSynchronizationContext: false);
+
+            int port = 33269;
+            var log = new UnitTestLogger(xUnitLog);
+
+            TcpCommunicationController tcpClient;
+            TcpCommunicationController tcpBackendService;
+
+            StressTestService localService;
+            {
+                // init service
+                var compositionHostService = new TalkCompositionHost(nameof(ClientServiceCloseClient) + "-Service");
+                //compositionHostService.AddAssembly(typeof(IStressTestService).Assembly);
+                compositionHostService.AddAssembly(typeof(StressTestService).Assembly);
+
+                compositionHostService.RegisterLocalSharedService<ILogger>(log);
+
+                compositionHostService.RegisterLocalSharedService<IStressTestService>();
+
+
+                tcpBackendService = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
+
+                compositionHostService.SessionTerminated += OnCloseTestService_CompositionHostService_SessionTerminated;
+
+                compositionHostService.InitGenericCommunication(tcpBackendService);
+
+                tcpBackendService.InitService(port);
+
+                localService = (StressTestService)compositionHostService.GetExport<IStressTestService>();
+            }
+
+            {
+                // init client
+                var compositionHostClient = new TalkCompositionHost(nameof(ClientServiceCloseClient) + "-Client");
+                //compositionHostClient.AddAssembly(typeof(IStressTestService).Assembly);
+                compositionHostClient.RegisterLocalSharedService<ILogger>(log);
+
+                compositionHostClient.RegisterRemoteService<IStressTestService>();
+                compositionHostClient.RegisterAsyncVoidMethod<IStressTestService>(nameof(IStressTestService.AsyncCallTest));
+
+                tcpClient = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
+                tcpClient.ClientReconnectInterval = TimeSpan.FromMinutes(2);
+
+                compositionHostClient.SessionCreated += OnCompositionHostClient_SessionCreated_ClientServiceCloseClient;
+                compositionHostClient.SessionTerminated += OnCloseTestClient_CompositionHostClient_SessionTerminated;
+
+                compositionHostClient.InitGenericCommunication(tcpClient);
+
+                tcpClient.InitClient(IPAddress.Loopback.ToString(), port);
+            }
+
+            Assert.True(await onConnectionEstablished.Task);
+
+
+            var result = currentStressTestServiceClientProxyInstance.SyncCallTest(0);
+            Assert.Equal(0, result);
+
+            result = currentStressTestServiceClientProxyInstance.SyncCallTest(1);
+            Assert.Equal(1, result);
+
+            // close client tcp connection
+            clientCloseTestSession.Close();
+
+            // wait for tcp events
+            //await Task.Delay(200);
+
+            Assert.Equal(1, sessionTerminatedClientCount);
+            Assert.Equal(1, sessionTerminatedServiceCount);
+           
+            Assert.Throws<OperationCanceledException>(() => currentStressTestServiceClientProxyInstance.SyncCallTest(2));
+
+            tcpClient.Shutdown();
+            tcpBackendService.Shutdown();
+        }
+
+        private void OnCloseTestClient_CompositionHostClient_SessionTerminated(object contractSession, SessionEventArgs e)
+        {
+            sessionTerminatedClientCount++;
+        }
+
+        private void OnCloseTestService_CompositionHostService_SessionTerminated(object contractSession, SessionEventArgs e)
+        {
+            sessionTerminatedServiceCount++;
+        }
+
+        private void OnCompositionHostClient_SessionCreated_ClientServiceCloseClient(object contractSession, SessionEventArgs e)
+        {
+            clientCloseTestSession = e.Session;
+            currentStressTestServiceClientProxyInstance = e.SessionContract.GetSessionInstance<IStressTestService>();
+            onConnectionEstablished.SetResult(true);
+        }
+
     }
 }

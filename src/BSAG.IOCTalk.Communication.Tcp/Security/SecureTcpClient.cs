@@ -182,7 +182,7 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
                     tlsStream.AuthenticateAsClient(ServerName);
                 }
 
-                this.client = new Client(this.socket, this.tlsStream, new ConcurrentQueue<IGenericMessage>(), socket.LocalEndPoint, socket.RemoteEndPoint, Logger);
+                this.client = new Client(this.socket, this.tlsStream, new ConcurrentQueue<IGenericMessage>(), socket.LocalEndPoint, socket.RemoteEndPoint, Logger, this);
 
                 StartReceivingData(client);
 

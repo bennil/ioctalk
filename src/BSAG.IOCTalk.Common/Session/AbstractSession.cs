@@ -46,12 +46,14 @@ namespace BSAG.IOCTalk.Common.Session
 
         protected bool isInitialized;
 
-        protected IContract contract;             
+        protected IContract contract;
 
         /// <summary>
         /// Pending request dictionary
         /// </summary>
         protected ConcurrentDictionary<long, IInvokeState> pendingRequests;
+
+        Action forceCloseCallback;
 
 
         // ----------------------------------------------------------------------------------------
@@ -68,13 +70,14 @@ namespace BSAG.IOCTalk.Common.Session
         /// <param name="communicationService">The communication service.</param>
         /// <param name="sessionId">The session id.</param>
         /// <param name="description">The description.</param>
-        public AbstractSession(IGenericCommunicationService communicationService, int sessionId, string description)
+        public AbstractSession(IGenericCommunicationService communicationService, int sessionId, string description, Action forceCloseCallback)
         {
             this.communicationService = communicationService;
             this.sessionId = sessionId;
             this.description = description;
             this.pendingRequests = new ConcurrentDictionary<long, IInvokeState>();
             this.isActive = true; // session is active on creation
+            this.forceCloseCallback = forceCloseCallback;
         }
 
         // ----------------------------------------------------------------------------------------
@@ -162,7 +165,7 @@ namespace BSAG.IOCTalk.Common.Session
                         {
                             waitHandle.Set();
                         }
-                        catch (ObjectDisposedException) 
+                        catch (ObjectDisposedException)
                         {
                             /* ignore already disposed handles */
                         }
@@ -171,10 +174,20 @@ namespace BSAG.IOCTalk.Common.Session
 
                 pendingRequests.Clear();
             }
+
+            try
+            {
+                if (forceCloseCallback != null)
+                    forceCloseCallback();
+            }
+            catch (Exception closeEx)
+            {
+                communicationService.Logger.Error(closeEx.ToString());
+            }
         }
 
         // ----------------------------------------------------------------------------------------
         #endregion
-        
+
     }
 }

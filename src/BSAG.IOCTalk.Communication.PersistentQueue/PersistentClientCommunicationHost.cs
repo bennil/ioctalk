@@ -264,7 +264,9 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                         catch (Exception)
                         {
                             // ignore retry exception
-                            Logger.Info("PersistentQueue: retry online invoke failed continue persistence");
+                            Logger.Info("PersistentQueue: retry online invoke failed continue persistence and force close connection");
+
+                            realSession.Close();
                         }
                     }
 
@@ -1065,7 +1067,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
             {
                 if (fictionalSession == null)
                 {
-                    fictionalSession = new Session(this, 0, "Fictional Persistent Session");
+                    fictionalSession = new Session(this, 0, "Fictional Persistent Session", null);
 
                     fictionalSessionContract = containerHost.CreateSessionContractInstance(fictionalSession);
                 }

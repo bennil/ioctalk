@@ -40,6 +40,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         private int connectionSessionId;
         private SpinLock spinLock = new SpinLock();
         private ILogger logger;
+        AbstractTcpCom parentCom;
 
         SemaphoreSlim semaphoreSlimSendLock = new SemaphoreSlim(1, 1);
 
@@ -60,7 +61,13 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         /// <param name="localEndPoint">The local end point.</param>
         /// <param name="remoteEndPoint">The remote end point.</param>
         /// <param name="logger">The logger.</param>
-        public Client(Socket socket, Stream stream, ConcurrentQueue<IGenericMessage> queueReceivedPackets, EndPoint localEndPoint, EndPoint remoteEndPoint, ILogger logger)
+        public Client(Socket socket, 
+            Stream stream, 
+            ConcurrentQueue<IGenericMessage> queueReceivedPackets, 
+            EndPoint localEndPoint, 
+            EndPoint remoteEndPoint, 
+            ILogger logger,
+            AbstractTcpCom parentCom)
         {
             this.logger = logger;
             this.socket = socket;
@@ -68,6 +75,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             this.localEndPoint = localEndPoint;
             this.remoteEndPoint = remoteEndPoint;
             this.queueReceivedPackets = queueReceivedPackets;
+            this.parentCom = parentCom;
+
             this.connectTimeUtc = DateTime.UtcNow;
             this.connectionSessionId = GenericCommunicationBaseService.GetNewConnectionSessionId();
         }
@@ -423,6 +432,15 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         {
             Interlocked.Exchange(ref isSocketClosedExecuted, 0);
         }
+
+        /// <summary>
+        /// Closes the underlying communication
+        /// </summary>
+        public void ForceClose()
+        {
+            parentCom.Close(this, "ForceClose");
+        }
+
         // ----------------------------------------------------------------------------------------
         #endregion
 

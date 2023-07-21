@@ -129,7 +129,7 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
                 SslStream tlsStream = new SslStream(new NetworkStream(clientSocket), false);
                 tlsStream.AuthenticateAsServer(certificate, ClientCertificateRequired, protocol, true);
 
-                Client client = new Client(clientSocket, tlsStream, new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, clientSocket.RemoteEndPoint, Logger);
+                Client client = new Client(clientSocket, tlsStream, new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, clientSocket.RemoteEndPoint, Logger, this);
                 StartReceivingData(client);
                 clients.Add(client.SessionId, client);
 

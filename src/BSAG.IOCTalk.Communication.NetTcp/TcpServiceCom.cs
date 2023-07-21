@@ -178,7 +178,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 Socket clientSocket = listener.EndAccept(asyncResult);
                 clientSocket.ReceiveBufferSize = this.ReceiveBufferSize;
 
-                Client client = new Client(clientSocket, new NetworkStream(clientSocket), new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, clientSocket.RemoteEndPoint, Logger);
+                Client client = new Client(clientSocket, new NetworkStream(clientSocket), new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, clientSocket.RemoteEndPoint, Logger, this);
                 clients.Add(client.SessionId, client);
                 
                 StartReceivingData(client);

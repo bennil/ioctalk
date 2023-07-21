@@ -36,8 +36,8 @@ namespace BSAG.IOCTalk.Common.Session
         /// <param name="communicationService">The communication service.</param>
         /// <param name="sessionId">The session id.</param>
         /// <param name="description">The description.</param>
-        public Session(IGenericCommunicationService communicationService, int sessionId, string description)
-            : base(communicationService, sessionId, description)
+        public Session(IGenericCommunicationService communicationService, int sessionId, string description, Action forceCloseCallback = null)
+            : base(communicationService, sessionId, description, forceCloseCallback)
         {
         }
 

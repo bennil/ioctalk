@@ -172,7 +172,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 this.InitSocketProperties(this.socket);
                 this.socket.Connect(EndPoint);
 
-                this.client = new Client(this.socket, new NetworkStream(this.socket), new ConcurrentQueue<IGenericMessage>(), socket.LocalEndPoint, socket.RemoteEndPoint, Logger);
+                this.client = new Client(this.socket, new NetworkStream(this.socket), new ConcurrentQueue<IGenericMessage>(), socket.LocalEndPoint, socket.RemoteEndPoint, Logger, this);
 
                 OnConnectionEstablished(client);
 

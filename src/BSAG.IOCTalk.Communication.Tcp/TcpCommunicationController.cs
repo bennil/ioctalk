@@ -519,7 +519,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             try
             {
-                this.CreateSession(e.Client.SessionId, e.Client.SessionInfo);
+                this.CreateSession(e.Client.SessionId, e.Client.SessionInfo, e.Client.ForceClose);
             }
             catch (Exception ex)
             {
