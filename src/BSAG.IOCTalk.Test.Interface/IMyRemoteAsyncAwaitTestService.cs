@@ -23,5 +23,9 @@ namespace BSAG.IOCTalk.Test.Interface
 
 
         Task<IDataTransferTest> ComplexRoundtrip(IDataTransferTest test);
+
+
+        Task<IDataTransferTest> GetObjectDataAsync();
+
     }
 }

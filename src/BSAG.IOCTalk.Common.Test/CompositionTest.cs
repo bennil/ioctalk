@@ -77,7 +77,7 @@ namespace BSAG.IOCTalk.Common.Test
             TalkCompositionHost hostContainer = new TalkCompositionHost();
             hostContainer.RegisterLocalSessionService<IMyTestService>();
             hostContainer.RegisterRemoteService<IMyRemoteTestService>();
-            hostContainer.RegisterExposedSubInterfaceForType<IMapTestMainInterface, MapTestMain>();
+            hostContainer.RegisterExposedSubInterfaceForType<IMapTestMainInterface, TestObjects.InterfaceMapTest.MapTestMain>();
             hostContainer.RegisterExposedSubInterfaceForType<IMapTestDerivedInterface, MapTestDerived>();
             hostContainer.AddReferencedAssemblies();
 
@@ -88,7 +88,7 @@ namespace BSAG.IOCTalk.Common.Test
             var result = hostContainer.CreateSessionContractInstance(session);
 
             Type resultTypeMain = hostContainer.GetInterfaceImplementationType(typeof(IMapTestMainInterface).FullName);
-            Assert.Equal(typeof(MapTestMain), resultTypeMain);
+            Assert.Equal(typeof(TestObjects.InterfaceMapTest.MapTestMain), resultTypeMain);
 
             Type resultTypeDerived = hostContainer.GetInterfaceImplementationType(typeof(IMapTestDerivedInterface).FullName);
             Assert.Equal(typeof(MapTestDerived), resultTypeDerived);

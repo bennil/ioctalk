@@ -1,9 +1,11 @@
-﻿using BSAG.IOCTalk.Common.Interface.Logging;
+﻿using BSAG.IOCTalk.Common.Interface.Communication;
+using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Session;
 using BSAG.IOCTalk.Common.Test;
 using BSAG.IOCTalk.Common.Test.TestObjects;
 using BSAG.IOCTalk.Communication.Tcp;
 using BSAG.IOCTalk.Composition;
+using BSAG.IOCTalk.Serialization.Json;
 using BSAG.IOCTalk.Test.Common.Service;
 using BSAG.IOCTalk.Test.Interface;
 using System;
@@ -33,7 +35,18 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
 
         [Fact]
-        public async Task TestMethodDataTransferAsyncImplementation()
+        public async Task TestMethodDataTransferAsyncImplementationBinarySerializer()
+        {
+            await AsyncDataTransferTestForSerializer(new BinaryMessageSerializer(), new BinaryMessageSerializer());
+        }
+
+        [Fact]
+        public async Task TestMethodDataTransferAsyncImplementationJsonSerializer()
+        {
+            await AsyncDataTransferTestForSerializer(new JsonMessageSerializer(), new JsonMessageSerializer());
+        }
+
+        private async Task AsyncDataTransferTestForSerializer(IGenericMessageSerializer serializerClient, IGenericMessageSerializer serializerService)
         {
             onConnectionEstablished = new TaskCompletionSource<bool>();
 
@@ -58,7 +71,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
 
                 tcpBackendService = new TcpCommunicationController(log);
-                tcpBackendService.Serializer = new BinaryMessageSerializer();
+                tcpBackendService.Serializer = serializerService;
                 tcpBackendService.LogDataStream = false;
 
                 compositionHostService.InitGenericCommunication(tcpBackendService);
@@ -77,7 +90,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostClient.RegisterRemoteService<IMyRemoteAsyncAwaitTestService>();
 
                 tcpClient = new TcpCommunicationController(log);
-                tcpClient.Serializer = new BinaryMessageSerializer();
+                tcpClient.Serializer = serializerClient;
                 tcpClient.LogDataStream = false;
                 tcpClient.RequestTimeoutSeconds = 15;
 
@@ -109,10 +122,6 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             tcpClient.Shutdown();
             tcpBackendService.Shutdown();
         }
-
-
-
-
 
         private void OnCompositionHostClient_SessionCreated_AsyncTest(object contractSession, SessionEventArgs e)
         {

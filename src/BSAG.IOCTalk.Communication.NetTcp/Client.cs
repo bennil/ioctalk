@@ -41,6 +41,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         private SpinLock spinLock = new SpinLock();
         private ILogger logger;
         AbstractTcpCom parentCom;
+        CancellationTokenSource cancelTokenSource;
 
         SemaphoreSlim semaphoreSlimSendLock = new SemaphoreSlim(1, 1);
 
@@ -79,6 +80,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
             this.connectTimeUtc = DateTime.UtcNow;
             this.connectionSessionId = GenericCommunicationBaseService.GetNewConnectionSessionId();
+            this.cancelTokenSource = new CancellationTokenSource();
+
         }
 
         // ----------------------------------------------------------------------------------------
@@ -164,6 +167,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             get { return socket.Connected; }
         }
 
+        public CancellationTokenSource Cancellation => cancelTokenSource;
 
         // ----------------------------------------------------------------------------------------
         #endregion

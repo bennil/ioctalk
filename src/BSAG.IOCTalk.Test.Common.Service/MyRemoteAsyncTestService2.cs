@@ -54,6 +54,13 @@ namespace BSAG.IOCTalk.Test.Common.Service
             return Task<IDataTransferTest[]>.FromResult(responseArr);
         }
 
+        public async Task<IDataTransferTest> GetObjectDataAsync()
+        {
+            await Task.Delay(10);   // force async execution
+
+            return new DTTest { ID = 5 };
+        }
+
         public static int RunSomeWorkCounter { get; set; }
     }
 }

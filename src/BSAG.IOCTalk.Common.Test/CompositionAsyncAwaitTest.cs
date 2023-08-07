@@ -1,5 +1,6 @@
 ﻿using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Reflection;
+using BSAG.IOCTalk.Common.Test.TestObjects;
 using BSAG.IOCTalk.Communication.Tcp;
 using BSAG.IOCTalk.Composition;
 using BSAG.IOCTalk.Test.Common.Service;
@@ -22,8 +23,10 @@ namespace BSAG.IOCTalk.Common.Test
     /// </summary>
     public class CompositionAsyncAwaitTest
     {
-        TaskCompletionSource<bool> onConnectionEstablished;
+        TaskCompletionSource<bool> onConnectionEstablishedClient;
+        TaskCompletionSource<bool> onConnectionEstablishedService;
         IMyRemoteAsyncAwaitTestService currentAsyncAwaitTestServiceClientProxyInstance;
+        IMyRemoteAsyncAwaitTestClient currentAsyncAwaitClientProxyInstance;
         readonly ITestOutputHelper xUnitLog;
 
         public CompositionAsyncAwaitTest(ITestOutputHelper xUnitLog)
@@ -46,11 +49,97 @@ namespace BSAG.IOCTalk.Common.Test
         [Fact]
         public async Task TestMethodBuildDataTransferInterfaceAsyncImplementation()
         {
-            onConnectionEstablished = new TaskCompletionSource<bool>();
+            var infra = await InitClientServiceTest();
+
+            var complexTest = await currentAsyncAwaitTestServiceClientProxyInstance.GetObjectDataAsync();
+            Assert.Equal(5, complexTest.ID);
+
+            var dataResponse = await currentAsyncAwaitTestServiceClientProxyInstance.GetDataAsync();
+
+            Assert.Equal("Hello world", dataResponse);
+
+
+            int expected = 23134;
+            var response2 = await currentAsyncAwaitTestServiceClientProxyInstance.GetDataAsync2(expected);
+            Assert.Equal(expected, response2);
+
+            // without return value
+            MyRemoteAsyncTestService.RunSomeWorkCounter = 0;
+            await currentAsyncAwaitTestServiceClientProxyInstance.RunSomeWork();
+
+            Assert.Equal(1, MyRemoteAsyncTestService.RunSomeWorkCounter);
+
+            infra.TcpClient.Shutdown();
+            infra.TcpBackendService.Shutdown();
+        }
+
+
+        [Fact]
+        public async Task TestMethodDataTransferInterfaceClientOtherSideAsyncImplementationOrder1()
+        {
+            var infra = await InitClientServiceTest();
+
+            var rGetObjectDataID10Async = await currentAsyncAwaitClientProxyInstance.GetObjectDataID10Async();
+            Assert.Equal(10, rGetObjectDataID10Async.ID);
+
+            var rGetObjectData = await currentAsyncAwaitClientProxyInstance.GetObjectData();
+            Assert.Equal("test", rGetObjectData.MainProperty);
+
+            var rGetObjectData2 = await currentAsyncAwaitClientProxyInstance.GetObjectData2();
+            Assert.Equal("test", rGetObjectData2.MainProperty);
+
+            infra.TcpClient.Shutdown();
+            infra.TcpBackendService.Shutdown();
+        }
+
+
+        [Fact]
+        public async Task TestMethodDataTransferInterfaceClientOtherSideAsyncImplementationOrder2()
+        {
+            var infra = await InitClientServiceTest();
+
+            var rGetObjectData = await currentAsyncAwaitClientProxyInstance.GetObjectData();
+            Assert.Equal("test", rGetObjectData.MainProperty);
+
+            var rGetObjectDataID10Async = await currentAsyncAwaitClientProxyInstance.GetObjectDataID10Async();
+            Assert.Equal(10, rGetObjectDataID10Async.ID);
+
+            var rGetObjectData2 = await currentAsyncAwaitClientProxyInstance.GetObjectData2();
+            Assert.Equal("test", rGetObjectData2.MainProperty);
+
+            infra.TcpClient.Shutdown();
+            infra.TcpBackendService.Shutdown();
+        }
+
+
+        [Fact]
+        public async Task TestMethodDataTransferInterfaceClientOtherSideAsyncImplementationOrder3()
+        {
+            var infra = await InitClientServiceTest();
+
+            var rGetObjectData2 = await currentAsyncAwaitClientProxyInstance.GetObjectData2();
+            Assert.Equal("test", rGetObjectData2.MainProperty);
+
+            var rGetObjectData = await currentAsyncAwaitClientProxyInstance.GetObjectData();
+            Assert.Equal("test", rGetObjectData.MainProperty);
+
+            var rGetObjectDataID10Async = await currentAsyncAwaitClientProxyInstance.GetObjectDataID10Async();
+            Assert.Equal(10, rGetObjectDataID10Async.ID);
+
+            infra.TcpClient.Shutdown();
+            infra.TcpBackendService.Shutdown();
+        }
+
+
+        async Task<(TcpCommunicationController TcpClient, TcpCommunicationController TcpBackendService)> InitClientServiceTest()
+        {
+            onConnectionEstablishedClient = new TaskCompletionSource<bool>();
+            onConnectionEstablishedService = new TaskCompletionSource<bool>();
 
             const int timeoutMs = 20000;
             var ct = new CancellationTokenSource(timeoutMs);
-            ct.Token.Register(() => onConnectionEstablished.TrySetCanceled(), useSynchronizationContext: false);
+            ct.Token.Register(() => onConnectionEstablishedClient.TrySetCanceled(), useSynchronizationContext: false);
+            ct.Token.Register(() => onConnectionEstablishedService.TrySetCanceled(), useSynchronizationContext: false);
 
             int port = 33255;
             var log = new UnitTestLogger(xUnitLog);
@@ -65,8 +154,9 @@ namespace BSAG.IOCTalk.Common.Test
 
                 compositionHostService.RegisterLocalSharedService<ILogger>(log);
 
-                compositionHostService.RegisterLocalSharedService<IMyRemoteAsyncAwaitTestService>();
-
+                compositionHostService.RegisterLocalSharedService<IMyRemoteAsyncAwaitTestService, MyRemoteAsyncTestService>();
+                compositionHostService.RegisterRemoteService<IMyRemoteAsyncAwaitTestClient>(true);
+                compositionHostService.SessionCreated += OnCompositionHostService_SessionCreated;
 
                 tcpBackendService = new TcpCommunicationController(log);
                 tcpBackendService.LogDataStream = true;
@@ -84,7 +174,9 @@ namespace BSAG.IOCTalk.Common.Test
                 //compositionHostClient.AddAssembly(typeof(IStressTestService).Assembly);
                 compositionHostClient.RegisterLocalSharedService<ILogger>(log);
 
-                compositionHostClient.RegisterRemoteService<IMyRemoteAsyncAwaitTestService>();
+                compositionHostClient.RegisterRemoteService<IMyRemoteAsyncAwaitTestService>(true);
+                compositionHostClient.RegisterLocalSessionService<IMyRemoteAsyncAwaitTestClient, MyRemoteAsyncTestClient>();
+                
 
                 tcpClient = new TcpCommunicationController(log);
                 tcpClient.LogDataStream = true;
@@ -97,36 +189,22 @@ namespace BSAG.IOCTalk.Common.Test
                 tcpClient.InitClient(IPAddress.Loopback.ToString(), port);
             }
 
-            Assert.True(await onConnectionEstablished.Task);
+            Assert.True(await onConnectionEstablishedClient.Task);
+            Assert.True(await onConnectionEstablishedService.Task);
 
-
-            var dataResponse = await currentAsyncAwaitTestServiceClientProxyInstance.GetDataAsync();
-
-            Assert.Equal("Hello world", dataResponse);
-
-
-            int expected = 23134;
-            var response2 = await currentAsyncAwaitTestServiceClientProxyInstance.GetDataAsync2(expected);
-            Assert.Equal(expected, response2);
-
-            // without return value
-            MyRemoteAsyncTestService.RunSomeWorkCounter = 0;
-            await currentAsyncAwaitTestServiceClientProxyInstance.RunSomeWork();
-
-            Assert.Equal(1, MyRemoteAsyncTestService.RunSomeWorkCounter);
-
-            tcpClient.Shutdown();
-            tcpBackendService.Shutdown();
+            return (tcpClient, tcpBackendService);
         }
 
-
-
-
+        private void OnCompositionHostService_SessionCreated(object contractSession, Session.SessionEventArgs e)
+        {
+            currentAsyncAwaitClientProxyInstance = e.SessionContract.GetSessionInstance<IMyRemoteAsyncAwaitTestClient>();
+            onConnectionEstablishedService.SetResult(true);
+        }
 
         private void OnCompositionHostClient_SessionCreated(object contractSession, Session.SessionEventArgs e)
         {
             currentAsyncAwaitTestServiceClientProxyInstance = e.SessionContract.GetSessionInstance<IMyRemoteAsyncAwaitTestService>();
-            onConnectionEstablished.SetResult(true);
+            onConnectionEstablishedClient.SetResult(true);
         }
     }
 }

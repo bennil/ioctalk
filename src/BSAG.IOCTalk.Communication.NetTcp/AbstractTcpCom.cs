@@ -42,7 +42,6 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         private int receiveBufferSize = 65536;
         private int sendBufferSize = 65536;
 
-        private CancellationTokenSource cancelTokenSource;
 
         private AbstractWireFraming wireFraming;
 
@@ -214,18 +213,21 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         /// <summary>
         /// Closes the TCP Connection.
         /// </summary>
-        public virtual void Close(Client client, string source)
+        public virtual bool Close(Client client, string source)
         {
             if (client != null
                 && client.socket != null
                 && client.AcquireIsSocketClosedExecuted())
             {
-                cancelTokenSource.Cancel();
+                client.Cancellation.Cancel();
 
                 client.socket.Close();
 
                 OnConnectionClosed(client, source);
+                return true;
             }
+            else
+                return false;
         }
 
 
@@ -236,7 +238,6 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         /// <returns></returns>
         protected SocketState StartReceivingData(Client client)
         {
-            this.cancelTokenSource = new CancellationTokenSource();
 
             SocketState state = new SocketState();
 
@@ -259,7 +260,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             Stream clientStream = state.Client.stream;
             PipeWriter writer = state.ReceivePipe.Writer;
 
-            var cancelToken = cancelTokenSource.Token;
+            var cancelToken = state.Client.Cancellation.Token;
 
             int currentMemoryRequest = 1024;
 
@@ -296,11 +297,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 // By completing PipeWriter, tell the PipeReader that there's no more data coming.
                 await writer.CompleteAsync();
 
-                //if (!state.Client.socket.Connected)
-                //{
-                Close(state.Client, "OnReceiveDataAsync state");
-                //    return;
-                //}
+                Close(state.Client, $"OnReceiveDataAsync state({clientSocket.Connected})");
             }
             catch (IOException ioEx)
             {
@@ -325,10 +322,13 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             {
                 CloseOrLogSocketException(state, socketEx);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException operationCancelEx)
             {
                 /* connection closed exception */
-                Close(state.Client, nameof(OperationCanceledException));
+                if (Close(state.Client, nameof(OperationCanceledException)))
+                {
+                    Logger.Debug("OnReceiveDataAsync: " + operationCancelEx.ToString());
+                }
             }
             catch (ObjectDisposedException)
             {
@@ -350,7 +350,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             var reader = socketState.ReceivePipe.Reader;
             Socket clientSocket = socketState.Client.socket;
 
-            var cancelToken = cancelTokenSource.Token;
+            var cancelToken = socketState.Client.Cancellation.Token;
             var sessionId = socketState.Client.SessionId;
 
             try
@@ -391,9 +391,12 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                     }
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException operationCancelEx)
             {
-                Close(socketState.Client, nameof(OperationCanceledException));
+                if (Close(socketState.Client, nameof(OperationCanceledException)))
+                {
+                    Logger.Debug("ReadReceivePipeAsync: " + operationCancelEx.ToString());
+                }
             }
             catch (Exception ex)
             {
@@ -492,7 +495,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         /// <param name="client">The client.</param>
         internal void OnConnectionEstablished(Client client)
         {
-            Logger.Info(string.Format("Tcp client connection \"{0}\" established", client.RemoteEndPoint.ToString()));
+            Logger.Info($"Tcp client connection \"{client.RemoteEndPoint}\" ({client.SessionId}) established");
 
             if (connectionEstablished != null)
             {
@@ -507,7 +510,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         /// <param name="client">The client.</param>
         internal void OnConnectionClosed(Client client, string source)
         {
-            Logger.Info($"Tcp client connection \"{client.RemoteEndPoint}\" closed - Source: {source}");
+            Logger.Info($"Tcp client connection \"{client.RemoteEndPoint}\" ({client.SessionId}) closed - Source: {source}");
 
             if (connectionClosed != null)
             {
