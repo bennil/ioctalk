@@ -41,7 +41,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IOCTalk.Communication.WebSo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IOCTalk.Communication.WebSocketFraming", "IOCTalk.Communication.WebSocketFraming\IOCTalk.Communication.WebSocketFraming.csproj", "{49825538-F443-4F8F-8CBE-2D6658FDC68D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOCTalk.UnitTests.Websockets", "UnitTests\IOCTalk.UnitTests.Websockets\IOCTalk.UnitTests.Websockets.csproj", "{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IOCTalk.UnitTests.Websockets", "UnitTests\IOCTalk.UnitTests.Websockets\IOCTalk.UnitTests.Websockets.csproj", "{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0E0F85AB-8231-43C8-976C-584D845CF26E}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
