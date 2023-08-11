@@ -63,8 +63,8 @@ Functional service implementation assembly:
 ```
 By convention the ioctalk dependency injection container needs a "Created" or "Terminated" at the end of the method name.
 
-If your service implementation only manages the single session instance, you can also use an IDisposalbe implementation to react on session termination.
-Be aware of not calling remote services in your constructor service implementation. Use constructor parameter (out Action<IMyService> myselfCreated) for remote interaction after the session is ready (all session instances are created).
+If your service implementation only manages the single session instance, you can also use an `IDisposalbe` implementation to react on session termination.__
+Be aware of not calling remote services in your constructor service implementation. Use constructor parameter `(out Action<IMyService> myselfCreated)` for remote interaction after the session is ready (all session instances are created).
 
 
 Now you have separated your business code from any technical dependency. You can use it with ioctalk, within a unit test or some future transfer technology.
