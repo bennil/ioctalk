@@ -2,17 +2,15 @@
 
 Combines dependency injection and remote procedure calls for enterprise architecture implementations without technical dependencies.
 
-*Nuget with ShortWireFraming(), LegacyWireFraming() and the serializers: BinaryMessageSerializer(), JsonMessageSerializer()*
-(https://www.nuget.org/packages/ioctalk-codegen-binary-json-tcp)
+[*Nuget with ShortWireFraming(), LegacyWireFraming() and the serializers: BinaryMessageSerializer(), JsonMessageSerializer()*](https://www.nuget.org/packages/ioctalk-codegen-binary-json-tcp)
 
-*Nuget with ShortWireFraming() and BinaryMessageSerializer()*
-(https://www.nuget.org/packages/ioctalk-codegen-binary-tcp)
+[*Nuget with ShortWireFraming() and BinaryMessageSerializer()*](https://www.nuget.org/packages/ioctalk-codegen-binary-tcp)
 
 Uses .net code generator for communication proxy auto creation and dependency mapping.
 This is a performance improvement by eliminating runtime code generation and runtime assembly type scanning.
 The new binary wire format and binary message serializer reduces the transfer size as well.
 
-```
+```csharp
 var localShare = new LocalShareContext();
 
 var tcpMyService = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
@@ -34,7 +32,7 @@ compositionHost.RegisterLocalSharedService<IMyInternalStuffService, MyInternalSt
 
 
 If you need to connect to ioctalk legacy wire format and json serialization services use:
-```
+```csharp
 new TcpCommunicationController(new LegacyWireFraming(), new JsonMessageSerializer())
 ```
 
@@ -45,7 +43,7 @@ How can you react to distributed events (remote endpoint session changes) in you
 The ioctalk solution is "constructor out delegate" injection and convention:
 
 Functional service implementation assembly:
-```
+```csharp
 	public class MySuperService : IMySuperService
 	{
 		public MySuperService(out Action<IMySupremeRemoteClientService> clientServiceCreated, 
