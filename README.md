@@ -1,13 +1,12 @@
 # IOC-Talk
 
+Combines dependency injection and remote procedure calls for enterprise architecture implementations without technical dependencies.
+
 Nuget with ShortWireFraming(), LegacyWireFraming() and the serializers: BinaryMessageSerializer(), JsonMessageSerializer()
-![Nuget](https://img.shields.io/nuget/v/ioctalk-codegen-binary-json-tcp)
+![Nuget](https://img.shields.io/nuget/v/ioctalk-codegen-binary-json-tcp?link=https%3A%2F%2Fwww.nuget.org%2Fpackages%2Fioctalk-codegen-binary-json-tcp)
 
 Nuget with ShortWireFraming() and BinaryMessageSerializer()
-![Nuget](https://img.shields.io/nuget/v/ioctalk-codegen-binary-tcp)
-
-
-Combines dependency injection and remote procedure calls for enterprise architecture implementations without technical dependencies.
+![Nuget](https://img.shields.io/nuget/v/ioctalk-codegen-binary-tcp?link=https%3A%2F%2Fwww.nuget.org%2Fpackages%2Fioctalk-codegen-binary-tcp)
 
 Uses .net code generator for communication proxy auto creation and dependency mapping.
 This is a performance improvement by eliminating runtime code generation and runtime assembly type scanning.
