@@ -266,12 +266,15 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
             try
             {
+                bool isZeroRead = false;
+                bool isPipeCompleted = false;
                 while (clientSocket.Connected)
                 {
                     Memory<byte> memory = writer.GetMemory(currentMemoryRequest);
                     int bytesRead = await clientStream.ReadAsync(memory, cancelToken);
                     if (bytesRead == 0)
                     {
+                        isZeroRead = true;
                         break;
                     }
                     // Tell the PipeWriter how much was read from the Socket.
@@ -290,6 +293,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
                     if (result.IsCompleted)
                     {
+                        isPipeCompleted = true;
                         break;
                     }
                 }
@@ -297,7 +301,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 // By completing PipeWriter, tell the PipeReader that there's no more data coming.
                 await writer.CompleteAsync();
 
-                Close(state.Client, $"OnReceiveDataAsync state({clientSocket.Connected})");
+                Close(state.Client, $"OnReceiveDataAsync state({clientSocket.Connected};{isZeroRead};{isPipeCompleted};{cancelToken.IsCancellationRequested})");
             }
             catch (IOException ioEx)
             {
