@@ -26,6 +26,12 @@ compositionHost.RegisterRemoteService<IMyClientService>();
 
 // Creates a singleton instance of MyInternalStuffService
 compositionHost.RegisterLocalSharedService<IMyInternalStuffService, MyInternalStuffService>();
+
+
+compositionHost.InitGenericCommunication(tcpMyService);
+
+// bind to tcp port 14341
+tcpMyService.InitService(14341);
 ```
 
 
