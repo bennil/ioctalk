@@ -24,7 +24,7 @@ compositionHost.RegisterLocalSessionService<IMyService, MyServiceImplementation>
 // Creates a instance of source generated IMyClientService proxy implementation per session
 compositionHost.RegisterRemoteService<IMyClientService>();
 
-// Creates a singleton instance of MyInternalStuffService
+// Creates a single instance of MyInternalStuffService (LocalShareContext singleton boundary)
 compositionHost.RegisterLocalSharedService<IMyInternalStuffService, MyInternalStuffService>();
 
 
