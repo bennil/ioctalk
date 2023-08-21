@@ -126,13 +126,31 @@ namespace BSAG.IOCTalk.Serialization.Binary
                 lock (lockObj)
                 {
                     globalStructureMapping[type] = structure;
-                    globalStructureMappingById.Add(structure.TypeId, structure);
+
+                    TryAddGlobalStructureMappingById(structure);
+
                 }
             }
             catch
             {
                 throw;
             }
+        }
+
+        private static void TryAddGlobalStructureMappingById(IValueItem structure)
+        {
+            if (globalStructureMappingById.TryGetValue(structure.TypeId, out var existingStructure) == true)
+            {
+                // ID expected to be unique
+                if ((existingStructure.Type == structure.Type
+                    && existingStructure.Name == structure.Name) == false)
+                {
+                    throw new InvalidOperationException($"TypeId {structure.TypeId} already registered! Existing name: {existingStructure.Name}; type: {existingStructure.Type} - Register name: {structure.Name}; type: {structure.Type}");
+                }
+                // else: already registered
+            }
+            else
+                globalStructureMappingById.Add(structure.TypeId, structure);
         }
 
         /// <summary>
@@ -155,7 +173,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
         {
             lock (lockObj)
             {
-                globalStructureMappingById.Add(structure.TypeId, structure);
+                TryAddGlobalStructureMappingById(structure);
             }
         }
 
