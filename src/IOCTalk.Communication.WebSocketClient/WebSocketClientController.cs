@@ -26,7 +26,7 @@ namespace IOCTalk.Communication.WebSocketClient
         int clientConnectCount = 0;
         int receiveBufferSize = 65536;
         ClientWebSocket? currentSocket;
-        Pipe receivePipe = new Pipe();
+        Pipe receivePipe;
         AbstractWireFraming wireFraming;
         ObjectPool<OutputBuffer> outputBufferObjectPool;
         int isSocketClosedExecuted = 0;
@@ -186,6 +186,19 @@ namespace IOCTalk.Communication.WebSocketClient
             {
                 return false;
             }
+            catch (WebSocketException webSocketEx)
+            {
+                if (webSocketEx.Message != null
+                    && webSocketEx.Message.Contains("Unable to connect"))
+                {
+                    return false;
+                }
+                else
+                {
+                    logger.Error(webSocketEx.ToString());
+                    return false;
+                }
+            }
             catch (Exception ex)
             {
                 logger.Error(ex.ToString());
@@ -196,6 +209,8 @@ namespace IOCTalk.Communication.WebSocketClient
 
         void StarReceivingData(int sessionId)
         {
+            receivePipe = new Pipe();
+
             Task.Run(async () => { await this.OnReceiveDataAsync(sessionId); });
             Task.Run(async () => { await this.ReadReceivePipeAsync(sessionId); });
         }
