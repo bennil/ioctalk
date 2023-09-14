@@ -23,7 +23,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
     public class PersistentClientCommunicationHost : IGenericCommunicationService
     {
         private IGenericCommunicationService underlyingCom;
-        private Dictionary<Type, Dictionary<string, PersistentMethod>> persistentMethods = new Dictionary<Type, Dictionary<string, PersistentMethod>>();
+        private Dictionary<string, Dictionary<string, PersistentMethod>> persistentMethods = new Dictionary<string, Dictionary<string, PersistentMethod>>();
         private string persistMsgFilePath;
         private FileStream persistMsgFile;
         internal static object syncLock = new object();
@@ -151,10 +151,10 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         public PersistentMethod RegisterPersistentMethod(Type interfaceType, string methodName)
         {
             Dictionary<string, PersistentMethod> methods;
-            if (!persistentMethods.TryGetValue(interfaceType, out methods))
+            if (!persistentMethods.TryGetValue(interfaceType.FullName, out methods))
             {
                 methods = new Dictionary<string, PersistentMethod>();
-                persistentMethods.Add(interfaceType, methods);
+                persistentMethods.Add(interfaceType.FullName, methods);
             }
 
             var result = new PersistentMethod(interfaceType, methodName);
@@ -843,7 +843,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                             // check transaction
                             PersistentMethod persistMethod = null;
                             bool commitTransactionAfterInvoke = false;
-                            if (persistentMethods.TryGetValue(targetType, out Dictionary<string, PersistentMethod> pMethods)
+                            if (persistentMethods.TryGetValue(targetType.FullName, out Dictionary<string, PersistentMethod> pMethods)
                                 && pMethods.TryGetValue(invokeInfo.InterfaceMethod.Name, out persistMethod)
                                 && persistMethod.Transaction != null)
                             {
@@ -1035,7 +1035,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         private bool TryGetPersistentMethod(Type interfaceType, string methodName, out PersistentMethod pm)
         {
             Dictionary<string, PersistentMethod> methods;
-            if (persistentMethods.TryGetValue(interfaceType, out methods))
+            if (persistentMethods.TryGetValue(interfaceType.FullName, out methods))
             {
                 return methods.TryGetValue(methodName, out pm);
             }
@@ -1049,7 +1049,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         private bool IsPersistentMethod(Type interfaceType, string methodName)
         {
             Dictionary<string, PersistentMethod> methods;
-            if (persistentMethods.TryGetValue(interfaceType, out methods))
+            if (persistentMethods.TryGetValue(interfaceType.FullName, out methods))
             {
                 return methods.ContainsKey(methodName);
             }
