@@ -15,6 +15,7 @@ using System.Threading;
 using Xunit;
 using BSAG.IOCTalk.Test.Common.Service.Implementation;
 using BSAG.IOCTalk.Common.Test.TestObjects;
+using BSAG.IOCTalk.Test.Interface;
 
 namespace BSAG.IOCTalk.Common.Test
 {
@@ -509,6 +510,23 @@ namespace BSAG.IOCTalk.Common.Test
             EnumTestObject deserializedObj = (EnumTestObject)serializer.Deserialize(json, typeof(EnumTestObject), null);
 
             Assert.Equal<MessageType>(testObject.Type, deserializedObj.Type);
+        }
+
+
+        [Fact]
+        public void TestMethodSpecialDerivedEnumSerialization()
+        {
+            JsonObjectSerializer serializer = new JsonObjectSerializer();
+
+            EnumSpecialTestObject testObject = new EnumSpecialTestObject();
+            testObject.ByteEnum = EnumDerrivedFromByte.TestByte1;
+            testObject.ShortEnum = EnumDerrivedFromShort.TestShort2;
+
+            string json = serializer.Serialize(testObject, null);
+            EnumSpecialTestObject deserializedObj = (EnumSpecialTestObject)serializer.Deserialize(json, typeof(EnumSpecialTestObject), null);
+
+            Assert.Equal<EnumDerrivedFromByte>(testObject.ByteEnum, deserializedObj.ByteEnum);
+            Assert.Equal<EnumDerrivedFromShort>(testObject.ShortEnum, deserializedObj.ShortEnum);
         }
 
         [Fact]

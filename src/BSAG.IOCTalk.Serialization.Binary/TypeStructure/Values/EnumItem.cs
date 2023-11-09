@@ -11,14 +11,24 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
 {
     public class EnumItem : AbstractValueItem, ITypePrefix
     {
-        private Type enumType;
-        private uint enumTypeId;
+        Type enumType;
+        uint enumTypeId;
+        Type underlyingEnumType;
+        bool isDefaultUnderlyingType;
+        IValueItem otherUnderlyingTypeEnum;
 
         public EnumItem(string name, Func<object, object> getter, Action<object, object> setter, Type enumType)
                     : base(name, getter, setter, ItemType.Enum)
         {
             this.enumType = enumType;
             this.enumTypeId = CalculateTypeId(enumType);
+
+            this.underlyingEnumType = Enum.GetUnderlyingType(enumType);
+            this.isDefaultUnderlyingType = underlyingEnumType.Equals(typeof(int));
+            if (isDefaultUnderlyingType == false)
+            {
+                otherUnderlyingTypeEnum = ValueItem.CreateValueItem(null, underlyingEnumType, name, getter, setter, null);
+            }
         }
 
         public override uint TypeId
@@ -73,14 +83,34 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             {
                 TypeMetaStructure.SkipTypeMetaInfo(reader);
                 contentType = reader.ReadUInt8();
-
             }
 
-            return NullableRead(reader, () =>
+            if (contentType == ValueItem.UnderlyingTypeId)
             {
-                int intEnumVal = reader.ReadInt32();
-                return Enum.ToObject(enumType, intEnumVal);
-            });
+                uint underylingTypeId = reader.ReadUInt32();
+                if (isDefaultUnderlyingType)
+                {
+                    throw new NotImplementedException($"Support for different underlying enum type casting not yet supported! Underyling type ID: {underylingTypeId}");
+                }
+                else
+                {
+                    if (otherUnderlyingTypeEnum.TypeId != underylingTypeId)
+                        throw new InvalidOperationException($"Unexpected underyling type ID! Expected: {otherUnderlyingTypeEnum.TypeId} {otherUnderlyingTypeEnum.Type}; Received: {underylingTypeId}");
+                }
+            }
+
+            if (isDefaultUnderlyingType)
+            {
+                return NullableRead(reader, () =>
+                {
+                    int intEnumVal = reader.ReadInt32();
+                    return Enum.ToObject(enumType, intEnumVal);
+                });
+            }
+            else
+            {
+                return otherUnderlyingTypeEnum.ReadValue(reader, context);
+            }
         }
 
         public override void WriteValue(IStreamWriter writer, ISerializeContext context, object value)
@@ -94,12 +124,24 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
                 TypeMetaStructure.WriteTypeMetaInfo(writer, this.enumType);
             }
 
-            writer.WriteUInt8(ValueItem.SingleValueIdent);
-
-            NullableWrite(writer, value, () =>
+            if (isDefaultUnderlyingType)
             {
-                writer.WriteInt32((int)value);
-            });
+                writer.WriteUInt8(ValueItem.SingleValueIdent);
+
+                NullableWrite(writer, value, () =>
+                {
+                    writer.WriteInt32((int)value);
+                });
+            }
+            else
+            {
+                // write additional underlying type ID
+                writer.WriteUInt8(ValueItem.UnderlyingTypeId);
+                writer.WriteUInt32(this.otherUnderlyingTypeEnum.TypeId);
+
+
+                otherUnderlyingTypeEnum.WriteValue(writer, context, value);
+            }
         }
     }
 }

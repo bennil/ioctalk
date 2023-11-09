@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BSAG.IOCTalk.Common.Reflection;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,9 +19,11 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         // ----------------------------------------------------------------------------------------
         // StructureEnum fields
         // ----------------------------------------------------------------------------------------
-        private Type enumType;
-        //private IJsonTypeStructure stringEnumSerializer;
-        private IJsonTypeStructure intEnumSerializer;
+        Type enumType;
+        Type underlyingEnumType;
+        bool isDefaultUnderlyingType;
+        IJsonTypeStructure intEnumSerializer;
+        IJsonTypeStructure otherUnderlyingTypeSerializer;
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -35,7 +38,14 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
             : base(key, isArrayItem)
         {
             this.enumType = enumType;
+            this.underlyingEnumType = Enum.GetUnderlyingType(enumType);
             this.intEnumSerializer = new StructureInt(key, isArrayItem);
+
+            this.isDefaultUnderlyingType = underlyingEnumType.Equals(typeof(int));
+            if (isDefaultUnderlyingType == false)
+            {
+                otherUnderlyingTypeSerializer = Structure.DetermineStructure(underlyingEnumType, key, null, isArrayItem);
+            }
         }
 
         // ----------------------------------------------------------------------------------------
@@ -62,13 +72,23 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         /// <param name="context">The context.</param>
         public override void Serialize(StringBuilder sb, object obj, SerializationContext context)
         {
-            if (keyExpected)
+            if (isDefaultUnderlyingType)
             {
-                sb.Append(Structure.QuotationMark);
-                sb.Append(Key);
-                sb.Append(Structure.QuotationColonSeparator);
+                if (keyExpected)
+                {
+                    sb.Append(Structure.QuotationMark);
+                    sb.Append(Key);
+                    sb.Append(Structure.QuotationColonSeparator);
+                }
+
+                sb.Append((int)obj);
             }
-            sb.Append((int)obj);
+            else
+            {
+                object underlyingNumericValueType = Convert.ChangeType(obj, underlyingEnumType);
+                otherUnderlyingTypeSerializer.Serialize(sb, underlyingNumericValueType, context);
+                //sb.Append(underlyingEnumType);
+            }
         }
 
         /// <summary>
@@ -82,22 +102,18 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
         {
             int startValueIndex = currentReadIndex + keyLength;
 
-            //if (char.IsNumber(json[startValueIndex]))     // string compatibility removed because of performance reasons
-            //{
-                // Enum number value
+            // Enum number value expected
+            if (isDefaultUnderlyingType)
+            {
                 int enumNumberValue = (int)intEnumSerializer.Deserialize(json, ref currentReadIndex, context);
                 return Enum.ToObject(enumType, enumNumberValue);
-            //}
-            //else
-            //{
-            //    // String enum representation
-            //    if (stringEnumSerializer == null)
-            //        stringEnumSerializer = Structure.DetermineStructure(typeof(int), this.key, null, this.isArrayItem);
+            }
+            else
+            {
 
-            //    string enumString = (string)stringEnumSerializer.Deserialize(json, ref currentReadIndex, context);
-
-            //    return Enum.Parse(enumType, enumString);
-            //}
+                object otherTypeNumber = otherUnderlyingTypeSerializer.Deserialize(json, ref currentReadIndex, context);
+                return Enum.ToObject(enumType, otherTypeNumber);
+            }
         }
         // ----------------------------------------------------------------------------------------
         #endregion

@@ -19,6 +19,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
         public const byte SingleValueIdent = 3;
         public const byte TypeMetaInfo = 4;
         public const byte HashCodeString = 5;
+        public const byte UnderlyingTypeId = 6;
 
 
         /// <summary>
@@ -125,6 +126,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             else if (type.Equals(typeof(char)))
             {
                 item = new CharItem(name, getter, setter);
+            }
+            else if (type.Equals(typeof(byte)))
+            {
+                item = new ByteItem(name, getter, setter);
             }
             else if (type.Equals(typeof(Guid)))
             {

@@ -16,6 +16,7 @@ using BSAG.IOCTalk.Common.Interface.Reflection;
 using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Composition;
 using BSAG.IOCTalk.Common.Test.TestObjects;
+using BSAG.IOCTalk.Test.Interface;
 
 namespace BSAG.IOCTalk.Serialization.Binary.Test
 {
@@ -628,6 +629,26 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             Assert.Equal<MessageType>(testObject.Type, deserializedObj.Type);
             Assert.Equal<TypeCode>((TypeCode)testObject.InObjectEnum, (TypeCode)deserializedObj.InObjectEnum);
+        }
+
+        [Fact]
+        public void TestMethodSpecialDerivedEnumSerialization()
+        {
+            BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
+
+            EnumSpecialTestObject testObject = new EnumSpecialTestObject();
+            testObject.ByteEnum = EnumDerrivedFromByte.TestByte1;
+            testObject.ShortEnum = EnumDerrivedFromShort.TestShort2;
+
+            var data = serializer.Serialize(testObject, null);
+
+            BinarySerializer.ClearGlobalStructureCache();
+
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            EnumSpecialTestObject deserializedObj = (EnumSpecialTestObject)serializer.Deserialize(data, deserializationContext);
+
+            Assert.Equal<EnumDerrivedFromByte>(testObject.ByteEnum, deserializedObj.ByteEnum);
+            Assert.Equal<EnumDerrivedFromShort>(testObject.ShortEnum, deserializedObj.ShortEnum);
         }
 
         [Fact]
