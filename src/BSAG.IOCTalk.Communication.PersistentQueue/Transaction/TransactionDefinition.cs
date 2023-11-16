@@ -61,7 +61,11 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue.Transaction
         internal void DismissTransaction()
         {
             if (currentTrx != null)
-                CommitTransaction();
+            {
+                currentTrx.ClearSendIndicatorPositions();
+                currentTrx.Dispose();
+                currentTrx = null;
+            }
         }
     }
 }

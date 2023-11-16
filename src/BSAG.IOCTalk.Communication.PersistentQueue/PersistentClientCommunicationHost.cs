@@ -773,7 +773,7 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
         /// <param name="pendFilePath"></param>
         /// <param name="newSession"></param>
         /// <returns>Returns <c>true</c> if no connection lost during resend; otherwise: false</returns>
-        private async Task<bool> ResendFile(string pendFilePath, ISession newSession)
+        public async Task<bool> ResendFile(string pendFilePath, ISession newSession)
         {
             FileStream stream = null;
             List<TransactionDefinition> openReadTransactions = new List<TransactionDefinition>();
@@ -1030,6 +1030,62 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                     }
                 }
             }
+        }
+
+        public async Task ResetSendIndicatorFlags(string pendFilePath)
+        {
+            Logger.Info($"Open pend file: {pendFilePath}");
+
+            var stream = new FileStream(pendFilePath, FileMode.Open, FileAccess.ReadWrite);
+
+            byte[] notSendArr = new byte[] { NotSendByte };
+            int persistentMethodReadCount = 0;
+            do
+            {
+                long indicatorBytePos = stream.Position;
+                byte indicator = (byte)stream.ReadByte();
+                bool alredySent = indicator == AlreadySentByte;
+
+                byte[] lengthBytes = new byte[4];
+                await stream.ReadAsync(lengthBytes, 0, 4).ConfigureAwait(false);
+                int msgLength = BitConverter.ToInt32(lengthBytes, 0);
+                Logger.Debug($"Read message; Indicator position: {indicatorBytePos}; dataLength: {msgLength}");
+
+                byte[] msgBytes = new byte[msgLength];
+                await stream.ReadAsync(msgBytes, 0, msgLength).ConfigureAwait(false);
+
+                //msgBytesPrevious = msgBytes;
+
+                if (!alredySent
+                    && msgLength > 0)
+                {
+                    // unsend
+                }
+                else if (alredySent)
+                {
+                    // Flag message as sent
+                    long endNextPos = stream.Position;
+
+                    Logger.Warn($"Reset send flag on position {endNextPos}");
+                    stream.Position = indicatorBytePos;
+                    await stream.WriteAsync(notSendArr, 0, 1).ConfigureAwait(false);
+                    await stream.FlushAsync().ConfigureAwait(false);
+
+                    stream.Position = endNextPos;
+                }
+                else
+                {
+                    Logger.Warn("Skip zero lenth message");
+                }
+
+                persistentMethodReadCount++;
+            }
+            while (stream.Position < stream.Length);
+
+            // all messages in pending file sent
+            stream.Close();
+            stream.Dispose();
+            stream = null;
         }
 
         private bool TryGetPersistentMethod(Type interfaceType, string methodName, out PersistentMethod pm)

@@ -577,6 +577,29 @@ namespace BSAG.IOCTalk.Common.Test
         //}
 
 
+        //[Fact]
+        //public async Task ResendTempTestTransaction()
+        //{
+        //    PersistentTestCommService dummyCom = new PersistentTestCommService(xUnitLog);
+        //    dummyCom.RaiseConnectionLost = false;
+
+        //    PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
+        //    persistComm.ResendDelay = TimeSpan.Zero;
+        //    persistComm.ResendSuspensionDelay = TimeSpan.Zero;
+        //    persistComm.ResendSuspensionGracePeriod = TimeSpan.Zero;
+
+        //    BSAG.IOCTalk.Common.Session.Session dummySession = new Session.Session(null, 0, "UnitTest Dummy Session");
+
+        //    TalkCompositionHost dummyHost = new TalkCompositionHost("UnitTestDummyHost");
+        //    dummyCom.RegisterContainerHost(dummyHost, null);
+
+        //    string filePath = @"C:\temp\MessageStore-Trx_Upload Doc Trx-20231115_112255_7513.pend";
+        //    //await persistComm.ResendFile(filePath, dummySession);
+        //    await persistComm.ResetSendIndicatorFlags(filePath);
+        //}
+
+
+
         private static void CleanupPeristentDirectory(PersistentClientCommunicationHost persistComm)
         {
             string persistPath = Path.GetFullPath(persistComm.DirectoryPath);
