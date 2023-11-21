@@ -170,11 +170,13 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
             if (context.SpecialTypeResolver != null
                 && !IsSpecializedSubType) // do not recheck specialized sub structure
             {
-                exposedSubInterfaceType = context.SpecialTypeResolver(objectType);
+                var exposedSubInterfaceTypeTemp = context.SpecialTypeResolver(objectType);
 
-                if (exposedSubInterfaceType != null)
+                if (exposedSubInterfaceTypeTemp != null
+                    && type.IsAssignableFrom(exposedSubInterfaceTypeTemp))
                 {
                     // expose specialized sub interface type
+                    exposedSubInterfaceType = exposedSubInterfaceTypeTemp;
                     isSpecialTargetType = true;
                     if (this.typeSerializerCache == null)
                         this.typeSerializerCache = new ConcurrentDictionary<Type, IJsonTypeStructure>();

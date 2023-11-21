@@ -205,6 +205,19 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                 //    //checkedSubInterfaceTypes.Add(collType);
                 //}
 
+                //// if object array determine colleciton item type using unknown type resolver
+                //Type collectionItemType = null;
+                //if (isObject
+                //    && unknownTypeResolver != null)
+                //{
+                //    context.Key = this.key;
+                //    context.ArrayIndex = 0;
+
+                //    collectionItemType = unknownTypeResolver(context);
+
+                //    context.ArrayIndex = null;
+                //}
+
                 IEnumerable collection = (IEnumerable)obj;
 
                 int count = 0;
@@ -221,20 +234,21 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                         if (isObject)
                         {
                             // determine serialize type
-                            Type itemType = item.GetType();
+                            Type targetType = null;
+                            if (unknownTypeResolver != null)
+                            {
+                                context.Key = this.key;
+                                context.ArrayIndex = count;
+
+                                targetType = unknownTypeResolver(context);
+
+                                context.ArrayIndex = null;
+                            }
+                            // use resolved collection type before actual item type
+                            Type itemType = targetType != null ? targetType : item.GetType();
                             IJsonTypeStructure currentObjectStructure;
                             if (!typeSerializerCache.TryGetValue(itemType, out currentObjectStructure))
                             {
-                                Type targetType = null;
-                                if (unknownTypeResolver != null)
-                                {
-                                    context.Key = this.key;
-                                    context.ArrayIndex = count;
-
-                                    targetType = unknownTypeResolver(context);
-
-                                    context.ArrayIndex = null;
-                                }
                                 if (targetType == null)
                                 {
                                     targetType = itemType;

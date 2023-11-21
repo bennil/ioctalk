@@ -73,7 +73,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Interface
 
         bool TryGetDifferentTargetType(Type objectType, out IValueItem targetItem);
 
-        IValueItem RegisterDifferentTargetType(Type objectType, Type defaultInterfaceType, Type diffType);
+        IValueItem RegisterDifferentTargetType(Type objectType, Type defaultInterfaceType, Type diffType, bool cacheDifference);
 
 
         //IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType);

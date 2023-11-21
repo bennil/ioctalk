@@ -330,7 +330,14 @@ namespace BSAG.IOCTalk.Serialization.Binary
 
             if (resultType != null)
             {
-                return context.RegisterDifferentTargetType(sourceType, defaultInterfaceType, resultType);
+                var exposedType = containerHost?.GetExposedSubInterfaceForType(sourceType);
+                if (exposedType != null
+                    && resultType.IsAssignableFrom(exposedType))
+                {
+                    resultType = exposedType;
+                }
+
+                return context.RegisterDifferentTargetType(sourceType, defaultInterfaceType, resultType, exposedType is null);
             }
             else
             {

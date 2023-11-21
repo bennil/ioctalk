@@ -73,7 +73,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
         /// </summary>
         public object ParentParentObject { get; set; }
 
-        
+
         public int ChildLevel { get; set; }
 
 
@@ -97,7 +97,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
         public IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType)
         {
             var result = unknowContextTypeResolver.DetermineSpecialInterfaceType(objectType, defaultInterfaceType, this);
-            
+
             if (result == null)
             {
                 result = DetermineSpecialInterfaceTypeFallback(objectType, defaultInterfaceType);
@@ -115,15 +115,16 @@ namespace BSAG.IOCTalk.Serialization.Binary
                 return result;
             }
 
-            Type diffType = null;
-            // check expose sub type attribute
-            var exposureAttributes = objectType.GetCustomAttributes(typeof(ExposeSubTypeAttribute), false);
-            if (exposureAttributes.Length > 0)
-            {
-                diffType = ((ExposeSubTypeAttribute)exposureAttributes[0]).Type;
-            }
+            // ExposeSubTypeAttribute not supported in binary serialization use RegisterExposedSubInterfaceForType  instead
+            //Type diffType = null;
+            //// check expose sub type attribute
+            //var exposureAttributes = objectType.GetCustomAttributes(typeof(ExposeSubTypeAttribute), false);
+            //if (exposureAttributes.Length > 0)
+            //{
+            //    diffType = ((ExposeSubTypeAttribute)exposureAttributes[0]).Type;
+            //}
 
-            var differentTargetStructure = RegisterDifferentTargetType(objectType, defaultInterfaceType, diffType);
+            var differentTargetStructure = RegisterDifferentTargetType(objectType, defaultInterfaceType, null, true);
             return differentTargetStructure;
 
         }
@@ -163,7 +164,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
         }
 
 
-        public IValueItem RegisterDifferentTargetType(Type objectType, Type defaultInterfaceType, Type diffType)
+        public IValueItem RegisterDifferentTargetType(Type objectType, Type defaultInterfaceType, Type diffType, bool cacheDifference)
         {
             if (diffType != null)
             {
@@ -174,7 +175,9 @@ namespace BSAG.IOCTalk.Serialization.Binary
                     {
                         ((ComplexStructure)differentTargetStructure).CheckDifferentType = false;
                     }
-                    differentTargetTypes[objectType] = differentTargetStructure;
+                    if (cacheDifference)
+                        differentTargetTypes[objectType] = differentTargetStructure;
+
                     return differentTargetStructure;
                 }
                 else
@@ -184,7 +187,9 @@ namespace BSAG.IOCTalk.Serialization.Binary
             }
             else
             {
-                differentTargetTypes[objectType] = null;
+                if (cacheDifference)
+                    differentTargetTypes[objectType] = null;
+
                 return null;
             }
         }

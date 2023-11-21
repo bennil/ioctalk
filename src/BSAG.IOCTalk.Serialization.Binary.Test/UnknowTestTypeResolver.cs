@@ -47,6 +47,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
         public IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType, ISerializeContext ctx)
         {
+            // fake expose sub type registration
+            if (objectType.Equals(typeof(TestInterfaceImpl1)))
+                return ctx.RegisterDifferentTargetType(objectType, defaultInterfaceType, typeof(ITestInterfaceBase), false);
+
             return null;
         }
 
