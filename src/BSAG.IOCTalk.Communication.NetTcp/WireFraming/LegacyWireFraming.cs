@@ -88,7 +88,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
                     Logger?.Error($"Max message size threshold of {MaxMessageSize} bytes exeeded! Discard message!!! Received message length: {msgLength}");
                     buffer = buffer.Slice(buffer.End);  // consume invalid data to clear buffer
                 }
-                else if (messagePayload.Length >= msgLength)
+                else if (messagePayload.Length >= msgLength + 5)
                 {
                     messagePayload = messagePayload.Slice(5);   // skip msg length + control byte
                     messagePayload = messagePayload.Slice(messagePayload.Start, msgLength);
@@ -102,6 +102,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
                 else
                 {
                     // buffer does not contain complete message yet
+                    //Logger?.Debug($"Incomplete network read; Expected length: {msgLength};  Rcv payload length: {messagePayload.Length} (+ 5)");
                     //todo: dead data parts check?
                 }
             }

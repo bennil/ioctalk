@@ -8,6 +8,7 @@ using BSAG.IOCTalk.Communication.Common;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
 using BSAG.IOCTalk.Serialization.Binary;
+using System.Diagnostics;
 
 namespace IOCTalk.StreamAnalyzer.Implementation
 {
@@ -24,6 +25,8 @@ namespace IOCTalk.StreamAnalyzer.Implementation
         #region fields
 
         public const char CharQuotationMark = '\"';
+        public const char CharJsonArrayStart = '[';
+        public const char CharJsonArrayEnd = ']';
         public const string Comma = ",";
         public const char FieldSeparator = '\t';
 
@@ -401,6 +404,50 @@ namespace IOCTalk.StreamAnalyzer.Implementation
             currentSession.LastReceiveRequestId = message.RequestId;
         }
 
+
+        /// <summary>
+        /// Test helper method only !
+        /// </summary>
+        /// <param name="streamSessions"></param>
+        public void ExtractSessionsFrom(IList<StreamSession> streamSessions)
+        {
+            List<StreamSession> filteredSessions = new List<StreamSession>();
+            for (int sessionIndex = 0; sessionIndex < streamSessions.Count; sessionIndex++)
+            {
+                var session = streamSessions[sessionIndex];
+
+                if (session.SessionInfo.Contains("<ip>"))
+                {
+                    if (session.SessionInfo.Contains("<SessionName>"))
+                    {
+                        filteredSessions.Add(session);
+                    }
+                }
+            }
+
+            HashSet<string> deviceIds = new HashSet<string>();
+            foreach (var s in filteredSessions)
+            {
+                var firstCall = s.IncomingSyncCalls.FirstOrDefault();
+
+                if (firstCall.Value != null
+                    && firstCall.Value.Request != null)
+                {
+                    if (firstCall.Value.Request.Name == "<RequestMethodName>")
+                    {
+                        // collect data
+                        //var valueIdStr = GetJsonSimpleStringValue(firstCall.Value.Request.Payload.ToString(), "ValueId");
+                        //deviceIds.Add(valueIdStr);
+                    }
+                }
+            }
+
+            foreach (var item in deviceIds)
+            {
+                Debug.WriteLine(item);
+            }
+        }
+
         private const string AllSessionsTag = "<All Sessions>";
 
         public void MergeSessions(IList<StreamSession> streamSessions)
@@ -509,6 +556,8 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                 message.RequestId = long.Parse(GetJsonSimpleStringValue(textMsg, "RequestId"));
                 message.Name = GetJsonSimpleStringValue(textMsg, "Name");
                 message.Target = GetJsonSimpleStringValue(textMsg, "Target");
+
+                message.Payload = GetJsonSimpleStringValue(textMsg, "Payload");
             }
 
             return message;
@@ -530,22 +579,31 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                 return null;
             }
 
-            if (json[startIndex] == CharQuotationMark)
+            char startChar = json[startIndex];
+            if (startChar == CharQuotationMark)
             {
                 startIndex++;
 
                 // value ends with quotation mark
                 endIndex = json.IndexOf(CharQuotationMark, startIndex);
             }
+            else if (json[startIndex] == CharJsonArrayStart)
+            {
+                // json start array
+                endIndex = json.IndexOf(CharJsonArrayEnd, startIndex);
+            }
             else
             {
                 // value ends with comma
                 endIndex = json.IndexOf(Comma, startIndex);
+            }
+
+            if (endIndex == -1)
+            {
+                endIndex = json.IndexOf('}', startIndex);
 
                 if (endIndex == -1)
-                {
-                    endIndex = json.IndexOf('}', startIndex);
-                }
+                    endIndex = json.Length - 1;
             }
 
             return json.Substring(startIndex, endIndex - startIndex);

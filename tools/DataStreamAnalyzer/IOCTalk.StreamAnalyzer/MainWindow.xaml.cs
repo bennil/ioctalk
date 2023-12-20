@@ -299,5 +299,10 @@ namespace IOCTalk.StreamAnalyzer
                 }));
             }
         }
+
+        private void btntemp_Click(object sender, RoutedEventArgs e)
+        {
+            analyzer.ExtractSessionsFrom(streamSessions);
+        }
     }
 }
