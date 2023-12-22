@@ -11,6 +11,7 @@ using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Serialization.Binary.Utils;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values.Tolerant;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
 {
@@ -509,9 +510,20 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                     context.ParentParentObject = oldParentObj;
                     context.ChildLevel++;
 
+                    bool containsPropertyFilter = context.Serializer.SerializeItemFilter != null;
+
                     for (int itemIndex = 0; itemIndex < items.Count; itemIndex++)
                     {
                         var item = items[itemIndex];
+
+                        if (containsPropertyFilter)
+                        {
+                            if (context.Serializer.SerializeItemFilter(item) == false)
+                            {
+                                // filter out property
+                                continue;
+                            }
+                        }
 
                         var itemValue = item.ReadValue(reader, context);
                         item.SetItemValue(newObject, itemValue);

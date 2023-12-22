@@ -81,6 +81,10 @@ namespace IOCTalk.StreamAnalyzer.Implementation
         /// <value>The flow rates.</value>
         public List<FlowRate> FlowRates { get; private set; }
 
+        public long TotalPayloadByteCount { get; set; }
+
+        public double TotalPayloadMegabytes => (TotalPayloadByteCount / 1024d) / 1024d;
+
         /// <summary>
         /// Gets or sets the pending flow rate.
         /// </summary>

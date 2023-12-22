@@ -9,6 +9,7 @@ using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
 using BSAG.IOCTalk.Serialization.Binary;
 using System.Diagnostics;
+using BSAG.IOCTalk.Serialization.Binary.TypeStructure.Interface;
 
 namespace IOCTalk.StreamAnalyzer.Implementation
 {
@@ -134,7 +135,8 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                     }
                                 }
 
-                                IGenericMessage message = ParseMessage(dataPart, currentSession.Format, currentSession);
+                                int dataLength;
+                                IGenericMessage message = ParseMessage(dataPart, currentSession.Format, currentSession, out dataLength);
 
                                 // Flow rate
                                 if (currentSession.PendingFlowRate == null)
@@ -155,7 +157,8 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                 }
                                 var pendFlowRate = currentSession.PendingFlowRate;
                                 pendFlowRate.TotalCallCount++;
-                                pendFlowRate.PayloadByteCount += dataPart.Length;
+                                pendFlowRate.PayloadByteCount += dataLength;
+                                currentSession.TotalPayloadByteCount += dataLength;
 
                                 // round trip determination
                                 MethodInvokeRoundtrip methodInvokeReq = null;
@@ -535,7 +538,8 @@ namespace IOCTalk.StreamAnalyzer.Implementation
             return true;
         }
 
-        private static IGenericMessage ParseMessage(string textMsg, RawMessageFormat format, StreamSession session)
+
+        private static IGenericMessage ParseMessage(string textMsg, RawMessageFormat format, StreamSession session, out int dataLength)
         {
             IGenericMessage message;
             if (format == RawMessageFormat.Binary)
@@ -543,9 +547,20 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                 byte[] binaryData = Convert.FromBase64String(textMsg);
 
                 if (binarySerializer == null)
+                {
                     binarySerializer = new BinaryMessageSerializer();
+                    binarySerializer.Serializer.SerializeItemFilter = (IValueItem item) =>
+                    {
+                        // functional types not present > skip payload deserialize
+                        if (item.Name == "Payload")
+                            return false;
+                        else
+                            return true;
+                    };
+                }
 
                 message = binarySerializer.DeserializeFromBytes(binaryData, binaryData.Length, null, session.SessionId);
+                dataLength = binaryData.Length;
             }
             else
             {
@@ -558,6 +573,7 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                 message.Target = GetJsonSimpleStringValue(textMsg, "Target");
 
                 message.Payload = GetJsonSimpleStringValue(textMsg, "Payload");
+                dataLength = textMsg.Length;
             }
 
             return message;

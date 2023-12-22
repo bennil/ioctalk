@@ -85,6 +85,27 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                     {
                         throw new NotImplementedException("More than one generic arguments is not supported yet!");
                     }
+
+                    if (name is null)
+                    {
+                        // typeId contains Version and PublicToken because of default generic Type.FullName e.g.: System.Collections.Generic.IEnumerable`1[[System.Int32, System.Private.CoreLib, Version=7.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+                        // remove additional generic argument information to keep typeId consitent between application boundaries
+                        int versionIndex = type.FullName.IndexOf(", Version=");
+                        if (versionIndex > 0)
+                        {
+                            string cleanGenericName = type.FullName.Substring(0, versionIndex);
+                            if (type.FullName.EndsWith("]]"))
+                            {
+                                cleanGenericName += "]]";
+                            }
+
+                            if (cleanGenericName.Contains(", Version="))
+                                throw new InvalidOperationException($"Only one generic argument expected on collections! Clean generic name: {cleanGenericName}; Type fullname: {type.FullName}");
+
+                            this.Name = cleanGenericName;
+                            this.typeId = CalculateTypeId();        // reset typeId
+                        }
+                    }
                 }
                 else
                 {

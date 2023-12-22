@@ -48,6 +48,12 @@ namespace BSAG.IOCTalk.Serialization.Binary
 
         public IUnknowContextTypeResolver UnknowContextTypeResolver => unknowTypeResolver;
 
+        /// <summary>
+        /// Get or set the serialize property item filter
+        /// </summary>
+        public Func<IValueItem, bool> SerializeItemFilter { get; set; }
+
+
         private static void RegisterValueTypeMappings()
         {
             RegisterTypeMapping(typeof(bool), new BoolItem(null, null, null));

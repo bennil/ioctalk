@@ -32,6 +32,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
 
         IMyRemoteAsyncAwaitTestService currentAsyncAwaitTestServiceClientProxyInstance;
+        ISpecialCasesService specialCasesServiceProxy;
 
 
         [Fact]
@@ -58,6 +59,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostService.RegisterLocalSharedService<ILogger>(log);
 
                 compositionHostService.RegisterLocalSharedService<IMyRemoteAsyncAwaitTestService, MyRemoteAsyncTestService2>();
+
 
 
                 tcpBackendService = new BSAG.IOCTalk.Communication.NetTcp.TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
@@ -161,6 +163,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostService.RegisterLocalSharedService<ILogger>(log);
 
                 compositionHostService.RegisterLocalSharedService<IStressTestService>();
+                compositionHostService.RegisterLocalSessionService<ISpecialCasesService, SpecialCasesService>();
 
 
                 tcpBackendService = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
@@ -180,6 +183,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
                 compositionHostClient.RegisterRemoteService<IStressTestService>();
                 compositionHostClient.RegisterAsyncVoidMethod<IStressTestService>(nameof(IStressTestService.AsyncCallTest));
+
+                compositionHostClient.RegisterRemoteService<ISpecialCasesService>();
 
                 tcpClient = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
 
@@ -220,6 +225,26 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             Assert.Equal(number, localService.CurrentNumber);
 
+            // Enumerable check
+            var listEnumerable = specialCasesServiceProxy.GetEnumerableIntListValues();
+            int count = 1;
+            foreach (var intItem in listEnumerable)
+            {
+                Assert.Equal(count, intItem);
+                count++;
+            }
+            Assert.Equal(4, count);
+
+            var arrayEnumerable = specialCasesServiceProxy.GetEnumerableIntArrayValues();
+            count = 1;
+            foreach (var intItem in arrayEnumerable)
+            {
+                Assert.Equal(count, intItem);
+                count++;
+            }
+            Assert.Equal(4, count);
+
+
             tcpClient.Shutdown();
             tcpBackendService.Shutdown();
         }
@@ -227,6 +252,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
         private void OnCompositionHostClient_SessionCreated_StressTest(object contractSession, SessionEventArgs e)
         {
             currentStressTestServiceClientProxyInstance = e.SessionContract.GetSessionInstance<IStressTestService>();
+            specialCasesServiceProxy = e.SessionContract.GetSessionInstance<ISpecialCasesService>();
             onConnectionEstablished.SetResult(true);
         }
 

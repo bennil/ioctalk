@@ -20,6 +20,8 @@ namespace BSAG.IOCTalk.Test.TestObjects
         
         public List<int> TestIntList { get; set; }
 
+        public IEnumerable<int> EnumerableIntList { get; set; }
+
         bool TestBool { get; set; }
 
         public SubObject SubObject { get; set; }

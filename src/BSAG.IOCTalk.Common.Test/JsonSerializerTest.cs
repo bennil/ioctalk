@@ -32,6 +32,7 @@ namespace BSAG.IOCTalk.Common.Test
             testObj.Description = "Test objekt x";
             testObj.SubObject = new SubObject() { SubId = 2, SubDescr = "Sub Description" };
             testObj.TestIntList = new List<int>(new int[] { 2, 6, 3, 8, 2 });
+            testObj.EnumerableIntList = testObj.TestIntList;
             testObj.ObjectArray = new object[] { 4, "Test String with \"escape\" chars ", 263.12, new TimeSpan(2, 2, 2), null, new SubObject() { SubId = 3, SubDescr = "Array Object" } };
             testObj.BooleanValue = true;
             testObj.NullableBooleanValue = null;
@@ -64,6 +65,14 @@ namespace BSAG.IOCTalk.Common.Test
             {
                 Assert.Equal<int>(testObj.TestIntList[i], deserializedTestObj.TestIntList[i]);
             }
+
+            int index = 0;
+            foreach (var intItem in deserializedTestObj.EnumerableIntList)
+            {
+                Assert.Equal<int>(testObj.TestIntList[index], intItem);
+                index++;
+            }
+            Assert.Equal(testObj.TestIntList.Count, index);
 
             // check object array
             for (int i = 0; i < testObj.ObjectArray.Length; i++)
