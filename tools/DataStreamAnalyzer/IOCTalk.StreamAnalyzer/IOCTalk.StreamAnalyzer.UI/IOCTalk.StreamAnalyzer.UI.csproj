@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>    
+    <UseWPF>true</UseWPF>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+  </PropertyGroup>
+  <ItemGroup>
+    <AppDesigner Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ioctalk-codegen-binary-json-tcp" Version="2.3.59" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\IOCTalk.StreamAnalyzer.Implementation\IOCTalk.StreamAnalyzer.Implementation.csproj" />
+  </ItemGroup>
+</Project>
