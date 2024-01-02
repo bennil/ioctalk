@@ -12,5 +12,8 @@ namespace BSAG.IOCTalk.Test.Interface.Expose
 
 
         IExposeTestOther TestExposeTypeOther(IExposeTestOther other);
+
+
+        IReadOnlyList<IExposeTestBase> GetExposedCollection();
     }
 }

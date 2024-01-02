@@ -328,15 +328,24 @@ namespace BSAG.IOCTalk.Serialization.Binary
                 }
             }
 
+            var exposedType = containerHost?.GetExposedSubInterfaceForType(sourceType);
+            if (exposedType != null)
+            {
+                if (resultType != null)
+                {
+                    // check if exposed special type is in interface hierarchy of expected result interface
+                    if (resultType.IsAssignableFrom(exposedType) == true)
+                    {
+                        resultType = exposedType;
+                    }
+                    // else: sourceType class implements result and exposed interface but both interfaces have no derivation connection > do not expose special interface in this case
+                }
+                else
+                    resultType = exposedType;
+            }
+
             if (resultType != null)
             {
-                var exposedType = containerHost?.GetExposedSubInterfaceForType(sourceType);
-                if (exposedType != null
-                    && resultType.IsAssignableFrom(exposedType))
-                {
-                    resultType = exposedType;
-                }
-
                 return context.RegisterDifferentTargetType(sourceType, defaultInterfaceType, resultType, exposedType is null);
             }
             else

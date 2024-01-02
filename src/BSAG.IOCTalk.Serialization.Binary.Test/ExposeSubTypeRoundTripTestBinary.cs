@@ -111,6 +111,15 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             Assert.Equal(typeof(ExposeTestBase), result2.GetType());
             Assert.Equal(otherSend.OtherTypeProperty, result2.OtherTypeProperty);
 
+            // collection test
+            var items = currentServiceClientProxyInstance.GetExposedCollection();
+
+            // expect 1 = base
+            Assert.Equal(typeof(ExposeTestBase), items[0].GetType());
+            // expect 2 = level 1
+            Assert.Equal(typeof(ExposeTestLevel1), items[1].GetType());
+
+
             tcpClient.Shutdown();
             tcpBackendService.Shutdown();
         }

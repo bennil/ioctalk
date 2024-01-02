@@ -28,5 +28,16 @@ namespace BSAG.IOCTalk.Test.Common.Service.Expose
 
             return new ExposeTestBase { OtherTypeProperty = other.OtherTypeProperty };
         }
+
+
+        public IReadOnlyList<IExposeTestBase> GetExposedCollection()
+        {
+            List<IExposeTestBase> list = new List<IExposeTestBase>();
+
+            list.Add(new ExposeTestBase());
+            list.Add(new ExposeTestLevel1());
+
+            return list.AsReadOnly();
+        }
     }
 }
