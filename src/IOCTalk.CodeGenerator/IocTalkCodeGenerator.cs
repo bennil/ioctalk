@@ -505,6 +505,13 @@ namespace IOCTalk.CodeGenerator
                 {
                     var dtoInterfType = allDtoTypes[dtoIndex];
 
+                    // check for nested interfaces
+                    foreach (var member in dtoInterfType.GetMembers())
+                    {
+                        if (member is IPropertySymbol pi)
+                            CheckForNestedDtoTypes(pi, allDtoTypes, $"member of {dtoInterfType}");
+                    }
+
                     if (allInterfaceImplementations != null
                         && allInterfaceImplementations.TryGetValue(dtoInterfType, out ITypeSymbol actualImplType))
                     {
@@ -519,12 +526,7 @@ namespace IOCTalk.CodeGenerator
 //                        LogToFileHelper.WriteLog($"Use custom map: {dtoInterfType} = {actualImplType}");
 //#endif
 
-                        // skip but check for nested interfaces
-                        foreach (var member in dtoInterfType.GetMembers())
-                        {
-                            if (member is IPropertySymbol pi)
-                                CheckForNestedDtoTypes(pi, allDtoTypes, $"member of {dtoInterfType}");
-                        }
+                        // skip dto implmentation
                         continue;
                     }
 
@@ -762,7 +764,7 @@ namespace IOCTalk.CodeGenerator
 
                 string methodBodyIntention = "\t\t";
                 string methodLineIntention = "\t\t\t";
-                              
+
 
                 StringBuilder sbInvokeInfoMember = new StringBuilder();
                 sbInvokeInfoMember.AppendLine();
@@ -1174,6 +1176,13 @@ namespace IOCTalk.CodeGenerator
                             }
                         }
                     }
+#if DEBUG
+                    else
+                    {
+                        LogToFileHelper.WriteLog($"Skip recursive member check: {member}; Interface type: {interfaceType}");
+                    }
+#endif
+
                 }
 
                 foreach (var baseInterface in interfaceType.Interfaces)
@@ -1243,13 +1252,19 @@ namespace IOCTalk.CodeGenerator
 
         private static void CheckForNestedDtoTypes(IPropertySymbol pi, List<ITypeSymbol> dtoTypes, string parentInfo)
         {
-            if (pi.Type.IsAbstract
+            if ((pi.Type.IsAbstract || pi.Type.Kind == SymbolKind.ArrayType)
                 && pi.Type.IsReferenceType
                 && pi.GetMethod != null
                 && pi.SetMethod != null)    // only if get/set property (DTO)
             {
                 CheckAndAddDtoType(dtoTypes, pi.Type, parentInfo);
             }
+#if DEBUG
+            else
+            {
+                LogToFileHelper.WriteLog($"Ignore property check: {pi}; IsAbstract: {pi.Type.IsAbstract}; IsReferenceType: {pi.Type.IsReferenceType}; Get: {pi.GetMethod != null}; Set: {pi.SetMethod != null}; Parent: {parentInfo}");
+            }
+#endif
         }
 
         private static string GetSourceCodeTypeName(ITypeSymbol type)
