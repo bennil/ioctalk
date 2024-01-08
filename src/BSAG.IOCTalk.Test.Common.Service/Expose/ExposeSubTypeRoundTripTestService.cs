@@ -51,5 +51,10 @@ namespace BSAG.IOCTalk.Test.Common.Service.Expose
                     Level1Property = null
                 };
         }
+
+        public IExposeTest2Container ExposeDerivedInterfaceContainerTest(IExposeTest2Container input)
+        {
+            return new ExposeTest2Container { NestedItem = ExposeDerivedInterfaceTest(input.NestedItem) };
+        }
     }
 }

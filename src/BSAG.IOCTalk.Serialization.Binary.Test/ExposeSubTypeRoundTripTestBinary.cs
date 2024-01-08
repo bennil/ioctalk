@@ -138,6 +138,14 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             var level1Input = new ExposeTest2Level1 { BaseProperty = 5, Level1Property = "level1" };
             var test2Result2 = (ExposeTest2Level1)currentServiceClientProxyInstance.ExposeDerivedInterfaceTest(level1Input);
             Assert.Equal(level1Input.Level1Property, test2Result2.Level1Property);
+            
+            // nested
+            var test2containerResult1 = currentServiceClientProxyInstance.ExposeDerivedInterfaceContainerTest(new ExposeTest2Container { NestedItem = baseInput });
+            Assert.Equal(typeof(ExposeTest2Level1), test2containerResult1.NestedItem.GetType());
+            Assert.Null(((ExposeTest2Level1)test2containerResult1.NestedItem).Level1Property);
+
+            var test2containerResult2 = currentServiceClientProxyInstance.ExposeDerivedInterfaceContainerTest(new ExposeTest2Container { NestedItem = level1Input });
+            Assert.Equal(level1Input.Level1Property, ((ExposeTest2Level1)test2containerResult2.NestedItem).Level1Property);
 
 
             tcpClient.Shutdown();

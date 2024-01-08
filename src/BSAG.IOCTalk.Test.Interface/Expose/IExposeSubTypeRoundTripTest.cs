@@ -18,5 +18,6 @@ namespace BSAG.IOCTalk.Test.Interface.Expose
 
 
         IExposeTest2Base ExposeDerivedInterfaceTest(IExposeTest2Base input);
+        IExposeTest2Container ExposeDerivedInterfaceContainerTest(IExposeTest2Container input);
     }
 }
