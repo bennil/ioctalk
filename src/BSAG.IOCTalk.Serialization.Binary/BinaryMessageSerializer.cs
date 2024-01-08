@@ -328,9 +328,11 @@ namespace BSAG.IOCTalk.Serialization.Binary
                 }
             }
 
+            // first check exposed interface by souce type  (prio 1 - by concrete source class)
             var exposedType = containerHost?.GetExposedSubInterfaceForType(sourceType);
             Type exposedInterface = null;
-            if (exposedType != null)
+            if (exposedType != null
+                && (defaultInterfaceType.IsAssignableFrom(exposedType) || defaultInterfaceType.Equals(typeof(object))))     // check if in same inheritance
             {
                 if (resultType != null)
                 {
@@ -346,16 +348,17 @@ namespace BSAG.IOCTalk.Serialization.Binary
             }
             else
             {
-                // check if derived result interface is exposed
+                // check if derived result interface is exposed (prio 2 - by interface inheritance)
                 var checkExposeType = resultType is null ? defaultInterfaceType : resultType;
                 if (checkExposeType.IsInterface)
                 {
                     exposedInterface = containerHost?.GetExposedSubInterfaceForType(checkExposeType);
-                    if (exposedInterface != null)
+                    if (exposedInterface != null
+                        && (defaultInterfaceType.IsAssignableFrom(exposedInterface) || defaultInterfaceType.Equals(typeof(object))))     // check if in same inheritance
                     {
                         // check if exposed special type is in interface hierarchy of expected result interface
                         if (checkExposeType.IsAssignableFrom(exposedInterface) == true
-                            && exposedInterface.IsAssignableFrom(sourceType))
+                            && exposedInterface.IsAssignableFrom(sourceType) == true)
                         {
                             resultType = exposedInterface;
                         }
