@@ -61,6 +61,11 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostService.RegisterExposedSubInterfaceForType<IExposeTestLevel1, ExposeTestLevel1>();
                 compositionHostService.RegisterExposedSubInterfaceForType<IExposeTestOther, ExposeTestBase>();
 
+                // Test2: interface > interface expose
+                compositionHostService.RegisterExposedSubInterfaceForType<IExposeTest2Level1, IExposeTest2Base>();
+                compositionHostService.MapInterfaceImplementationType<IExposeTest2Base, ExposeTest2Base>();
+                compositionHostService.MapInterfaceImplementationType<IExposeTest2Level1, ExposeTest2Level1>();
+
                 tcpBackendService = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
 
                 compositionHostService.InitGenericCommunication(tcpBackendService);
@@ -83,6 +88,11 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostClient.RegisterRemoteService<IExposeSubTypeRoundTripTest>();
                 compositionHostClient.RegisterExposedSubInterfaceForType<IExposeTestLevel1, ExposeTestLevel1>();
                 compositionHostClient.RegisterExposedSubInterfaceForType<IExposeTestOther, ExposeTestBase>();
+
+                // Test2: interface > interface expose
+                compositionHostClient.RegisterExposedSubInterfaceForType<IExposeTest2Level1, IExposeTest2Base>();
+                compositionHostClient.MapInterfaceImplementationType<IExposeTest2Base, ExposeTest2Base>();
+                compositionHostClient.MapInterfaceImplementationType<IExposeTest2Level1, ExposeTest2Level1>();
 
                 tcpClient = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
                 tcpClient.LogDataStream = true;
@@ -118,6 +128,16 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             Assert.Equal(typeof(ExposeTestBase), items[0].GetType());
             // expect 2 = level 1
             Assert.Equal(typeof(ExposeTestLevel1), items[1].GetType());
+
+
+            // check exposed derived interface
+            var baseInput = new ExposeTest2Base { BaseProperty = 5 };
+            var test2Result1 = (ExposeTest2Level1)currentServiceClientProxyInstance.ExposeDerivedInterfaceTest(baseInput);
+            Assert.Null(test2Result1.Level1Property);
+
+            var level1Input = new ExposeTest2Level1 { BaseProperty = 5, Level1Property = "level1" };
+            var test2Result2 = (ExposeTest2Level1)currentServiceClientProxyInstance.ExposeDerivedInterfaceTest(level1Input);
+            Assert.Equal(level1Input.Level1Property, test2Result2.Level1Property);
 
 
             tcpClient.Shutdown();

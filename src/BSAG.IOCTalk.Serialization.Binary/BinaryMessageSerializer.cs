@@ -315,7 +315,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             {
                 if (sourceType.Equals(typeof(Communication.Common.GenericMessage)))
                 {
-                    resultType = typeof(IGenericMessage);
+                    return null;    // no special interface
                 }
                 else if (context.ParentObject is IGenericMessage message)
                 {
@@ -329,6 +329,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             }
 
             var exposedType = containerHost?.GetExposedSubInterfaceForType(sourceType);
+            Type exposedInterface = null;
             if (exposedType != null)
             {
                 if (resultType != null)
@@ -343,10 +344,25 @@ namespace BSAG.IOCTalk.Serialization.Binary
                 else
                     resultType = exposedType;
             }
+            else if (resultType != null && resultType.IsInterface)
+            {
+                // check if derived result interface is exposed
+                exposedInterface = containerHost?.GetExposedSubInterfaceForType(resultType);
+                if (exposedInterface != null)
+                {
+                    // check if exposed special type is in interface hierarchy of expected result interface
+                    if (resultType.IsAssignableFrom(exposedInterface) == true
+                        && exposedInterface.IsAssignableFrom(sourceType))
+                    {
+                        resultType = exposedInterface;
+                    }
+                }
+            }
 
             if (resultType != null)
             {
-                return context.RegisterDifferentTargetType(sourceType, defaultInterfaceType, resultType, exposedType is null);
+                bool cacheDifference = exposedType is null && exposedInterface is null;
+                return context.RegisterDifferentTargetType(sourceType, defaultInterfaceType, resultType, cacheDifference);
             }
             else
             {

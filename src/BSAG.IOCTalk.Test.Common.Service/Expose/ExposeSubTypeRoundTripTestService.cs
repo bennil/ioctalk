@@ -15,7 +15,7 @@ namespace BSAG.IOCTalk.Test.Common.Service.Expose
                 throw new InvalidOperationException($"Unexpected concrete type received: {item.GetType().FullName}; Expected: {expectedType}");
             }
 
-            return new ExposeTestLevel1 {  TestId = item.TestId, TestLevel1 = "exposed" };
+            return new ExposeTestLevel1 { TestId = item.TestId, TestLevel1 = "exposed" };
         }
 
         public IExposeTestOther TestExposeTypeOther(IExposeTestOther other)
@@ -38,6 +38,18 @@ namespace BSAG.IOCTalk.Test.Common.Service.Expose
             list.Add(new ExposeTestLevel1());
 
             return list.AsReadOnly();
+        }
+
+        public IExposeTest2Base ExposeDerivedInterfaceTest(IExposeTest2Base input)
+        {
+            if (input is IExposeTest2Level1 level1)
+                return level1;
+            else
+                return new ExposeTest2Level1
+                {
+                    BaseProperty = input.BaseProperty,
+                    Level1Property = null
+                };
         }
     }
 }
