@@ -224,6 +224,17 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                                 {
                                                     currentSession.OutgoingSyncCalls.Remove(message.RequestId);
                                                 }
+
+                                                if (methodInvokeResp.RoundTripTime.HasValue)
+                                                {
+                                                    if (currentSession.OutgoingSyncCallMinDuration is null || currentSession.OutgoingSyncCallMinDuration > methodInvokeResp.RoundTripTime)
+                                                        currentSession.OutgoingSyncCallMinDuration = methodInvokeResp.RoundTripTime;
+
+                                                    if (currentSession.OutgoingSyncCallMaxDuration is null || currentSession.OutgoingSyncCallMaxDuration < methodInvokeResp.RoundTripTime)
+                                                        currentSession.OutgoingSyncCallMaxDuration = methodInvokeResp.RoundTripTime;
+
+                                                    currentSession.OutgoingSyncCallTotalDuration += methodInvokeResp.RoundTripTime.Value;
+                                                }
                                             }
                                             else
                                             {

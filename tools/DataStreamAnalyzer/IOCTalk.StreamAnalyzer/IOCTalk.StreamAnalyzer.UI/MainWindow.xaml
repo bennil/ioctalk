@@ -34,7 +34,7 @@
 
         <TabControl Grid.Row="3" x:Name="TabMainControl" IsEnabled="False">
             <TabItem Header="Statistic">
-                <UniformGrid Columns="2" VerticalAlignment="Top" HorizontalAlignment="Left" MaxWidth="500" Margin="10">
+                <UniformGrid Columns="2" VerticalAlignment="Top" HorizontalAlignment="Left" MaxWidth="800" Margin="10">
 
                     <TextBlock>Session:</TextBlock>
                     <TextBlock Text="{Binding Path=SessionInfo, FallbackValue=Select Session}" />
@@ -52,7 +52,7 @@
                     <TextBlock Text="{Binding IncomingSyncCallCount}" />
 
                     <TextBlock>Outgoing synchronous calls:</TextBlock>
-                    <TextBlock Text="{Binding OutgoingSyncCallCount}" />
+                    <TextBlock><TextBlock Text="{Binding OutgoingSyncCallCount}" /> (Min: <TextBlock Text="{Binding OutgoingSyncCallMinDuration}"/>; Max: <TextBlock Text="{Binding OutgoingSyncCallMaxDuration}"/>; Avg: <TextBlock Text="{Binding OutgoingSyncCallAvgDuration}"/>)</TextBlock>
 
                     <TextBlock />
                     <TextBlock />

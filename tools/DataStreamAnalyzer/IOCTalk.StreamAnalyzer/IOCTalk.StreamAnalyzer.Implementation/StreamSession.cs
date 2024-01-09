@@ -108,6 +108,12 @@ namespace IOCTalk.StreamAnalyzer.Implementation
         /// </value>
         public int OutgoingSyncCallCount { get; set; }
 
+        public TimeSpan? OutgoingSyncCallMinDuration { get; set; }
+        public TimeSpan? OutgoingSyncCallMaxDuration { get; set; }
+        public TimeSpan? OutgoingSyncCallAvgDuration => OutgoingSyncCallTotalDuration > TimeSpan.Zero ? OutgoingSyncCallTotalDuration / OutgoingSyncCallCount : null;
+        public TimeSpan OutgoingSyncCallTotalDuration { get; set; } = TimeSpan.Zero;
+
+
         /// <summary>
         /// Gets or sets the incoming async call count.
         /// </summary>

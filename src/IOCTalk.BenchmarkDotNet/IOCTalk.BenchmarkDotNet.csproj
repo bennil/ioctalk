@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<Version>2.3.0</Version>
 	</PropertyGroup>
 
@@ -16,8 +16,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
-		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.2" Condition="'$(OS)' == 'Windows_NT'" />
+		<PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
+		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.12" Condition="'$(OS)' == 'Windows_NT'" />
 	</ItemGroup>
 
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -36,6 +36,7 @@
 		<ProjectReference Include="..\BSAG.IOCTalk.Serialization.Json\BSAG.IOCTalk.Serialization.Json.csproj" />
 		<ProjectReference Include="..\BSAG.IOCTalk.Test.Common.Service\BSAG.IOCTalk.Test.Common.Service.csproj" />
 		<ProjectReference Include="..\BSAG.IOCTalk.Test.Interface\BSAG.IOCTalk.Test.Interface.csproj" />
+		<ProjectReference Include="..\IOCTalk.CodeGenerator\IOCTalk.CodeGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 </Project>
