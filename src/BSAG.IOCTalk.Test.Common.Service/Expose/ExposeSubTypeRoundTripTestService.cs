@@ -56,5 +56,21 @@ namespace BSAG.IOCTalk.Test.Common.Service.Expose
         {
             return new ExposeTest2Container { NestedItem = ExposeDerivedInterfaceTest(input.NestedItem) };
         }
+
+        public IExposeTest3Base[] GetTest3BaseItems()
+        {
+            List<IExposeTest3Base> items = new List<IExposeTest3Base>();
+
+            items.Add(new ExposeTest3Combined { SomeBasicProperty = "basic data1", OtherTypeProperty = "other data1" });
+            items.Add(new ExposeTest3Combined { SomeBasicProperty = "basic data2", OtherTypeProperty = "other data2" });
+            items.Add(new ExposeTest3Combined { SomeBasicProperty = "basic data3", OtherTypeProperty = "other data3" });
+
+            return items.ToArray();
+        }
+
+        public IExposeTest3Other GetTest3OtherItem()
+        {
+            return new ExposeTest3Combined { SomeBasicProperty = "basic data", OtherTypeProperty = "other data expected" };
+        }
     }
 }

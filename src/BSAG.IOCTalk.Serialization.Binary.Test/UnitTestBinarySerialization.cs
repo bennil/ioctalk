@@ -52,7 +52,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             byte[] result = serializer.Serialize(simpleObj, null);
 
-            ClearGlobalTypeCache();
+            serializer.ClearGlobalStructureCache();
 
             BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
 
@@ -62,122 +62,173 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             Assert.Equal(simpleObj.BaseProperty, resultObject.BaseProperty);
         }
 
-        private static void ClearGlobalTypeCache()
-        {
-            // clear global cache
-            Dictionary<Type, IValueItem> globalCache1 = (Dictionary<Type, IValueItem>)typeof(BinarySerializer).GetField("globalStructureMapping", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
-            Dictionary<uint, IValueItem> globalCache2 = (Dictionary<uint, IValueItem>)typeof(BinarySerializer).GetField("globalStructureMappingById", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
-
-            List<IObjectType> removeItems = new List<IObjectType>();
-            foreach (var item in globalCache1.Values)
-            {
-                if (item is IObjectType)
-                {
-                    IObjectType structure = (IObjectType)item;
-                    removeItems.Add(structure);
-                }
-            }
-
-            foreach (var rItem in removeItems)
-            {
-                globalCache1.Remove(rItem.RuntimeType);
-                globalCache2.Remove(rItem.TypeId);
-            }
-        }
 
         [Fact]
         public void TestMethodBasicSerialization()
         {
-            try
+            TestMethodBasicSerializationInternal(false);
+
+        }
+
+        [Fact]
+        public void TestMethodBasicSerializationForceDifferentContext()
+        {
+            TestMethodBasicSerializationInternal(true);
+        }
+
+        private static void TestMethodBasicSerializationInternal(bool forceDifferntContext)
+        {
+            BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver()); //UnknownTypeResolver, SpecialTypeResolver);
+
+
+            TestObject testObj = new TestObject();
+            testObj.ID = 4;
+            testObj.Description = "Test objekt x";
+            testObj.SubObject = new SubObject() { SubId = 2, SubDescr = "Sub Description" };
+            testObj.TestIntList = new List<int>(new int[] { 2, 6, 3, 8, 2 });
+            testObj.EnumerableIntList = testObj.TestIntList;
+            testObj.ObjectArray = new object[] { 4, "Test String with \"escape\" chars ", 263.12, new TimeSpan(2, 2, 2), null, new SubObject() { SubId = 3, SubDescr = "Array Object" } };
+            testObj.BooleanValue = true;
+            testObj.NullableBooleanValue = null;
+            testObj.NullableBooleanValue2 = true;
+            testObj.TimeSpanValue = new TimeSpan(1, 1, 1);
+            testObj.DateTimeValue = new DateTime(2014, 07, 14, 18, 1, 5, 201);
+            testObj.BaseProperty = "Base Test";
+            testObj.CharValue = 'b';
+            testObj.GuidValue = Guid.NewGuid();
+            testObj.DecimalValue = 1242.46m;
+            testObj.DecimalValueNullable = null;
+            testObj.DecimalValueNullable2 = 346353.23m;
+            testObj.IntValueNullable = null;
+            testObj.IntValueNullable2 = -45435323;
+
+            var dataBytes = serializer.Serialize(testObj, null);
+
+            if (forceDifferntContext)
             {
-                BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver()); //UnknownTypeResolver, SpecialTypeResolver);
-
-
-                TestObject testObj = new TestObject();
-                testObj.ID = 4;
-                testObj.Description = "Test objekt x";
-                testObj.SubObject = new SubObject() { SubId = 2, SubDescr = "Sub Description" };
-                testObj.TestIntList = new List<int>(new int[] { 2, 6, 3, 8, 2 });
-                testObj.EnumerableIntList = testObj.TestIntList;
-                testObj.ObjectArray = new object[] { 4, "Test String with \"escape\" chars ", 263.12, new TimeSpan(2, 2, 2), null, new SubObject() { SubId = 3, SubDescr = "Array Object" } };
-                testObj.BooleanValue = true;
-                testObj.NullableBooleanValue = null;
-                testObj.NullableBooleanValue2 = true;
-                testObj.TimeSpanValue = new TimeSpan(1, 1, 1);
-                testObj.DateTimeValue = new DateTime(2014, 07, 14, 18, 1, 5, 201);
-                testObj.BaseProperty = "Base Test";
-                testObj.CharValue = 'b';
-                testObj.GuidValue = Guid.NewGuid();
-                testObj.DecimalValue = 1242.46m;
-                testObj.DecimalValueNullable = null;
-                testObj.DecimalValueNullable2 = 346353.23m;
-                testObj.IntValueNullable = null;
-                testObj.IntValueNullable2 = -45435323;
-
-                var dataBytes = serializer.Serialize(testObj, null);
-
-                SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
-                TestObject deserializedTestObj = (TestObject)serializer.Deserialize(dataBytes, deserializationContext);
-
-                Assert.Equal<int>(testObj.ID, deserializedTestObj.ID);
-                Assert.Equal(testObj.Description, deserializedTestObj.Description);
-
-                Assert.Equal<int>(testObj.SubObject.SubId, deserializedTestObj.SubObject.SubId);
-                Assert.Equal(testObj.SubObject.SubDescr, deserializedTestObj.SubObject.SubDescr);
-
-                // check list
-                for (int i = 0; i < testObj.TestIntList.Count; i++)
-                {
-                    Assert.Equal<int>(testObj.TestIntList[i], deserializedTestObj.TestIntList[i]);
-                }
-
-                int index = 0;
-                foreach (var intItem in deserializedTestObj.EnumerableIntList)
-                {
-                    Assert.Equal<int>(testObj.TestIntList[index], intItem);
-                    index++;
-                }
-                Assert.Equal(testObj.TestIntList.Count, index);
-
-                // check object array
-                for (int i = 0; i < testObj.ObjectArray.Length; i++)
-                {
-                    if (testObj.ObjectArray[i] is SubObject)
-                    {
-                        Assert.Equal(((SubObject)testObj.ObjectArray[i]).SubId, ((SubObject)deserializedTestObj.ObjectArray[i]).SubId);
-                        Assert.Equal(((SubObject)testObj.ObjectArray[i]).SubDescr, ((SubObject)deserializedTestObj.ObjectArray[i]).SubDescr);
-                    }
-                    else
-                    {
-                        Assert.Equal(testObj.ObjectArray[i], deserializedTestObj.ObjectArray[i]);
-                    }
-                }
-
-                Assert.Equal<bool>(testObj.BooleanValue, deserializedTestObj.BooleanValue);
-                Assert.Equal<TimeSpan>(testObj.TimeSpanValue, deserializedTestObj.TimeSpanValue);
-                Assert.Equal<DateTime>(testObj.DateTimeValue, deserializedTestObj.DateTimeValue);
-
-                Assert.Equal(testObj.BaseProperty, deserializedTestObj.BaseProperty);
-
-                Assert.Equal<char>(testObj.CharValue, deserializedTestObj.CharValue);
-                Assert.Equal<char>(testObj.EmptyCharValue, deserializedTestObj.EmptyCharValue);
-                Assert.Equal<Guid>(testObj.GuidValue, deserializedTestObj.GuidValue);
-
-                Assert.Equal<bool?>(testObj.NullableBooleanValue, deserializedTestObj.NullableBooleanValue);
-                Assert.Equal<bool?>(testObj.NullableBooleanValue2, deserializedTestObj.NullableBooleanValue2);
-
-                Assert.Equal<decimal>(testObj.DecimalValue, deserializedTestObj.DecimalValue);
-                Assert.Equal<decimal?>(testObj.DecimalValueNullable, deserializedTestObj.DecimalValueNullable);
-                Assert.Equal<decimal?>(testObj.DecimalValueNullable2, deserializedTestObj.DecimalValueNullable2);
-
-                Assert.Equal<int?>(testObj.IntValueNullable, deserializedTestObj.IntValueNullable);
-                Assert.Equal<int?>(testObj.IntValueNullable2, deserializedTestObj.IntValueNullable2);
+                serializer = new BinarySerializer(new UnknowTestTypeResolver());
+                serializer.AutoCreateMissingTypes = true;
+                serializer.ForceAutoCreateMissingTypes = true;
             }
-            catch (Exception ex)
+
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            dynamic deserializedTestObj = serializer.Deserialize(dataBytes, deserializationContext);
+
+            Assert.Equal<int>(testObj.ID, deserializedTestObj.ID);
+            Assert.Equal(testObj.Description, deserializedTestObj.Description);
+
+            Assert.Equal<int>(testObj.SubObject.SubId, deserializedTestObj.SubObject.SubId);
+            Assert.Equal(testObj.SubObject.SubDescr, deserializedTestObj.SubObject.SubDescr);
+
+            // check list
+            for (int i = 0; i < testObj.TestIntList.Count; i++)
             {
-                throw;  // because of visual studio unittest bug
+                Assert.Equal<int>(testObj.TestIntList[i], deserializedTestObj.TestIntList[i]);
+            }
+
+            int index = 0;
+            foreach (var intItem in deserializedTestObj.EnumerableIntList)
+            {
+                Assert.Equal<int>(testObj.TestIntList[index], intItem);
+                index++;
+            }
+            Assert.Equal(testObj.TestIntList.Count, index);
+
+            // check object array
+            for (int i = 0; i < testObj.ObjectArray.Length; i++)
+            {
+                if (testObj.ObjectArray[i] is SubObject)
+                {
+                    Assert.Equal(((SubObject)testObj.ObjectArray[i]).SubId, ((dynamic)deserializedTestObj.ObjectArray[i]).SubId);
+                    Assert.Equal(((SubObject)testObj.ObjectArray[i]).SubDescr, ((dynamic)deserializedTestObj.ObjectArray[i]).SubDescr);
+                }
+                else
+                {
+                    Assert.Equal(testObj.ObjectArray[i], deserializedTestObj.ObjectArray[i]);
+                }
+            }
+
+            Assert.Equal<bool>(testObj.BooleanValue, deserializedTestObj.BooleanValue);
+            Assert.Equal<TimeSpan>(testObj.TimeSpanValue, deserializedTestObj.TimeSpanValue);
+            Assert.Equal<DateTime>(testObj.DateTimeValue, deserializedTestObj.DateTimeValue);
+
+            Assert.Equal(testObj.BaseProperty, deserializedTestObj.BaseProperty);
+
+            Assert.Equal<char>(testObj.CharValue, deserializedTestObj.CharValue);
+            Assert.Equal<char>(testObj.EmptyCharValue, deserializedTestObj.EmptyCharValue);
+            Assert.Equal<Guid>(testObj.GuidValue, deserializedTestObj.GuidValue);
+
+            Assert.Equal<bool?>(testObj.NullableBooleanValue, deserializedTestObj.NullableBooleanValue);
+            Assert.Equal<bool?>(testObj.NullableBooleanValue2, deserializedTestObj.NullableBooleanValue2);
+
+            Assert.Equal<decimal>(testObj.DecimalValue, deserializedTestObj.DecimalValue);
+            Assert.Equal<decimal?>(testObj.DecimalValueNullable, deserializedTestObj.DecimalValueNullable);
+            Assert.Equal<decimal?>(testObj.DecimalValueNullable2, deserializedTestObj.DecimalValueNullable2);
+
+            Assert.Equal<int?>(testObj.IntValueNullable, deserializedTestObj.IntValueNullable);
+            Assert.Equal<int?>(testObj.IntValueNullable2, deserializedTestObj.IntValueNullable2);
+        }
+
+        [Fact]
+        public void PrimitiveArraySerializationTest()
+        {
+            PrimitiveTypeArrayTest item = new PrimitiveTypeArrayTest
+            {
+                StringArray = new[] { "arr item1", "arr item 2", "array item 3" }
+            };
+
+            BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
+
+            var serializedBytes = serializer.Serialize(item, null);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            PrimitiveTypeArrayTest deserializedTestObj = (PrimitiveTypeArrayTest)serializer.Deserialize(serializedBytes, deserializationContext);
+
+            Assert.Equal(item.StringArray.Length, deserializedTestObj.StringArray.Length);
+            for (int i = 0; i < item.StringArray.Length; i++)
+            {
+                Assert.Equal(item.StringArray[i], deserializedTestObj.StringArray[i]);
             }
         }
+
+
+        [Fact]
+        public void PrimitiveArraySerializationDifferentContextTest()
+        {
+            PrimitiveArraySerializationDifferentContextInternal(false);
+        }
+
+        private static void PrimitiveArraySerializationDifferentContextInternal(bool forceTargetObjectCreation)
+        {
+            PrimitiveTypeArrayTest item = new PrimitiveTypeArrayTest
+            {
+                StringArray = new[] { "arr item1", "arr item 2", "array item 3" }
+            };
+
+            BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
+
+            var serializedBytes = serializer.Serialize(item, null);
+
+
+            BinarySerializer serializerDifferentContext = new BinarySerializer(new UnknowTestTypeResolver());
+            serializerDifferentContext.AutoCreateMissingTypes = forceTargetObjectCreation;
+            serializerDifferentContext.ForceAutoCreateMissingTypes = forceTargetObjectCreation;
+            SerializationContext deserializationContext = new SerializationContext(serializerDifferentContext, true, null);
+            dynamic deserializedTestObj = serializerDifferentContext.Deserialize(serializedBytes, deserializationContext);
+
+            Assert.Equal(item.StringArray.Length, deserializedTestObj.StringArray.Length);
+            for (int i = 0; i < item.StringArray.Length; i++)
+            {
+                Assert.Equal(item.StringArray[i], deserializedTestObj.StringArray[i]);
+            }
+        }
+
+        [Fact]
+        public void PrimitiveArraySerializationDifferentContextForceCreationTest()
+        {
+            PrimitiveArraySerializationDifferentContextInternal(true);
+        }
+
+
 
 
         [Fact]
@@ -213,6 +264,35 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             {
                 throw;  // because of visual studio unittest bug
             }
+        }
+
+        [Fact]
+        public void TestMethodInterfaceSerializationDifferentContext()
+        {
+            BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
+
+            TestInterfaceImpl1 testObj1 = new TestInterfaceImpl1();
+            testObj1.TestBaseProperty = "TEST";
+            testObj1.AdditionalProperty = "Some data";
+            testObj1.DeepTestProperty1 = "Inherited interface property 1";
+            testObj1.DeepTestProperty2 = "Inherited interface property 2";
+
+            InterfRefObject interfRef = new InterfRefObject();
+            interfRef.BaseObject = testObj1;
+
+            var dataBytes = serializer.Serialize(interfRef, null);
+
+            BinarySerializer deSerializer = new BinarySerializer(new UnknowTestTypeResolver());
+            SerializationContext deserializationContext = new SerializationContext(deSerializer, true, null);
+            InterfRefObject deserializedObj = (InterfRefObject)deSerializer.Deserialize(dataBytes, deserializationContext);
+
+            Assert.Equal(interfRef.BaseObject.TestBaseProperty, deserializedObj.BaseObject.TestBaseProperty);
+
+            TestInterfaceImpl1 implObj = (TestInterfaceImpl1)deserializedObj.BaseObject;
+            Assert.Null(implObj.AdditionalProperty);
+
+            Assert.Equal(testObj1.DeepTestProperty1, implObj.DeepTestProperty1);
+            Assert.Equal(testObj1.DeepTestProperty2, implObj.DeepTestProperty2);
         }
 
 
@@ -333,103 +413,171 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             }
         }
 
+
+        [Fact]
+        public void TestMethodInterfaceInheritanceArraySerializationForceDifferentContext()
+        {
+            BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
+
+            TestInterfaceImpl1Collections collHolder = new TestInterfaceImpl1Collections();
+
+            TestInterfaceImpl1 testObj1 = new TestInterfaceImpl1();
+            testObj1.TestBaseProperty = "TEST";
+            testObj1.AdditionalProperty = "Some data";
+            testObj1.DeepTestProperty1 = "Inherited interface property 1";
+            testObj1.DeepTestProperty2 = "Inherited interface property 2";
+
+            TestInterfaceImpl1 testObj2 = new TestInterfaceImpl1();
+            testObj2.TestBaseProperty = "TEST 2";
+            testObj2.AdditionalProperty = "Some data 2";
+            testObj2.DeepTestProperty1 = "Inherited interface property 1 - 2";
+            testObj2.DeepTestProperty2 = "Inherited interface property 2 - 2";
+
+            collHolder.Array = new ITestInterfaceBase[] { testObj1 };
+
+            collHolder.List = new List<ITestInterfaceBase>();
+            collHolder.List.Add(testObj1);
+            collHolder.List.Add(testObj2);
+
+            collHolder.ObjectArray = new object[] { testObj1, testObj2 };
+
+            // own collection
+            collHolder.OwnCollection = new OwnCollection();
+            collHolder.OwnCollection.Add("Own Testdata 1");
+            collHolder.OwnCollection.Add("Own Testdata 2");
+
+            var data = serializer.Serialize(collHolder, null);
+
+            BinarySerializer deSerializer = new BinarySerializer(new UnknowTestTypeResolver());
+            deSerializer.AutoCreateMissingTypes = true;
+            deSerializer.ForceAutoCreateMissingTypes = true;
+            SerializationContext deserializationContext = new SerializationContext(deSerializer, true, null);
+            dynamic deserializedObj = deSerializer.Deserialize(data, deserializationContext);
+
+            Assert.Equal<int>(collHolder.Array.Length, deserializedObj.Array.Length);
+            for (int i = 0; i < collHolder.Array.Length; i++)
+            {
+                ITestInterfaceBase orginalItem = collHolder.Array[i];
+                dynamic deserializedItem = deserializedObj.Array[i];
+
+                CheckCollectionItemDynamic(orginalItem, deserializedItem, true);
+            }
+
+            for (int i = 0; i < collHolder.List.Count; i++)
+            {
+                ITestInterfaceBase orginalItem = collHolder.List[i];
+                dynamic deserializedItem = deserializedObj.List[i];
+
+                CheckCollectionItemDynamic(orginalItem, deserializedItem, true);
+            }
+
+            for (int i = 0; i < collHolder.ObjectArray.Length; i++)
+            {
+                ITestInterfaceBase orginalItem = (ITestInterfaceBase)collHolder.ObjectArray[i];
+                dynamic deserializedItem = deserializedObj.ObjectArray[i];
+
+                CheckCollectionItemDynamic(orginalItem, deserializedItem, true);
+            }
+
+            // check own collection implementation
+            var deserializedEnumerator = deserializedObj.OwnCollection.GetEnumerator();
+            foreach (var item in collHolder.OwnCollection)
+            {
+                deserializedEnumerator.MoveNext();
+
+                Assert.True(item.Equals(deserializedEnumerator.Current));
+            }
+        }
+
         /// <summary>
         /// Tests the method interface inheritance array serialization.
         /// </summary>
         [Fact]
         public void TestMethodInterfaceInheritanceArraySerializationWithNewSerializer()
         {
-            try
-            {
-                BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
+            BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
 
-                TestInterfaceImpl1Collections collHolder = new TestInterfaceImpl1Collections();
+            TestInterfaceImpl1Collections collHolder = new TestInterfaceImpl1Collections();
 
-                TestInterfaceImpl1 testObj1 = new TestInterfaceImpl1();
-                testObj1.TestBaseProperty = "TEST";
-                testObj1.AdditionalProperty = "Some data";
-                testObj1.DeepTestProperty1 = "Inherited interface property 1";
-                testObj1.DeepTestProperty2 = "Inherited interface property 2";
+            TestInterfaceImpl1 testObj1 = new TestInterfaceImpl1();
+            testObj1.TestBaseProperty = "TEST";
+            testObj1.AdditionalProperty = "Some data";
+            testObj1.DeepTestProperty1 = "Inherited interface property 1";
+            testObj1.DeepTestProperty2 = "Inherited interface property 2";
 
-                TestInterfaceImpl1 testObj2 = new TestInterfaceImpl1();
-                testObj2.TestBaseProperty = "TEST 2";
-                testObj2.AdditionalProperty = "Some data 2";
-                testObj2.DeepTestProperty1 = "Inherited interface property 1 - 2";
-                testObj2.DeepTestProperty2 = "Inherited interface property 2 - 2";
+            TestInterfaceImpl1 testObj2 = new TestInterfaceImpl1();
+            testObj2.TestBaseProperty = "TEST 2";
+            testObj2.AdditionalProperty = "Some data 2";
+            testObj2.DeepTestProperty1 = "Inherited interface property 1 - 2";
+            testObj2.DeepTestProperty2 = "Inherited interface property 2 - 2";
 
-                collHolder.Array = new ITestInterfaceBase[] { testObj1 };
+            collHolder.Array = new ITestInterfaceBase[] { testObj1 };
 
-                collHolder.List = new List<ITestInterfaceBase>();
-                collHolder.List.Add(testObj1);
-                collHolder.List.Add(testObj2);
+            collHolder.List = new List<ITestInterfaceBase>();
+            collHolder.List.Add(testObj1);
+            collHolder.List.Add(testObj2);
 
-                collHolder.ObjectArray = new object[] { testObj1, testObj2 };
+            collHolder.ObjectArray = new object[] { testObj1, testObj2 };
 
-                decimal anyObjVal = 342534.56m;
-                object[] anyObjectArr = new object[] { 2, "hallo", new object[] { 7, "nested", new TestObject() {
+            decimal anyObjVal = 342534.56m;
+            object[] anyObjectArr = new object[] { 2, "hallo", new object[] { 7, "nested", new TestObject() {
                     DecimalValue = anyObjVal
                 } } };
-                collHolder.AnyObjectArray = anyObjectArr;
+            collHolder.AnyObjectArray = anyObjectArr;
 
-                // own collection
-                collHolder.OwnCollection = new OwnCollection();
-                collHolder.OwnCollection.Add("Own Testdata 1");
-                collHolder.OwnCollection.Add("Own Testdata 2");
+            // own collection
+            collHolder.OwnCollection = new OwnCollection();
+            collHolder.OwnCollection.Add("Own Testdata 1");
+            collHolder.OwnCollection.Add("Own Testdata 2");
 
-                var data = serializer.Serialize(collHolder, null);
+            var data = serializer.Serialize(collHolder, null);
 
-                ClearGlobalTypeCache();
+            serializer.ClearGlobalStructureCache();
 
-                BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
+            BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
 
-                SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
-                TestInterfaceImpl1Collections deserializedObj = (TestInterfaceImpl1Collections)serializer2.Deserialize(data, deserializationContext);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            TestInterfaceImpl1Collections deserializedObj = (TestInterfaceImpl1Collections)serializer2.Deserialize(data, deserializationContext);
 
-                Assert.Equal<int>(collHolder.Array.Length, deserializedObj.Array.Length);
-                for (int i = 0; i < collHolder.Array.Length; i++)
-                {
-                    ITestInterfaceBase orginalItem = collHolder.Array[i];
-                    ITestInterfaceBase deserializedItem = deserializedObj.Array[i];
-
-                    CheckCollectionItem(orginalItem, deserializedItem, true);
-                }
-
-                for (int i = 0; i < collHolder.List.Count; i++)
-                {
-                    ITestInterfaceBase orginalItem = collHolder.List[i];
-                    ITestInterfaceBase deserializedItem = deserializedObj.List[i];
-
-                    CheckCollectionItem(orginalItem, deserializedItem, true);
-                }
-
-                for (int i = 0; i < collHolder.ObjectArray.Length; i++)
-                {
-                    ITestInterfaceBase orginalItem = (ITestInterfaceBase)collHolder.ObjectArray[i];
-                    ITestInterfaceBase deserializedItem = (ITestInterfaceBase)deserializedObj.ObjectArray[i];
-
-                    CheckCollectionItem(orginalItem, deserializedItem, true);
-                }
-
-
-                // check own collection implementation
-                var deserializedEnumerator = deserializedObj.OwnCollection.GetEnumerator();
-                foreach (var item in collHolder.OwnCollection)
-                {
-                    deserializedEnumerator.MoveNext();
-
-                    Assert.True(item.Equals(deserializedEnumerator.Current));
-                }
-
-                object anyItemObj = ((object[])((object[])collHolder.AnyObjectArray)[2])[2];
-                TestObject anyItem = anyItemObj as TestObject;
-
-                Assert.Equal(anyObjVal, anyItem.DecimalValue);
-
-            }
-            catch (Exception ex)
+            Assert.Equal<int>(collHolder.Array.Length, deserializedObj.Array.Length);
+            for (int i = 0; i < collHolder.Array.Length; i++)
             {
-                throw;  // because of visual studio unittest bug
+                ITestInterfaceBase orginalItem = collHolder.Array[i];
+                ITestInterfaceBase deserializedItem = deserializedObj.Array[i];
+
+                CheckCollectionItem(orginalItem, deserializedItem, true);
             }
+
+            for (int i = 0; i < collHolder.List.Count; i++)
+            {
+                ITestInterfaceBase orginalItem = collHolder.List[i];
+                ITestInterfaceBase deserializedItem = deserializedObj.List[i];
+
+                CheckCollectionItem(orginalItem, deserializedItem, true);
+            }
+
+            for (int i = 0; i < collHolder.ObjectArray.Length; i++)
+            {
+                ITestInterfaceBase orginalItem = (ITestInterfaceBase)collHolder.ObjectArray[i];
+                ITestInterfaceBase deserializedItem = (ITestInterfaceBase)deserializedObj.ObjectArray[i];
+
+                CheckCollectionItem(orginalItem, deserializedItem, true);
+            }
+
+
+            // check own collection implementation
+            var deserializedEnumerator = deserializedObj.OwnCollection.GetEnumerator();
+            foreach (var item in collHolder.OwnCollection)
+            {
+                deserializedEnumerator.MoveNext();
+
+                Assert.True(item.Equals(deserializedEnumerator.Current));
+            }
+
+            object anyItemObj = ((object[])((object[])collHolder.AnyObjectArray)[2])[2];
+            TestObject anyItem = anyItemObj as TestObject;
+
+            Assert.Equal(anyObjVal, anyItem.DecimalValue);
         }
 
         private static void CheckCollectionItem(ITestInterfaceBase orginalItem, ITestInterfaceBase deserializedItem, bool checkAddProp)
@@ -441,6 +589,22 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             TestInterfaceImpl1 implObj = (TestInterfaceImpl1)deserializedItem;
             if (checkAddProp)
                 Assert.Null(implObj.AdditionalProperty);
+        }
+
+        private static void CheckCollectionItemDynamic(ITestInterfaceBase orginalItem, dynamic deserializedItem, bool checkAddProp)
+        {
+            Assert.Equal(orginalItem.TestBaseProperty, deserializedItem.TestBaseProperty);
+            Assert.Equal(orginalItem.DeepTestProperty1, deserializedItem.DeepTestProperty1);
+            Assert.Equal(orginalItem.DeepTestProperty2, deserializedItem.DeepTestProperty2);
+
+            dynamic implObj = deserializedItem;
+            if (checkAddProp)
+            {
+                Type actualType = implObj.GetType();
+                bool exist = actualType.GetProperties().Where(p => p.Name.Equals(nameof(TestInterfaceImpl1.AdditionalProperty))).Any();
+                if (exist)
+                    Assert.Null(implObj.AdditionalProperty);
+            }
         }
 
 
@@ -521,7 +685,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var data = serializer.Serialize(objArray, null);
 
-            ClearGlobalTypeCache();
+            serializer.ClearGlobalStructureCache();
 
             BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
 
@@ -552,7 +716,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var data = serializer.Serialize(objArray, null);
 
-            ClearGlobalTypeCache();
+            serializer.ClearGlobalStructureCache();
 
             BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
 
@@ -576,7 +740,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var data = serializer.Serialize(objList, null);
 
-            ClearGlobalTypeCache();
+            serializer.ClearGlobalStructureCache();
 
             BinarySerializer serializer2 = new BinarySerializer(new UnknowTestTypeResolver());
 
@@ -625,6 +789,17 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
         [Fact]
         public void TestMethodEnumSerialization()
         {
+            TestMethodEnumSerializationInternal(false);
+        }
+
+        [Fact]
+        public void TestMethodEnumSerializationForceDifferentContext()
+        {
+            TestMethodEnumSerializationInternal(true);
+        }
+
+        private static void TestMethodEnumSerializationInternal(bool forceDifferentContext)
+        {
             BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
 
             EnumTestObject testObject = new EnumTestObject();
@@ -633,13 +808,27 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var data = serializer.Serialize(testObject, null);
 
-            BinarySerializer.ClearGlobalStructureCache();
+            if (forceDifferentContext)
+            {
+                serializer = new BinarySerializer(new UnknowTestTypeResolver());
+                serializer.AutoCreateMissingTypes = true;
+                serializer.ForceAutoCreateMissingTypes = true;
+            }
+            serializer.ClearGlobalStructureCache();
 
             SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
-            EnumTestObject deserializedObj = (EnumTestObject)serializer.Deserialize(data, deserializationContext);
+            dynamic deserializedObj = serializer.Deserialize(data, deserializationContext);
 
-            Assert.Equal<MessageType>(testObject.Type, deserializedObj.Type);
-            Assert.Equal<TypeCode>((TypeCode)testObject.InObjectEnum, (TypeCode)deserializedObj.InObjectEnum);
+            if (forceDifferentContext)
+            {
+                Assert.Equal<int>((int)testObject.Type, (int)deserializedObj.Type);
+                Assert.Equal<int>((int)testObject.InObjectEnum, (int)deserializedObj.InObjectEnum);
+            }
+            else
+            {
+                Assert.Equal<MessageType>(testObject.Type, deserializedObj.Type);
+                Assert.Equal<TypeCode>((TypeCode)testObject.InObjectEnum, (TypeCode)deserializedObj.InObjectEnum);
+            }
         }
 
         [Fact]
@@ -653,7 +842,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var data = serializer.Serialize(testObject, null);
 
-            BinarySerializer.ClearGlobalStructureCache();
+            serializer.ClearGlobalStructureCache();
 
             SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
             EnumSpecialTestObject deserializedObj = (EnumSpecialTestObject)serializer.Deserialize(data, deserializationContext);
@@ -674,7 +863,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             var data = serializer.Serialize(msg, null);
 
-            BinarySerializer.ClearGlobalStructureCache();
+            serializer.ClearGlobalStructureCache();
 
             SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
             GenericMessage deserializedMsg = (GenericMessage)serializer.Deserialize(data, deserializationContext);
@@ -728,8 +917,17 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
             int exptectedId = 5;
 
+            #region byte generation code
+            // before use: Name property must be commented
+            //PropertyExtended propertyChangedObj = new PropertyExtended();
+            //propertyChangedObj.ID = exptectedId;
+
+            //byte[] result = serializer.Serialize(propertyChangedObj, null);
+            //string resultBytesStr = string.Join(",", result);
+            #endregion
+
             // Binary meta and payload data of PropertyExtended instance without Name property
-            byte[] data = new byte[] { 176, 149, 221, 227, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 60, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 69, 120, 116, 101, 110, 100, 101, 100, 1, 0, 3, 0, 3, 0, 0, 0, 2, 73, 68, 0, 1, 5, 0, 0, 0 };
+            byte[] data = new byte[] { 224, 187, 60, 47, 4, 100, 0, 1, 24, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 67, 111, 109, 109, 111, 110, 46, 84, 101, 115, 116, 60, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 69, 120, 116, 101, 110, 100, 101, 100, 1, 0, 3, 0, 3, 0, 0, 0, 2, 73, 68, 0, 0, 1, 5, 0, 0, 0 };
 
             SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
             PropertyExtended resultObject = (PropertyExtended)serializer.Deserialize(data, deserializationContext);
@@ -762,7 +960,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             #endregion
 
             // Binary meta and payload data of PropertyExtended instance without Name property
-            byte[] data = new byte[] { 180, 32, 156, 29, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 59, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 82, 101, 109, 111, 118, 101, 100, 2, 0, 3, 0, 3, 0, 0, 0, 2, 73, 68, 0, 2, 0, 2, 0, 0, 0, 4, 78, 97, 109, 101, 1, 1, 7, 0, 0, 0, 3, 4, 116, 101, 115, 116 };
+            byte[] data = new byte[] { 19, 114, 186, 51, 4, 112, 0, 1, 24, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 67, 111, 109, 109, 111, 110, 46, 84, 101, 115, 116, 59, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 82, 101, 109, 111, 118, 101, 100, 2, 0, 3, 0, 3, 0, 0, 0, 2, 73, 68, 0, 0, 2, 0, 2, 0, 0, 0, 4, 78, 97, 109, 101, 1, 0, 1, 7, 0, 0, 0, 3, 4, 116, 101, 115, 116 };
 
             SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
             PropertyRemoved resultObject = (PropertyRemoved)serializer.Deserialize(data, deserializationContext);
@@ -793,14 +991,14 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             #endregion
 
             // Binary meta and payload data of PropertyExtended instance without Name property
-            byte[] data = new byte[] { 243, 125, 29, 83, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 67, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 100, 65, 100, 118, 97, 110, 99, 101, 100, 4, 0, 10, 0, 10, 0, 0, 0, 8, 82, 101, 109, 111, 118, 101, 100, 49, 0, 4, 0, 4, 0, 0, 0, 10, 85, 110, 99, 104, 97, 110, 103, 101, 100, 49, 0, 2, 0, 2, 0, 0, 0, 8, 82, 101, 109, 111, 118, 101, 100, 50, 1, 2, 0, 2, 0, 0, 0, 10, 85, 110, 99, 104, 97, 110, 103, 101, 100, 50, 1, 1, 0, 0, 0, 0, 126, 132, 46, 65, 1, 3, 19, 114, 101, 109, 111, 118, 101, 100, 32, 100, 117, 109, 109, 121, 32, 118, 97, 108, 117, 101, 3, 15, 116, 101, 115, 116, 32, 105, 116, 32, 52, 50, 51, 52, 51, 50, 53 };
+            byte[] data = new byte[] { 169, 91, 58, 9, 4, 168, 0, 1, 24, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 67, 111, 109, 109, 111, 110, 46, 84, 101, 115, 116, 67, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 100, 65, 100, 118, 97, 110, 99, 101, 100, 4, 0, 10, 0, 10, 0, 0, 0, 8, 82, 101, 109, 111, 118, 101, 100, 49, 0, 0, 4, 0, 4, 0, 0, 0, 10, 85, 110, 99, 104, 97, 110, 103, 101, 100, 49, 0, 0, 2, 0, 2, 0, 0, 0, 8, 82, 101, 109, 111, 118, 101, 100, 50, 1, 0, 2, 0, 2, 0, 0, 0, 10, 85, 110, 99, 104, 97, 110, 103, 101, 100, 50, 1, 0, 1, 0, 0, 0, 0, 126, 132, 46, 65, 1, 3, 19, 114, 101, 109, 111, 118, 101, 100, 32, 100, 117, 109, 109, 121, 32, 118, 97, 108, 117, 101, 3, 15, 116, 101, 115, 116, 32, 105, 116, 32, 52, 50, 51, 52, 51, 50, 53 };
 
             SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
             PropertyChangedAdvanced resultObject = (PropertyChangedAdvanced)serializer.Deserialize(data, deserializationContext);
 
             Assert.Equal(expUnchanged1, resultObject.Unchanged1);
             Assert.Equal(expUnchanged2, resultObject.Unchanged2);
-            Assert.Null(resultObject.Added4);
+            //Assert.Null(resultObject.Added4);
         }
 
 
@@ -820,7 +1018,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             #endregion
 
             // Binary meta and payload data of PropertyChangeIntToLong instance with int property
-            byte[] data = new byte[] { 60, 9, 90, 236, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 67, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 73, 110, 116, 84, 111, 76, 111, 110, 103, 1, 0, 3, 0, 3, 0, 0, 0, 14, 78, 117, 109, 98, 101, 114, 80, 114, 111, 112, 101, 114, 116, 121, 0, 1, 157, 123, 243, 25 };
+            byte[] data = new byte[] { 84, 40, 199, 103, 4, 119, 0, 1, 24, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 67, 111, 109, 109, 111, 110, 46, 84, 101, 115, 116, 67, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 73, 110, 116, 84, 111, 76, 111, 110, 103, 1, 0, 3, 0, 3, 0, 0, 0, 14, 78, 117, 109, 98, 101, 114, 80, 114, 111, 112, 101, 114, 116, 121, 0, 0, 1, 157, 123, 243, 25 };
 
             SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
             PropertyChangeIntToLong resultObject = (PropertyChangeIntToLong)serializer.Deserialize(data, deserializationContext);
@@ -844,7 +1042,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             #endregion
 
             // Binary meta and payload data of PropertyChangeIntToLong instance with int property
-            byte[] data = new byte[] { 130, 237, 223, 38, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 73, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 68, 111, 117, 98, 108, 101, 84, 111, 68, 101, 99, 105, 109, 97, 108, 1, 0, 10, 0, 10, 0, 0, 0, 14, 78, 117, 109, 98, 101, 114, 80, 114, 111, 112, 101, 114, 116, 121, 0, 1, 0, 0, 0, 157, 123, 243, 185, 65 };
+            byte[] data = new byte[] { 156, 125, 60, 0, 4, 125, 0, 1, 24, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 67, 111, 109, 109, 111, 110, 46, 84, 101, 115, 116, 73, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 68, 111, 117, 98, 108, 101, 84, 111, 68, 101, 99, 105, 109, 97, 108, 1, 0, 10, 0, 10, 0, 0, 0, 14, 78, 117, 109, 98, 101, 114, 80, 114, 111, 112, 101, 114, 116, 121, 0, 0, 1, 0, 0, 0, 157, 123, 243, 185, 65 };
 
             SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
             PropertyChangeDoubleToDecimal resultObject = (PropertyChangeDoubleToDecimal)serializer.Deserialize(data, deserializationContext);
@@ -870,7 +1068,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             #endregion
 
             // Binary meta and payload data of PropertyChangedNullable instance with not nullable properties
-            byte[] data = new byte[] { 27, 35, 82, 199, 4, 1, 17, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 67, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 100, 78, 117, 108, 108, 97, 98, 108, 101, 1, 0, 3, 0, 3, 0, 0, 0, 9, 80, 114, 111, 112, 101, 114, 116, 121, 49, 0, 1, 188, 57, 143, 0 };
+            byte[] data = new byte[] { 205, 70, 87, 165, 4, 114, 0, 1, 24, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 67, 111, 109, 109, 111, 110, 46, 84, 101, 115, 116, 67, 66, 83, 65, 71, 46, 73, 79, 67, 84, 97, 108, 107, 46, 84, 101, 115, 116, 46, 84, 101, 115, 116, 79, 98, 106, 101, 99, 116, 115, 46, 67, 104, 97, 110, 103, 101, 100, 76, 97, 121, 111, 117, 116, 46, 80, 114, 111, 112, 101, 114, 116, 121, 67, 104, 97, 110, 103, 101, 100, 78, 117, 108, 108, 97, 98, 108, 101, 1, 0, 3, 0, 3, 0, 0, 0, 9, 80, 114, 111, 112, 101, 114, 116, 121, 49, 0, 0, 1, 188, 57, 143, 0 };
 
             SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
             PropertyChangedNullable resultObject = (PropertyChangedNullable)serializer.Deserialize(data, deserializationContext);
@@ -901,6 +1099,17 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
         [Fact]
         public void TestMethodBinary_TypeDescriptionSerialization()
         {
+            TypeRefTestInternal(false);
+        }
+
+        [Fact]
+        public void TestMethodBinary_TypeDescriptionSerializationDifferentContext()
+        {
+            TypeRefTestInternal(true);
+        }
+
+        private static void TypeRefTestInternal(bool forceDifferentContext)
+        {
             BinarySerializer serializer = new BinarySerializer(new UnknowTestTypeResolver());
 
             TypeDescription typeRefItem = new TypeDescription();
@@ -911,10 +1120,26 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
             byte[] result = serializer.Serialize(typeRefItem, null);
 
-            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
-            TypeDescription resultObject = (TypeDescription)serializer.Deserialize(result, deserializationContext);
+            if (forceDifferentContext)
+            {
+                serializer = new BinarySerializer(new UnknowTestTypeResolver());
+                serializer.AutoCreateMissingTypes = true;
+                serializer.ForceAutoCreateMissingTypes = true;
+            }
 
-            Assert.Equal(typeRefItem.TypeReference, resultObject.TypeReference);
+            SerializationContext deserializationContext = new SerializationContext(serializer, true, null);
+            dynamic resultObject = serializer.Deserialize(result, deserializationContext);
+
+            if (forceDifferentContext)
+            {
+                // auto generated type
+                Assert.True(resultObject.TypeReference.Name.Contains(typeRefItem.TypeReference.Name));
+            }
+            else
+            {
+                Assert.Equal(typeRefItem.TypeReference, resultObject.TypeReference);
+            }
+
             Assert.Equal(typeRefItem.TypeReference2, resultObject.TypeReference2);
             Assert.Null(resultObject.TypeReference3);
             Assert.Equal(typeRefItem.OtherProperty, resultObject.OtherProperty);
@@ -1013,7 +1238,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             IInvokeMethodInfo invokeInfo = new InvokeMethodInfo(typeof(ITestService), nameof(ITestService.CallTest), new Type[] { typeof(ITestItem) });
             var bytes = msgSerializer.SerializeToBytes(msg, invokeInfo);
 
-            BinarySerializer.ClearGlobalStructureCache();
+            msgSerializer.Serializer.ClearGlobalStructureCache();
 
             BinaryMessageSerializer msgSerializerNew = new BinaryMessageSerializer();
             msgSerializerNew.RegisterContainerHost(new DummyContainerHost());

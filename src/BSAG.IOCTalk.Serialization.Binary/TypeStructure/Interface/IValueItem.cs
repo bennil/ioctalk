@@ -22,6 +22,11 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Interface
         ItemType Type { get; }
 
         /// <summary>
+        /// Gets additional item type description flags
+        /// </summary>
+        ItemTypeFlags TypeFlags { get; }
+
+        /// <summary>
         /// Gets a value indicating whether this instance is nullable.
         /// </summary>
         /// <value><c>true</c> if this instance is nullable; otherwise, <c>false</c>.</value>

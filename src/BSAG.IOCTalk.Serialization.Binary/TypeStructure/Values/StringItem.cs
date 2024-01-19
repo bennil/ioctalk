@@ -24,7 +24,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
         public StringItem(string name, Func<object, object> getter, Action<object, object> setter)
             : base(name, getter, setter, ItemType.String)
         {
-            this.IsNullable = true;
+            this.TypeFlags |= ItemTypeFlags.Nullable;
         }
 
         /// <summary>

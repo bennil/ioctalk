@@ -15,6 +15,7 @@ using Microsoft.Win32;
 using IOCTalk.StreamAnalyzer.Implementation;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace IOCTalk.StreamAnalyzer
 {
@@ -49,7 +50,7 @@ namespace IOCTalk.StreamAnalyzer
 
         // Using a DependencyProperty as the backing store for FilterTime.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty FilterTimeProperty =
-            DependencyProperty.Register("FilterTime", typeof(bool), typeof(MainWindow), new PropertyMetadata(true));
+            DependencyProperty.Register("FilterTime", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
 
         public static StreamAnalyzerService Analyzer
         {
@@ -65,7 +66,7 @@ namespace IOCTalk.StreamAnalyzer
 
         // Using a DependencyProperty as the backing store for FilterFlowRate.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty FilterFlowRateProperty =
-            DependencyProperty.Register("FilterFlowRate", typeof(bool), typeof(MainWindow), new PropertyMetadata(true));
+            DependencyProperty.Register("FilterFlowRate", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
 
 
         public static MainWindow Instance
@@ -303,6 +304,75 @@ namespace IOCTalk.StreamAnalyzer
         private void btntemp_Click(object sender, RoutedEventArgs e)
         {
             analyzer.ExtractSessionsFrom(streamSessions);
+        }
+
+        private void DataGridOutgoingSysCalls_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            if (e.AddedItems.Count > 0
+                && e.AddedItems[0] is MethodInvokeRoundtrip mir
+                && this.DataContext is StreamSession session)
+            {
+                if (mir.Request != null
+                    && mir.Request.Payload != null)
+                {
+                    sb.AppendLine("Request Data:");
+                    if (session.Format == BSAG.IOCTalk.Common.Interface.Communication.Raw.RawMessageFormat.Binary)
+                    {
+                        if (mir.Request.Payload is string strReqPayload)
+                        {
+                            sb.AppendLine(strReqPayload);
+                        }
+                        else
+                        {
+                            JsonSerializerOptions options = new JsonSerializerOptions()
+                            {
+                                WriteIndented = true,
+                            };
+                            string reqJson = JsonSerializer.Serialize(mir.Request, options);
+                            sb.AppendLine(reqJson);
+                        }
+                    }
+                    else
+                    {
+
+                        sb.AppendLine(mir.Request.Payload.ToString());
+                    }
+                }
+
+                if (mir.Response != null
+                    && mir.Response.Payload != null)
+                {
+                    if (sb.Length > 0)
+                        sb.AppendLine();
+
+                    sb.AppendLine("Response Data:");
+                    if (session.Format == BSAG.IOCTalk.Common.Interface.Communication.Raw.RawMessageFormat.Binary)
+                    {
+                        if (mir.Response.Payload is string strPayload)
+                        {
+                            sb.AppendLine(strPayload);
+                        }
+                        else
+                        {
+                            JsonSerializerOptions options = new JsonSerializerOptions()
+                            {
+                                WriteIndented = true,
+                            };
+                            string respJson = JsonSerializer.Serialize(mir.Response, options);
+                            sb.AppendLine(respJson);
+                        }
+                    }
+                    else
+                    {
+
+                        sb.AppendLine(mir.Response.Payload.ToString());
+                    }
+                }
+            }
+
+            TextBoxOutgoingSyncCallDetails.Text = sb.ToString();
         }
     }
 }

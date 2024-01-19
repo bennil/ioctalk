@@ -26,6 +26,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
         private Action<object, object> setter;
         //private bool isReadTypeIdExpected;
         private bool isObject;
+        private ItemTypeFlags itemTypeFlags = ItemTypeFlags.Nullable;
         //private bool isTolerantLayout;
 
         /// <summary>
@@ -100,7 +101,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
         /// Gets the item type.
         /// </summary>
         /// <value>The type.</value>
-        public ItemType Type { get; set; }
+        public ItemType Type { get; private set; }
+
+        public ItemTypeFlags TypeFlags => itemTypeFlags;
+
 
         /// <summary>
         /// Gets the runtime type
@@ -137,6 +141,11 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                 return true;
             }
         }
+
+        /// <summary>
+        /// Gets a value indicating wheter target type is System.Object.
+        /// </summary>
+        public bool IsObjectType => isObject;
 
 
         /// <summary>
@@ -243,7 +252,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
             return true;
         }
 
-        internal bool AddTolerantLayoutDummyProperty(ITypeResolver typeResolver, string propertyName, ItemType itemType, uint propertyTypeId, bool isNullable)
+        internal bool AddTolerantLayoutDummyProperty(ITypeResolver typeResolver, string propertyName, ItemType itemType, uint propertyTypeId, ItemTypeFlags typeFlags)
         {
             IValueItem item = typeResolver.GetByTypeId(propertyTypeId);
 
@@ -254,7 +263,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                     TypeId = propertyTypeId,
                     Type = itemType,
                     Name = propertyName,
-                    IsNullable = isNullable
+                    TypeFlags = typeFlags
                 };
                 items.Add(dummyItem);
 
@@ -266,7 +275,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
             }
         }
 
-        internal bool AddTolerantLayoutConverterProperty(IValueItem nameMatchingItem, ITypeResolver typeResolver, string propertyName, ItemType itemType, uint propertyTypeId, bool isNullable, Func<object, object> converter)
+        internal bool AddTolerantLayoutConverterProperty(IValueItem nameMatchingItem, ITypeResolver typeResolver, string propertyName, ItemType itemType, uint propertyTypeId, ItemTypeFlags typeFlags, Func<object, object> converter)
         {
             IValueItem item = typeResolver.GetByTypeId(propertyTypeId);
 
@@ -277,7 +286,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                     TypeId = propertyTypeId,
                     Type = itemType,
                     Name = propertyName,
-                    IsNullable = isNullable
+                    TypeFlags = typeFlags
                 };
                 items.Add(dummyItem);
 
@@ -297,20 +306,14 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
 
         private uint CalculateTypeId()
         {
-            uint typeCode = Hashing.CreateHash(Name);
-
-            typeCode = Hashing.CreateHash((uint)Type, typeCode);
+            uint typeCode = Hashing.CreateHash((uint)Type);
+            typeCode = Hashing.CreateHash(type.FullName, typeCode);
 
             foreach (var item in items)
             {
-                uint itemType = (uint)item.Type;
-                if (item.IsNullable)
-                {
-                    itemType *= 17; // include nullable property
-                }
-
                 typeCode = Hashing.CreateHash(item.Name, typeCode);
-                typeCode = Hashing.CreateHash(itemType, typeCode);
+                typeCode = Hashing.CreateHash((uint)item.Type, typeCode);
+                typeCode = TypeMetaStructure.CreateItemTypeFlagsHashForTypeIdCalculation(item.TypeFlags, typeCode);
             }
 
             if (typeCode <= 150)
@@ -392,7 +395,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                     if (context.IsWriteTypeMetaInfoRequired(this.TypeId))
                     {
                         // serialize type meta info at the first time
-                        TypeMetaStructure.WriteTypeMetaInfo(writer, this);
+                        TypeMetaStructure.WriteObjectTypeMetaInfo(writer, this, context, true);
                     }
 
                     writer.WriteUInt8(ValueItem.SingleObjectIdent);
@@ -495,7 +498,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
             if (contentType == ValueItem.TypeMetaInfo)
             {
                 // type meta data already loaded for type id > skip data
-                TypeMetaStructure.SkipTypeMetaInfo(reader);
+                TypeMetaStructure.SkipTypeMetaInfo(reader, true);
                 contentType = reader.ReadUInt8();
             }
 

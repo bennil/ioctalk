@@ -94,6 +94,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostClient.MapInterfaceImplementationType<IExposeTest2Base, ExposeTest2Base>();
                 compositionHostClient.MapInterfaceImplementationType<IExposeTest2Level1, ExposeTest2Level1>();
 
+                // Test3
+                compositionHostClient.MapInterfaceImplementationType<IExposeTest3Base, ExposeTest3Combined>();
+                compositionHostClient.MapInterfaceImplementationType<IExposeTest3Other, ExposeTest3Combined>();
+
                 tcpClient = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
                 tcpClient.LogDataStream = true;
 
@@ -139,13 +143,39 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             var test2Result2 = (ExposeTest2Level1)currentServiceClientProxyInstance.ExposeDerivedInterfaceTest(level1Input);
             Assert.Equal(level1Input.Level1Property, test2Result2.Level1Property);
             
-            // nested
+            // test 2 - nested
             var test2containerResult1 = currentServiceClientProxyInstance.ExposeDerivedInterfaceContainerTest(new ExposeTest2Container { NestedItem = baseInput });
             Assert.Equal(typeof(ExposeTest2Level1), test2containerResult1.NestedItem.GetType());
             Assert.Null(((ExposeTest2Level1)test2containerResult1.NestedItem).Level1Property);
 
             var test2containerResult2 = currentServiceClientProxyInstance.ExposeDerivedInterfaceContainerTest(new ExposeTest2Container { NestedItem = level1Input });
             Assert.Equal(level1Input.Level1Property, ((ExposeTest2Level1)test2containerResult2.NestedItem).Level1Property);
+
+
+            // test 3
+            var result3Items = currentServiceClientProxyInstance.GetTest3BaseItems();
+            // only IExposeTest3Base surface is expected
+            foreach (ExposeTest3Combined item in result3Items)
+            {
+                Assert.NotNull(item.SomeBasicProperty);
+                Assert.Null(item.OtherTypeProperty);
+            }
+
+            // only other property is expected
+            var otherItem = (ExposeTest3Combined)currentServiceClientProxyInstance.GetTest3OtherItem();
+            Assert.Null(otherItem.SomeBasicProperty);
+            Assert.NotNull(otherItem.OtherTypeProperty);
+
+            // request items again
+            var result3Items2 = currentServiceClientProxyInstance.GetTest3BaseItems();
+            // only IExposeTest3Base surface is expected
+            foreach (ExposeTest3Combined item in result3Items2)
+            {
+                Assert.NotNull(item.SomeBasicProperty);
+                Assert.Null(item.OtherTypeProperty);
+            }
+
+
 
 
             tcpClient.Shutdown();

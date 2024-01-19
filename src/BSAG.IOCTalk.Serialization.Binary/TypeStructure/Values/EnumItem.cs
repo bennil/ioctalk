@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BSAG.IOCTalk.Serialization.Binary.TypeStructure.Interface;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Serialization.Binary.Utils;
+using BSAG.IOCTalk.Common.Reflection;
 
 namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
 {
@@ -47,6 +48,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             }
         }
 
+        public ItemType UnderlyingItemType => isDefaultUnderlyingType ? ItemType.Int32 : otherUnderlyingTypeEnum.Type;
+
+        public Type EnumType => enumType;
+
         private uint CalculateTypeId(Type enumType)
         {
             uint typeCode = Hashing.CreateHash(enumType.FullName);
@@ -71,7 +76,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             {
                 uint actualTypeId = reader.ReadUInt32();
 
-                if (actualTypeId != enumTypeId)
+                if (actualTypeId != enumTypeId
+                    && context.Serializer.AutoCreateMissingTypes == false)
                 {
                     throw new InvalidOperationException($"Unexptected enum type ID: {actualTypeId}; exptected ID: {enumTypeId}; exptected type: {enumType.FullName}");
                 }
@@ -81,7 +87,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
 
             if (contentType == ValueItem.TypeMetaInfo)
             {
-                TypeMetaStructure.SkipTypeMetaInfo(reader);
+                TypeMetaStructure.SkipTypeMetaInfo(reader, true);
                 contentType = reader.ReadUInt8();
             }
 
@@ -121,7 +127,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             if (context.IsWriteTypeMetaInfoRequired(this.TypeId))
             {
                 // serialize type meta info at the first time
-                TypeMetaStructure.WriteTypeMetaInfo(writer, this.enumType);
+                TypeMetaStructure.WriteEnumTypeMetaInfo(writer, this);
             }
 
             if (isDefaultUnderlyingType)

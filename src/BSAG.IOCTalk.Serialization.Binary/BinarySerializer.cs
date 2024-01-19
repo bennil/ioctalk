@@ -18,31 +18,34 @@ using System.Buffers;
 namespace BSAG.IOCTalk.Serialization.Binary
 {
 
-    public class BinarySerializer //: ITypeResolver
+    public class BinarySerializer
     {
-        private static Dictionary<Type, IValueItem> globalStructureMapping = new Dictionary<Type, IValueItem>();
-        private static Dictionary<uint, IValueItem> globalStructureMappingById = new Dictionary<uint, IValueItem>();
+        private ConcurrentDictionary<Type, IValueItem> globalStructureMapping = new ConcurrentDictionary<Type, IValueItem>();
+        private ConcurrentDictionary<uint, IValueItem> globalStructureMappingById = new ConcurrentDictionary<uint, IValueItem>();
 
 
         private IUnknowContextTypeResolver unknowTypeResolver;
-        private static object lockObj = new object();
 
-
-
-        static BinarySerializer()
-        {
-            // register value type mappings
-            RegisterValueTypeMappings();
-        }
 
 
         public BinarySerializer(IUnknowContextTypeResolver unknowTypeResolver)
         {
             this.unknowTypeResolver = unknowTypeResolver;
+
+            RegisterValueTypeMappings();
         }
 
 
+        /// <summary>
+        /// Missing deserialize types will be automatically created (for deserialize in different application contexts e.g. analyzer tooling)
+        /// </summary>
         public bool AutoCreateMissingTypes { get; set; } = false;
+
+        /// <summary>
+        /// Only for unit tests to simulate a different deserialize context
+        /// </summary>
+        public bool ForceAutoCreateMissingTypes { get; set; } = false;
+
 
         public Assembly[] CustomLookupAssemblies { get; set; }
 
@@ -53,8 +56,11 @@ namespace BSAG.IOCTalk.Serialization.Binary
         /// </summary>
         public Func<IValueItem, bool> SerializeItemFilter { get; set; }
 
+        public int AutoImplementMissingTypeMaxCount { get; set; } = 100;
+        public int AutoImplementMissingTypeMaxPropertyCount { get; set; } = 100;
 
-        private static void RegisterValueTypeMappings()
+
+        private void RegisterValueTypeMappings()
         {
             RegisterTypeMapping(typeof(bool), new BoolItem(null, null, null));
 
@@ -125,44 +131,35 @@ namespace BSAG.IOCTalk.Serialization.Binary
             structure.WriteValue(writer, context, obj);
         }
 
-        private static void RegisterTypeMapping(Type type, IValueItem structure)
+        private void RegisterTypeMapping(Type type, IValueItem structure)
         {
-            try
-            {
-                lock (lockObj)
-                {
-                    globalStructureMapping[type] = structure;
+            globalStructureMapping.TryAdd(type, structure);
 
-                    TryAddGlobalStructureMappingById(structure);
+            TryAddGlobalStructureMappingById(structure);
 
-                }
-            }
-            catch
-            {
-                throw;
-            }
         }
 
-        private static void TryAddGlobalStructureMappingById(IValueItem structure)
+        private void TryAddGlobalStructureMappingById(IValueItem structure)
         {
             if (globalStructureMappingById.TryGetValue(structure.TypeId, out var existingStructure) == true)
             {
                 // ID expected to be unique
                 if ((existingStructure.Type == structure.Type
-                    && existingStructure.Name == structure.Name) == false)
+                    && existingStructure.Name == structure.Name) == false
+                    && ForceAutoCreateMissingTypes == false)
                 {
                     throw new InvalidOperationException($"TypeId {structure.TypeId} already registered! Existing name: {existingStructure.Name}; type: {existingStructure.Type} - Register name: {structure.Name}; type: {structure.Type}");
                 }
                 // else: already registered
             }
             else
-                globalStructureMappingById.Add(structure.TypeId, structure);
+                globalStructureMappingById.TryAdd(structure.TypeId, structure);
         }
 
         /// <summary>
         /// Clears the global structure cache.
         /// </summary>
-        public static void ClearGlobalStructureCache()
+        public void ClearGlobalStructureCache()
         {
             globalStructureMapping.Clear();
             globalStructureMappingById.Clear();
@@ -175,12 +172,9 @@ namespace BSAG.IOCTalk.Serialization.Binary
         /// Registers the given tolerant binary layout type mapping structure.
         /// </summary>
         /// <param name="structure">The structure.</param>
-        internal static void RegisterTolerantTypeMapping(IValueItem structure)
+        internal void RegisterTolerantTypeMapping(IValueItem structure)
         {
-            lock (lockObj)
-            {
-                TryAddGlobalStructureMappingById(structure);
-            }
+            TryAddGlobalStructureMappingById(structure);
         }
 
         public object Deserialize(byte[] messageBytes, ISerializeContext deserializeContext)

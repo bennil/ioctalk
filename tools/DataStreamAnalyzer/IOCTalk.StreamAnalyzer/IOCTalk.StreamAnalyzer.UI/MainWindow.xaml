@@ -12,18 +12,18 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Margin="5">
-            <CheckBox IsChecked="{Binding ElementName=main, Path=FilterTime}">Filter out round-trip times less than </CheckBox>
+            <CheckBox IsChecked="{Binding ElementName=main, Path=FilterTime}">Filter out round-trip times less than</CheckBox>
             <TextBox Name="TextBlockMinRoundTripTime" IsEnabled="{Binding ElementName=main, Path=FilterTime}" Margin="5,0,0,0">00:00:00.500</TextBox>
             <Button Name="ButtonAnalyzeDataStream" Click="ButtonAnalyzeDataStream_Click" Margin="50,0,0,0">Analyze Data Stream</Button>
             <Label Foreground="Red" Margin="15,0,0,0" Visibility="Collapsed" Name="PleaseWaitLabel">Please wait</Label>
         </StackPanel>
-        
+
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="5,0,5,5">
             <CheckBox VerticalAlignment="Center" IsChecked="{Binding ElementName=main, Path=FilterFlowRate}">Filter out flow rates less than</CheckBox>
             <TextBox Name="TextBloxMinFlowRateCount" IsEnabled="{Binding ElementName=main, Path=FilterFlowRate}" Margin="5,0,0,0">10</TextBox>
             <TextBlock VerticalAlignment="Center" Margin="5,0,0,0"> calls per second.</TextBlock>
         </StackPanel>
-        
+
 
         <StackPanel Orientation="Horizontal" Margin="5" Grid.Row="2">
             <Label Margin="0,0,0,0">Sessions:</Label>
@@ -47,7 +47,7 @@
 
                     <TextBlock />
                     <TextBlock />
-                    
+
                     <TextBlock MinHeight="25" MinWidth="160">Incoming synchronous calls:</TextBlock>
                     <TextBlock Text="{Binding IncomingSyncCallCount}" />
 
@@ -59,7 +59,7 @@
 
                     <TextBlock>Incoming asynchronous calls:</TextBlock>
                     <TextBlock Text="{Binding IncomingAsyncCallCount}" />
-                    
+
                     <TextBlock>Outgoing asynchronous calls:</TextBlock>
                     <TextBlock Text="{Binding OutgoingAsyncCallCount}" />
 
@@ -67,14 +67,23 @@
                 </UniformGrid>
             </TabItem>
             <TabItem Header="Outgoing Sync. Calls">
-                <DataGrid ItemsSource="{Binding OutgoingSyncCalls.Values}" AutoGenerateColumns="False" IsReadOnly="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Round Trip Time" Binding="{Binding RoundTripTime}" />
-                        <DataGridTextColumn Header="Method" Binding="{Binding Request.Name}" />
-                        <DataGridTextColumn Header="Request Time" Binding="{Binding RequestTime}" />
-                        <DataGridTextColumn Header="Response Time" Binding="{Binding ResponseTime}" />
-                    </DataGrid.Columns>
-                </DataGrid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition Height="150" />
+                    </Grid.RowDefinitions>
+                    <DataGrid ItemsSource="{Binding OutgoingSyncCalls.Values}" AutoGenerateColumns="False" IsReadOnly="True" 
+                              SelectionChanged="DataGridOutgoingSysCalls_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Round Trip Time" Binding="{Binding RoundTripTime}" />
+                            <DataGridTextColumn Header="Method" Binding="{Binding Request.Name}" />
+                            <DataGridTextColumn Header="Request Time" Binding="{Binding RequestTime}" />
+                            <DataGridTextColumn Header="Response Time" Binding="{Binding ResponseTime}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="7" />
+                    <TextBox Grid.Row="1" IsReadOnly="True" TextWrapping="WrapWithOverflow" VerticalScrollBarVisibility="Auto" x:Name="TextBoxOutgoingSyncCallDetails" Margin="0,7,0,0" />
+                </Grid>
             </TabItem>
             <TabItem Header="Incoming Sync. Calls">
                 <DataGrid ItemsSource="{Binding IncomingSyncCalls.Values}" AutoGenerateColumns="False" IsReadOnly="True">
@@ -93,7 +102,7 @@
                 <TextBox IsReadOnly="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" Name="TextBoxErrors" />
             </TabItem>
         </TabControl>
-        
-        
+
+
     </Grid>
 </Window>

@@ -21,9 +21,6 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
 
         public override void WriteValue(IStreamWriter writer, ISerializeContext context, object value)
         {
-            // Write ItemType.TypeRef ID
-            //writer.WriteUInt32(this.TypeId);
-
             if (value == null)
             {
                 writer.WriteUInt8(ValueItem.NullValueIdent);
@@ -35,31 +32,49 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
 
                 IValueItem item = context.GetByType(typeRef);
 
-                bool typeMetaInfo = false;
-                if (item is ITypeStructure)
-                {
-                    ITypeStructure tStructure = (ITypeStructure)item;
+                //bool typeMetaInfo = false;
+                //if (item is ITypeStructure)
+                //{
+                //    ITypeStructure tStructure = (ITypeStructure)item;
 
-                    if (context.IsWriteTypeMetaInfoRequired(item.TypeId))
-                    {
-                        writer.WriteUInt8(ValueItem.TypeMetaInfo);
+                //    if (context.IsWriteTypeMetaInfoRequired(item.TypeId))
+                //    {
+                //        writer.WriteUInt8(ValueItem.TypeMetaInfo);
 
-                        typeMetaInfo = true;
-                    }
-                }
+                //        typeMetaInfo = true;
+                //    }
+                //}
 
-                if (!typeMetaInfo)
-                {
-                    writer.WriteUInt8(ValueItem.SingleValueIdent);
-                }
+                //if (!typeMetaInfo)
+                //{
+                //    writer.WriteUInt8(ValueItem.SingleValueIdent);
+                //}
 
+                writer.WriteUInt8(ValueItem.SingleValueIdent);
                 writer.WriteUInt32(item.TypeId);
 
-                if (typeMetaInfo)
+                if (item is ComplexStructure cs
+                    && cs.IsObjectType == false
+                    && context.IsWriteTypeMetaInfoRequired(item.TypeId))
                 {
                     // serialize type meta info
-                    TypeMetaStructure.WriteTypeMetaInfo(writer, (ITypeStructure)item, false);
+                    TypeMetaStructure.WriteObjectTypeMetaInfo(writer, (ITypeStructure)item, context, true);
                 }
+                else if (item is CollectionItems ci
+                    && ci.ItemStructure is ComplexStructure csItem
+                    && csItem.IsObjectType == false
+                    && context.IsWriteTypeMetaInfoRequired(item.TypeId))
+                {
+                    TypeMetaStructure.WriteCollectionTypeMetaInfo(writer, ci, context, true);
+                }
+                else if (item is EnumItem ei
+                    && context.IsWriteTypeMetaInfoRequired(item.TypeId))
+                {
+                    TypeMetaStructure.WriteEnumTypeMetaInfo(writer, ei);
+                }
+                else
+                    writer.WriteUInt8(ValueItem.NullValueIdent);
+
             }
         }
 
@@ -67,28 +82,20 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
         {
             byte contentType = reader.ReadUInt8();
 
-
             if (contentType == ValueItem.SingleValueIdent)
             {
                 uint typeIdValue = reader.ReadUInt32();
 
-                var actualStructure = context.GetByTypeId(typeIdValue);
+                byte contentType2 = reader.ReadUInt8();
 
-                Type runtimeType = ValueItem.GetRuntimeType(actualStructure);
-                if (runtimeType != null)
-                {
-                    return runtimeType;
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Runtime type for structure \"{actualStructure.Name}\" not found. Type ID: {actualStructure.TypeId}");
-                }
-            }
-            else if (contentType == ValueItem.TypeMetaInfo)
-            {
-                uint typeIdValue = reader.ReadUInt32();
+                IValueItem actualStructure = null;
+                if (contentType2 == ValueItem.TypeMetaInfo)
+                    actualStructure = TypeMetaStructure.ReadTypeMetaInfo(reader, typeIdValue, context, true);
+                else if (contentType2 != ValueItem.NullValueIdent)
+                    throw new InvalidOperationException($"Unexpected typeref content type 2 value: {contentType2}");
 
-                var actualStructure = TypeMetaStructure.ReadTypeMetaInfo(reader, typeIdValue, context);
+                if (actualStructure is null)
+                    actualStructure = context.GetByTypeId(typeIdValue);
 
                 Type runtimeType = ValueItem.GetRuntimeType(actualStructure);
                 if (runtimeType != null)

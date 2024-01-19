@@ -308,7 +308,14 @@ namespace BSAG.IOCTalk.Serialization.Binary
             if (context.TryGetDifferentTargetType(sourceType, out specialTarget)
                 && specialTarget != null)
             {
-                return specialTarget;
+                if (specialTarget is ComplexStructure cs)
+                {
+                    // check if expected interface is assignable
+                    if (defaultInterfaceType.IsAssignableFrom(cs.RuntimeType) || defaultInterfaceType.Equals(typeof(object)))
+                        return specialTarget;
+                }
+                else
+                    return specialTarget;
             }
 
             // check contextual target type

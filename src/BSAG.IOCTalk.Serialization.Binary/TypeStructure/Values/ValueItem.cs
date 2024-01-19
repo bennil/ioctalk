@@ -74,6 +74,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             {
                 return new TypeRefItem(name, getter, setter);
             }
+            else if (type.IsEnum)
+            {
+                return new EnumItem(name, getter, setter, type);
+            }
             else
             {
                 return new ComplexStructure(type, name, getter, setter, ctx);
@@ -147,7 +151,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
             {
                 throw new NotSupportedException($"The type \"{type.FullName}\" is not supported for binary transmission!");
             }
-            item.IsNullable = isNullable;
+            if (isNullable)
+                item.TypeFlags |= ItemTypeFlags.Nullable;
             return item;
         }
 
@@ -158,7 +163,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
                 return ((IObjectType)valueItem).RuntimeType;
             }
             else
-            {             
+            {
                 return GetRuntimeType(valueItem.Type);
             }
         }
@@ -200,6 +205,9 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
                 case ItemType.TimeSpan:
                     return typeof(TimeSpan);
 
+                case ItemType.String:
+                    return typeof(string);
+
                 case ItemType.Char:
                     return typeof(char);
 
@@ -212,6 +220,8 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
                 case ItemType.UInt64:
                     return typeof(UInt64);
 
+                case ItemType.TypeRef:
+                    return typeof(Type);
             }
 
             return null;

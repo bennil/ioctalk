@@ -74,5 +74,11 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// Write variable encoded 32-bit unsigned integer
         /// </summary>
         void WriteVarUInt32(uint value);
+
+
+        /// <summary>
+        /// Gets or sets the current reader position.
+        /// </summary>
+        long Position { get; set; }
     }
 }

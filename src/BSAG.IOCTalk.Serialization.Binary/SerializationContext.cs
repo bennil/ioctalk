@@ -112,7 +112,14 @@ namespace BSAG.IOCTalk.Serialization.Binary
             IValueItem result;
             if (differentTargetTypes.TryGetValue(objectType, out result))
             {
-                return result;
+                if (result is ComplexStructure cs)
+                {
+                    // check if expected interface is assignable
+                    if (defaultInterfaceType.IsAssignableFrom(cs.RuntimeType) || defaultInterfaceType.Equals(typeof(object)))
+                        return result;
+                }
+                else
+                    return result;
             }
 
             // ExposeSubTypeAttribute not supported in binary serialization use RegisterExposedSubInterfaceForType  instead

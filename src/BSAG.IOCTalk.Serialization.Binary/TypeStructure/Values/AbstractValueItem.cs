@@ -53,10 +53,16 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
         public ItemType Type { get; protected set; }
 
         /// <summary>
+        /// Gets the additional item type flags.
+        /// </summary>
+        /// <value>The type.</value>
+        public ItemTypeFlags TypeFlags { get; internal set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether this instance is nullable.
         /// </summary>
         /// <value><c>true</c> if this instance is nullable; otherwise, <c>false</c>.</value>
-        public bool IsNullable { get; internal set; }
+        public bool IsNullable => TypeFlags.HasFlag(ItemTypeFlags.Nullable);
 
         /// <summary>
         /// Gets the type identifier (unique type hash code).

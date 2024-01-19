@@ -9,9 +9,12 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ioctalk-codegen-binary-json-tcp" Version="2.3.59" />
-  </ItemGroup>
-  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
+    <ProjectReference Include="..\..\..\..\src\BSAG.IOCTalk.Communication.Common\BSAG.IOCTalk.Communication.Common.csproj" />
+    <ProjectReference Include="..\..\..\..\src\BSAG.IOCTalk.Communication.NetTcp\BSAG.IOCTalk.Communication.NetTcp.csproj" />
+    <ProjectReference Include="..\..\..\..\src\BSAG.IOCTalk.Composition\BSAG.IOCTalk.Composition.csproj" />
+    <ProjectReference Include="..\..\..\..\src\BSAG.IOCTalk.Logging\BSAG.IOCTalk.Logging.csproj" />
+    <ProjectReference Include="..\..\..\..\src\BSAG.IOCTalk.Serialization.Binary\BSAG.IOCTalk.Serialization.Binary.csproj" />
     <ProjectReference Include="..\IOCTalk.StreamAnalyzer.Implementation\IOCTalk.StreamAnalyzer.Implementation.csproj" />
   </ItemGroup>
 </Project>

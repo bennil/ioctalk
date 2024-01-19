@@ -26,6 +26,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
         private IValueItem itemStructure;
         private Func<object, object> getter;
         private Action<object, object> setter;
+        private ItemTypeFlags itemTypeFlags = ItemTypeFlags.Collection | ItemTypeFlags.Nullable;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CollectionItems"/> class.
@@ -52,12 +53,12 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
             this.isArray = type.IsArray;
             this.setter = setter;
             this.getter = getter;
-            this.typeId = CalculateTypeId();
 
             if (isArray)
             {
                 itemType = type.GetElementType();
                 isByteArray = itemType.Equals(typeof(byte));
+                itemTypeFlags |= ItemTypeFlags.Array;
             }
             else
             {
@@ -103,7 +104,6 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                                 throw new InvalidOperationException($"Only one generic argument expected on collections! Clean generic name: {cleanGenericName}; Type fullname: {type.FullName}");
 
                             this.Name = cleanGenericName;
-                            this.typeId = CalculateTypeId();        // reset typeId
                         }
                     }
                 }
@@ -131,6 +131,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
             }
 
             itemStructure = typeResolver.GetByType(itemType);
+            this.typeId = CalculateTypeId();
         }
 
         /// <summary>
@@ -146,7 +147,11 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
         /// Gets the item type.
         /// </summary>
         /// <value>The type.</value>
-        public ItemType Type { get; set; }
+        public ItemType Type => itemStructure.Type;
+
+        public ItemTypeFlags TypeFlags => itemTypeFlags;
+
+        public IValueItem ItemStructure => itemStructure;
 
         /// <summary>
         /// Gets a value indicating whether this instance is nullable.
@@ -165,6 +170,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
             get
             {
                 return typeId;
+            }
+            internal set
+            {
+                typeId = value;
             }
         }
 
@@ -203,7 +212,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                 if (context.IsWriteTypeMetaInfoRequired(this.TypeId))
                 {
                     // serialize type meta info at the first time
-                    TypeMetaStructure.WriteTypeMetaInfo(writer, this);
+                    TypeMetaStructure.WriteCollectionTypeMetaInfo(writer, this, context, true);
                 }
             }
 
@@ -334,7 +343,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
             }
             else if (contentType == ValueItem.TypeMetaInfo)
             {
-                TypeMetaStructure.SkipTypeMetaInfo(reader);
+                TypeMetaStructure.SkipTypeMetaInfo(reader, true);
                 return this.ReadValue(reader, context);
             }
             else
@@ -345,7 +354,10 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
 
         private uint CalculateTypeId()
         {
-            uint typeCode = Hashing.CreateHash(Name);
+            uint typeCode = Hashing.CreateHash((uint)Type);
+            typeCode = Hashing.CreateHash(itemStructure.TypeId, typeCode);
+
+            typeCode = TypeMetaStructure.CreateItemTypeFlagsHashForTypeIdCalculation(TypeFlags, typeCode);
 
             if (typeCode <= 150)
             {

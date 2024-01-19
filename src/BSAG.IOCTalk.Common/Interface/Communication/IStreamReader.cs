@@ -217,5 +217,10 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// <exception cref="EndOfStreamException"/>
         uint ReadVarUInt32();
 
+
+        /// <summary>
+        /// Gets the current reader position.
+        /// </summary>
+        long Position { get; }
     }
 }

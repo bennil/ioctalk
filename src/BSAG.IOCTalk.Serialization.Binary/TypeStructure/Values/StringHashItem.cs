@@ -23,7 +23,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Values
         public StringHashItem(string name, Func<object, object> getter, Action<object, object> setter)
             : base(name, getter, setter, ItemType.StringHash)
         {
-            this.IsNullable = true;
+            this.TypeFlags |= ItemTypeFlags.Nullable;
         }
 
         /// <summary>

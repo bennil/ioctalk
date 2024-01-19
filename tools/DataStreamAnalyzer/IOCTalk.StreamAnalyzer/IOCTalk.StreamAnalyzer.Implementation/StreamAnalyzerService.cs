@@ -136,7 +136,10 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                 }
 
                                 int dataLength;
-                                IGenericMessage message = ParseMessage(dataPart, currentSession.Format, currentSession, out dataLength);
+                                IGenericMessage message = ParseMessage(dataPart, currentSession.Format, currentSession, errors, out dataLength);
+
+                                if (message is null)
+                                    continue;
 
                                 // Flow rate
                                 if (currentSession.PendingFlowRate == null)
@@ -550,9 +553,9 @@ namespace IOCTalk.StreamAnalyzer.Implementation
         }
 
 
-        private static IGenericMessage ParseMessage(string textMsg, RawMessageFormat format, StreamSession session, out int dataLength)
+        private static IGenericMessage ParseMessage(string textMsg, RawMessageFormat format, StreamSession session, StringBuilder errors, out int dataLength)
         {
-            IGenericMessage message;
+            IGenericMessage message = null;
             if (format == RawMessageFormat.Binary)
             {
                 byte[] binaryData = Convert.FromBase64String(textMsg);
@@ -560,17 +563,32 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                 if (binarySerializer == null)
                 {
                     binarySerializer = new BinaryMessageSerializer();
-                    binarySerializer.Serializer.SerializeItemFilter = (IValueItem item) =>
-                    {
-                        // functional types not present > skip payload deserialize
-                        if (item.Name == "Payload")
-                            return false;
-                        else
-                            return true;
-                    };
+                    binarySerializer.Serializer.AutoCreateMissingTypes = true;
+                    //binarySerializer.Serializer.SerializeItemFilter = (IValueItem item) =>
+                    //{
+                    //    // functional types not present > skip payload deserialize
+                    //    if (item.Name == "Payload")
+                    //        return false;
+                    //    else
+                    //        return true;
+                    //};
                 }
 
-                message = binarySerializer.DeserializeFromBytes(binaryData, binaryData.Length, null, session.SessionId);
+                try
+                {
+                    message = binarySerializer.DeserializeFromBytes(binaryData, binaryData.Length, null, session.SessionId);
+                }
+                catch (Exception ex)
+                {
+                    errors.AppendLine("Deserialize Expection:");
+                    errors.AppendLine(ex.ToString());
+                    errors.AppendLine();
+                    errors.AppendLine();
+                    errors.Append("base64 message data: ");
+                    errors.AppendLine(textMsg);
+                    errors.AppendLine();
+                }
+
                 dataLength = binaryData.Length;
             }
             else

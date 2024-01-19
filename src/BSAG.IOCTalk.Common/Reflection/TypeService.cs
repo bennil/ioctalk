@@ -1077,9 +1077,19 @@ namespace BSAG.IOCTalk.Common.Reflection
         {
             throw new NotSupportedException($"This ioctalk version is compiled with ahead of time only option.");
         }
+
+        public static Type ImplementDynamicTypeWithTypeReference(string csharpCode, string targetAssemblyName, params Type[] refAssemblyTypes)
+        {
+            throw new NotSupportedException($"This ioctalk version is compiled with ahead of time only option.");
+        }
 #elif CodeGen
 
         public static Type ImplementDynamicType(string csharpCode, string targetAssemblyName)
+        {
+            throw new NotSupportedException($"This ioctalk version is compiled for source generator only. No runtime auto implementation supported.");
+        }
+
+        public static Type ImplementDynamicTypeWithTypeReference(string csharpCode, string targetAssemblyName, params Type[] refAssemblyTypes)
         {
             throw new NotSupportedException($"This ioctalk version is compiled for source generator only. No runtime auto implementation supported.");
         }
@@ -1088,6 +1098,13 @@ namespace BSAG.IOCTalk.Common.Reflection
         public static Type ImplementDynamicType(string csharpCode, string targetAssemblyName)
         {
             return ImplementDynamicType(csharpCode, targetAssemblyName, null);
+        }
+
+        public static Type ImplementDynamicTypeWithTypeReference(string csharpCode, string targetAssemblyName, params Type[] refAssemblyTypes)
+        {
+            var references = GetMetadataReferences(null, refAssemblyTypes);
+
+            return ImplementDynamicType(csharpCode, targetAssemblyName, references);
         }
 
         public static Type ImplementDynamicType(string csharpCode, string targetAssemblyName, MetadataReference[] references)
@@ -1130,7 +1147,7 @@ namespace BSAG.IOCTalk.Common.Reflection
                     ms.Seek(0, SeekOrigin.Begin);
                     Assembly assembly = Assembly.Load(ms.ToArray());
 
-                    return assembly.GetTypes().First();
+                    return assembly.GetTypes().Where(t => t.FullName.StartsWith(targetAssemblyName)).First();
                 }
             }
 
