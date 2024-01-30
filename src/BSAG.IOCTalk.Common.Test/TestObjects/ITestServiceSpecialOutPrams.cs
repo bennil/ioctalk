@@ -6,6 +6,8 @@ namespace BSAG.IOCTalk.Common.Test.TestObjects
 {
     public interface ITestServiceSpecialOutPrams
     {
+        void GetOutDataSimple(out string outData);
+
         void GetData(out int? nullableInteger, out IList<string> listTest);
 
         int? NullableReturnTestMethod(int input);

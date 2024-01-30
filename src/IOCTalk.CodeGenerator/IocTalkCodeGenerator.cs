@@ -867,8 +867,7 @@ namespace IOCTalk.CodeGenerator
                         }
 
                         // type array
-                        //sbParameterTypes.AppendFormat("typeof({0}){1}", parameterTypeString, (param.IsOut ? ".MakeByRefType()" : null));
-                        sbParameterTypes.AppendFormat("typeof({0}){1}", parameterTypeString, null);
+                        sbParameterTypes.AppendFormat("typeof({0}){1}", parameterTypeString, (param.RefKind == RefKind.Out ? ".MakeByRefType()" : null));
 
 
                         if (i < parameters.Length - 1)

@@ -129,13 +129,14 @@ namespace BSAG.IOCTalk.Common.Test
             //int? nullableInt;
             //instance.GetData(out nullableInt);
 
-
+            // without parameters
             var invokeMethod = new InvokeMethodInfo(typeof(ITestServiceSpecialOutPrams), nameof(ITestServiceSpecialOutPrams.GetData));
-
             var invokeMethodDeserialize = new InvokeMethodInfo(invokeMethod.InterfaceMethod.DeclaringType, invokeMethod.QualifiedMethodName);
-
-
             Assert.NotNull(invokeMethodDeserialize);
+
+            // with parameters
+            var simpleOutInvokeMethodExplicit = new InvokeMethodInfo(typeof(ITestServiceSpecialOutPrams), nameof(ITestServiceSpecialOutPrams.GetOutDataSimple), new Type[] { typeof(string).MakeByRefType() });
+            var outInvokeMethodExplicit = new InvokeMethodInfo(typeof(ITestServiceSpecialOutPrams), nameof(ITestServiceSpecialOutPrams.GetData), new Type[] { typeof(int?).MakeByRefType(), typeof(IList<string>).MakeByRefType() });
         }
 
 
