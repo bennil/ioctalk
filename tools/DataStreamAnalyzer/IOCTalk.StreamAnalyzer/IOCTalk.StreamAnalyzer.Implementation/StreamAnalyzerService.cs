@@ -268,6 +268,12 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                         }
 
                                         break;
+
+
+                                    case MessageType.Exception:
+                                        errors.AppendLine($"Exception Message - SessionID: {sessionId}; RequestID: {message.RequestId}:");
+                                        errors.AppendLine(message.Payload.ToString());
+                                        break;
                                 }
 
 
@@ -308,7 +314,7 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                                                 string conditions = string.Concat(fileExort.Conditions?.Select(cd => $"{cd.Key}-{cd.Value}_"));
                                                 string groupKeyValues = string.Concat(fileExort.GroupByKeys?.Select(gk => $"{gk}-{GetJsonSimpleStringValue(dataPart, gk)}_"));
 
-                                                string exportPath = Path.Combine(Path.GetFullPath(fileExort.ExportDirectory), $"{conditions}{groupKeyValues.TrimEnd('_')}.txt");
+                                                string exportPath = Path.Combine(Path.GetFullPath(fileExort.ExportDirectory), $"{conditions}{groupKeyValues.TrimEnd('_')}.dlog");
 
                                                 if (File.Exists(exportPath))
                                                     File.Delete(exportPath);

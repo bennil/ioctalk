@@ -1342,6 +1342,19 @@ namespace BSAG.IOCTalk.Communication.Common
                         responseObject = returnObject;
                     }
 
+                    if (responseObject is Task task)
+                    {
+                        // Method result is wrapped in Task<?> (this can happen in ProcessPendingCallerThreadInvokesOnce - sync wait processing other async method)
+                        if (task.IsCompleted == false)
+                        {
+                            // Block sync method until async result is completed
+                            if (task.Wait(requestTimeout) == false)
+                                throw new TimeoutException($"Timeout unwarpping async result from method {methodInfo.QualifiedMethodName}; SessionID: {session.SessionId} Timeout: {requestTimeout}");
+                        }
+
+                        responseObject = TypeService.GetAsyncAwaitResultValue(task);
+                    }
+
                     try
                     {
                         // Send response message
