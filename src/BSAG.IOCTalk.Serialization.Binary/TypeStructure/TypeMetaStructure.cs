@@ -713,6 +713,11 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                 code.AppendLine();
             }
 
+            // Debug information
+            code.AppendLine($"      public uint DebugInfoTypeId => {expectedTypeId};");
+            code.AppendLine($"      public string DebugInfoTypeFullName => \"{typeFullName}\";");
+
+
             code.AppendLine();
             code.AppendLine("   }");
             code.AppendLine("}");

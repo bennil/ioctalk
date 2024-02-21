@@ -178,12 +178,15 @@ namespace BSAG.IOCTalk.Serialization.Binary
                 if (diffType != defaultInterfaceType)
                 {
                     var differentTargetStructure = serializer.GetByType(diffType, this);
-                    if (differentTargetStructure is ComplexStructure)
-                    {
-                        ((ComplexStructure)differentTargetStructure).CheckDifferentType = false;
-                    }
+                    
                     if (cacheDifference)
+                    {
+                        if (differentTargetStructure is ComplexStructure)
+                        {
+                            ((ComplexStructure)differentTargetStructure).CheckDifferentType = false;
+                        }
                         differentTargetTypes[objectType] = differentTargetStructure;
+                    }
 
                     return differentTargetStructure;
                 }
