@@ -114,6 +114,24 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             var response3 = await currentAsyncAwaitTestServiceClientProxyInstance.GetDataAsync3(expectedArrayLength);
             Assert.Equal(expectedArrayLength, response3.Length);
 
+            currentAsyncAwaitTestServiceClientProxyInstance.AsyncVoidTest(null);
+
+
+            // same name tests
+            await currentAsyncAwaitTestServiceClientProxyInstance.SameNameTest("test");
+
+            int id = 4;
+            var sameNameResult1 = await currentAsyncAwaitTestServiceClientProxyInstance.SameNameTest(id);
+            Assert.Equal(id, sameNameResult1.ID);
+
+            string[] sameNameStrings = { "das", "ist", "ein", "Array" };
+            var sameNameResult2 = await currentAsyncAwaitTestServiceClientProxyInstance.SameNameTest(sameNameStrings);
+            for (int i = 0; i < sameNameStrings.Length; i++)
+            {
+                Assert.Equal(sameNameStrings[i], sameNameResult2[i].Name);
+            }
+
+
 
             tcpClient.Shutdown();
             tcpBackendService.Shutdown();
@@ -335,7 +353,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
             clientCloseTestSession.Close();
 
             // wait for tcp events
-            //await Task.Delay(200);
+            await Task.Delay(200);
 
             Assert.Equal(1, sessionTerminatedClientCount);
             Assert.Equal(1, sessionTerminatedServiceCount);

@@ -27,5 +27,14 @@ namespace BSAG.IOCTalk.Test.Interface
 
         Task<IDataTransferTest> GetObjectDataAsync();
 
+        void AsyncVoidTest(IDataTransferTest test);
+
+
+        Task<IDataTransferTest> SameNameTest(int id);
+
+        Task<IDataTransferTest[]> SameNameTest(string[] list);
+
+        Task SameNameTest(string test);
+
     }
 }

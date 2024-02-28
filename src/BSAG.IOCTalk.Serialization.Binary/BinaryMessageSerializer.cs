@@ -484,43 +484,46 @@ namespace BSAG.IOCTalk.Serialization.Binary
 
                         case MessageType.MethodInvokeResponse:
 
-                            IInvokeState invokeState;
-                            if (session.PendingRequests.TryGetValue(message.RequestId, out invokeState))
+                            if (context.ChildLevel <= 1)
                             {
-                                if (invokeState.OutParameterValues != null)
+                                IInvokeState invokeState;
+                                if (session.PendingRequests.TryGetValue(message.RequestId, out invokeState))
                                 {
-                                    if (context.ArrayIndex.HasValue)
+                                    if (invokeState.OutParameterValues != null)
                                     {
-                                        if (context.ArrayIndex == 0)
+                                        if (context.ArrayIndex.HasValue)
                                         {
-                                            resultType = invokeState.Method.ReturnType;
+                                            if (context.ArrayIndex == 0)
+                                            {
+                                                resultType = invokeState.Method.ReturnType;
+                                            }
+                                            else
+                                            {
+                                                Type type = invokeState.MethodSource.OutParameters[context.ArrayIndex.Value - 1].ParameterType;
+                                                type = type.GetElementType();
+                                                resultType = type;
+                                            }
                                         }
                                         else
                                         {
-                                            Type type = invokeState.MethodSource.OutParameters[context.ArrayIndex.Value - 1].ParameterType;
-                                            type = type.GetElementType();
-                                            resultType = type;
+                                            resultType = objectArrayType;
                                         }
                                     }
-                                    else
+                                    else if (context.ArrayIndex == 0
+                                        || !context.ArrayIndex.HasValue)
                                     {
-                                        resultType = objectArrayType;
+                                        // first arrar item contains method return type 
+                                        // or payload only inlcudes return object
+                                        if (invokeState.MethodSource.IsAsyncAwaitRemoteMethod)
+                                            resultType = TypeService.GetAsyncAwaitResultType(invokeState.Method.ReturnType);
+                                        else
+                                            resultType = invokeState.Method.ReturnType;
                                     }
                                 }
-                                else if (context.ArrayIndex == 0
-                                    || !context.ArrayIndex.HasValue)
+                                else
                                 {
-                                    // first arrar item contains method return type 
-                                    // or payload only inlcudes return object
-                                    if (invokeState.MethodSource.IsAsyncAwaitRemoteMethod)
-                                        resultType = TypeService.GetAsyncAwaitResultType(invokeState.Method.ReturnType);
-                                    else
-                                        resultType = invokeState.Method.ReturnType;
+                                    throw new InvalidOperationException("Pending request ID: " + message.RequestId + " message not found!");
                                 }
-                            }
-                            else
-                            {
-                                throw new InvalidOperationException("Pending request ID: " + message.RequestId + " message not found!");
                             }
                             break;
 

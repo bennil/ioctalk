@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace BSAG.IOCTalk.Test.Common.Service
 {
@@ -59,6 +60,32 @@ namespace BSAG.IOCTalk.Test.Common.Service
             await Task.Delay(10);   // force async execution
 
             return new DTTest { ID = 5 };
+        }
+
+        public async void AsyncVoidTest(IDataTransferTest test)
+        {
+        }
+
+        public Task<IDataTransferTest> SameNameTest(int id)
+        {
+            return Task.FromResult<IDataTransferTest>(new DTTest { ID = id, Name = "SameNameTest" });
+        }
+
+        public Task<IDataTransferTest[]> SameNameTest(string[] list)
+        {
+            List<IDataTransferTest> items = new List<IDataTransferTest>();
+            for (int i = 0; i < list.Length; i++)
+            {
+                var item = list[i];
+                items.Add(new DTTest { ID = i, Name = item });
+            }
+            return Task.FromResult<IDataTransferTest[]>(items.ToArray());
+        }
+
+        public Task SameNameTest(string test)
+        {
+            // do nothing
+            return Task.CompletedTask;
         }
 
         public static int RunSomeWorkCounter { get; set; }
