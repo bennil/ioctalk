@@ -17,6 +17,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
     {
         private uint typeId;
         private Type type;
+        private string typeName;
         private Type itemType;
         private Type targetCollectionType;
         private bool isArray;
@@ -42,13 +43,14 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
         public CollectionItems(Type type, string name, Func<object, object> getter, Action<object, object> setter, ITypeResolver typeResolver)
         {
             this.type = type;
+            this.typeName = type.FullName;
             if (name != null)
             {
                 this.Name = name;
             }
             else
             {
-                this.Name = type.FullName;
+                this.Name = typeName;
             }
             this.isArray = type.IsArray;
             this.setter = setter;
@@ -87,24 +89,25 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
                         throw new NotImplementedException("More than one generic arguments is not supported yet!");
                     }
 
-                    if (name is null)
+
+                    // typeId contains Version and PublicToken because of default generic Type.FullName e.g.: System.Collections.Generic.IEnumerable`1[[System.Int32, System.Private.CoreLib, Version=7.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+                    // remove additional generic argument information to keep typeId consitent between application boundaries
+                    int versionIndex = type.FullName.IndexOf(", Version=");
+                    if (versionIndex > 0)
                     {
-                        // typeId contains Version and PublicToken because of default generic Type.FullName e.g.: System.Collections.Generic.IEnumerable`1[[System.Int32, System.Private.CoreLib, Version=7.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
-                        // remove additional generic argument information to keep typeId consitent between application boundaries
-                        int versionIndex = type.FullName.IndexOf(", Version=");
-                        if (versionIndex > 0)
+                        string cleanGenericName = type.FullName.Substring(0, versionIndex);
+                        if (type.FullName.EndsWith("]]"))
                         {
-                            string cleanGenericName = type.FullName.Substring(0, versionIndex);
-                            if (type.FullName.EndsWith("]]"))
-                            {
-                                cleanGenericName += "]]";
-                            }
-
-                            if (cleanGenericName.Contains(", Version="))
-                                throw new InvalidOperationException($"Only one generic argument expected on collections! Clean generic name: {cleanGenericName}; Type fullname: {type.FullName}");
-
-                            this.Name = cleanGenericName;
+                            cleanGenericName += "]]";
                         }
+
+                        if (cleanGenericName.Contains(", Version="))
+                            throw new InvalidOperationException($"Only one generic argument expected on collections! Clean generic name: {cleanGenericName}; Type fullname: {type.FullName}");
+
+                        if (name is null)
+                            this.Name = cleanGenericName;
+
+                        this.typeName = cleanGenericName;
                     }
                 }
                 else
@@ -354,7 +357,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure
 
         private uint CalculateTypeId()
         {
-            uint typeCode = Hashing.CreateHash((uint)Type);
+            uint typeCode = Hashing.CreateHash(typeName);
             typeCode = Hashing.CreateHash(itemStructure.TypeId, typeCode);
 
             typeCode = TypeMetaStructure.CreateItemTypeFlagsHashForTypeIdCalculation(TypeFlags, typeCode);

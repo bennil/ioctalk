@@ -11,7 +11,7 @@ The new binary wire format and binary message serializer reduces the transfer si
 ```
 var localShare = new LocalShareContext();
 
-var tcpMyService = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
+var tcpMyService = new TcpCommunicationController(new ShortWireFraming(), new JsonMessageSerializer());
 
 var compositionHost = new TalkCompositionHost(localShare, "MyService");
 
@@ -35,11 +35,13 @@ tcpMyService.InitService(14341);
 ```
 
 
-If you need to connect to ioctalk legacy wire format and json serialization services use:
+If you need to connect to ioctalk legacy wire format services use:
 ```
 new TcpCommunicationController(new LegacyWireFraming(), new JsonMessageSerializer())
 ```
 
+| :exclamation:  BinaryMessageSerializer is not production ready yet! Binary layout may change due to bugfixes! |
+|---------------------------------------------------------------------------------------------------------------|
 
 ## Dependency less session handling
 
