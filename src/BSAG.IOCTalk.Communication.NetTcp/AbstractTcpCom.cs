@@ -429,6 +429,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 case SocketError.NetworkDown:
                 case SocketError.NetworkUnreachable:
                 case SocketError.NetworkReset:
+                case SocketError.OperationAborted:
 
                 case (SocketError)100:      // Linux/Android: Network is down
                 case (SocketError)101:      // Linux/Android: Network is unreachable
@@ -441,7 +442,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                     break;
 
                 default:
-                    Logger.Error(sockEx.ToString());
+                    Logger.Error($"Socket exception ErrorCode: {errorCode}{Environment.NewLine}{sockEx}");
                     Close(state.Client, $"{nameof(SocketException)} ErrorCode: {errorCode}");
                     break;
             }
