@@ -361,6 +361,12 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                         if (Logger != null)
                             Logger.Warn($"Connection refused {communication?.EndPointInfo}! {errMsg}");
 
+                        if (ClientReconnectFailed != null)
+                            ClientReconnectFailed(this, EventArgs.Empty);
+
+                        if (isActive == false)
+                            return;
+
                         await Task.Delay(ClientReconnectInterval);
 
                         clientConnectCount++;
@@ -373,7 +379,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 catch (Exception ex)
                 {
                     if (Logger != null)
-                        Logger.Error(ex.ToString());
+                        Logger.Error($"Unexpected tcp auto reconnect error: {ex}");
 
                     await Task.Delay(1000);    // pause between reconnect
                 }
