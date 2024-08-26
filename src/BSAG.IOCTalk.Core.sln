@@ -48,6 +48,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOCTalk.UnitTests.Interceptor", "UnitTests\IOCTalk.UnitTests.Interceptor\IOCTalk.UnitTests.Interceptor.csproj", "{F4B9FBF0-5B10-42F7-B5E1-C7BFAE9EE1FA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -130,6 +132,10 @@ Global
 		{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4B9FBF0-5B10-42F7-B5E1-C7BFAE9EE1FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4B9FBF0-5B10-42F7-B5E1-C7BFAE9EE1FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4B9FBF0-5B10-42F7-B5E1-C7BFAE9EE1FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4B9FBF0-5B10-42F7-B5E1-C7BFAE9EE1FA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -140,6 +146,7 @@ Global
 		{20AD9229-4A46-40FD-A3E4-8A16CF577188} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
 		{9A9F851A-3B4D-4EC6-88F8-23E6EDD98B38} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
 		{7727B1B8-0C2C-4CC3-845B-7F0A414FDCFE} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
+		{F4B9FBF0-5B10-42F7-B5E1-C7BFAE9EE1FA} = {E592DCF8-AC15-4FE8-AF2A-C95F4B80682E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {53870CE6-F9E9-4FC3-A378-8E7A71F1DF33}

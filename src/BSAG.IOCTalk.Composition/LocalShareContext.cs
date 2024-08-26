@@ -4,6 +4,8 @@ using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Common.Session;
+using BSAG.IOCTalk.Composition.Fluent;
+using BSAG.IOCTalk.Composition.Interception;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -38,7 +40,7 @@ namespace BSAG.IOCTalk.Composition
 
         private List<Assembly> assemblies = new List<Assembly>();
         private List<IDiscoveryCondition> discoveryConditionItems;
-        private Dictionary<Type, Type> interfaceImplementationMapping = new Dictionary<Type, Type>();
+        private Dictionary<Type, TypeHierachy> interfaceImplementationMapping = new Dictionary<Type, TypeHierachy>();
 
         private ILogger logger;
         private bool isInitalized = false;
@@ -141,9 +143,13 @@ namespace BSAG.IOCTalk.Composition
             if (implementationType.IsClass == false)
                 throw new ArgumentException($"Class type expected. Actual: {interfaceType.FullName}", nameof(implementationType));
 
-            interfaceImplementationMapping[interfaceType] = implementationType;
+            interfaceImplementationMapping[interfaceType] = new TypeHierachy(interfaceType, implementationType);
         }
 
+        internal TypeHierachy GetInterfaceImplementationTypeHierachy(Type interfaceType)
+        {
+            return interfaceImplementationMapping[interfaceType];
+        }
 
         #region Assembly management
 
@@ -414,6 +420,7 @@ namespace BSAG.IOCTalk.Composition
 
             // create new instance
             Type targetType;
+            bool registerTargetInstance = true;
             if (type.IsInterface)
             {
                 //var contract = currentContract;
@@ -425,7 +432,7 @@ namespace BSAG.IOCTalk.Composition
                 //    }
                 //}
 
-                if (!TryFindInterfaceImplementation(type, injectTargetType, out targetType))
+                if (!TryFindInterfaceImplementation(type, injectTargetType, pendingCreateList, out targetType, out registerTargetInstance))
                 {
                     // not found > check if multiple import
                     if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
@@ -469,16 +476,21 @@ namespace BSAG.IOCTalk.Composition
             instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
             this.CheckOutParamsSubscriptions(instance, outParams, null, type, injectTargetType);
 
-            this.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
+            if (registerTargetInstance)
+                this.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
 
             return true;
         }
 
-        internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, out Type targetType)
+        internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, List<Type> pendingCreateList, out Type targetType, out bool registerTargetInstance)
         {
-            if (interfaceImplementationMapping.TryGetValue(interfaceType, out targetType))
+            if (interfaceImplementationMapping.TryGetValue(interfaceType, out var targetTypeHierachy))
+            {
+                targetType = targetTypeHierachy.GetNextImplementationType(injectTargetType, pendingCreateList, out registerTargetInstance);
                 return true;
+            }
 
+            registerTargetInstance = true;
             if (injectTargetType != null)
             {
                 // first scan inject assembly
@@ -498,7 +510,7 @@ namespace BSAG.IOCTalk.Composition
 
             if (ParentContainer is LocalShareContext parentLsc)
             {
-                return parentLsc.TryFindInterfaceImplementation(interfaceType, injectTargetType, out targetType);
+                return parentLsc.TryFindInterfaceImplementation(interfaceType, injectTargetType, pendingCreateList, out targetType, out registerTargetInstance);
             }
             else
             {
@@ -866,12 +878,16 @@ namespace BSAG.IOCTalk.Composition
         /// </summary>
         /// <typeparam name="InterfaceType">The interface service type</typeparam>
         /// <typeparam name="ImplementationType">The implementation type</typeparam>
-        public void RegisterLocalSharedService<InterfaceType, ImplementationType>()
+        public LocalSharedRegistration<InterfaceType> RegisterLocalSharedService<InterfaceType, ImplementationType>()
             where ImplementationType : class, InterfaceType
         {
+            LocalSharedRegistration<InterfaceType> fluentHelper = new LocalSharedRegistration<InterfaceType>(this);
+
             MapInterfaceImplementationType<InterfaceType, ImplementationType>();
 
             RegisterLocalSharedService(typeof(InterfaceType));
+
+            return fluentHelper;
         }
 
         /// <summary>

@@ -1,31 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
-		<IsTestProject>true</IsTestProject>
-		<IsPackable>false</IsPackable>
-
-		<Version>2.0.0</Version>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
-		<PackageReference Include="xunit" Version="2.5.0" />
-		<PackageReference Include="xunit.runner.visualstudio" Version="2.5.0">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
-		<ProjectReference Include="..\BSAG.IOCTalk.Communication.PersistentQueue\BSAG.IOCTalk.Communication.PersistentQueue.csproj" />
-		<ProjectReference Include="..\BSAG.IOCTalk.Communication.Tcp\BSAG.IOCTalk.Communication.Tcp.csproj" />
-		<ProjectReference Include="..\BSAG.IOCTalk.Composition\BSAG.IOCTalk.Composition.csproj" />
-		<ProjectReference Include="..\BSAG.IOCTalk.Logging\BSAG.IOCTalk.Logging.csproj" />
-		<ProjectReference Include="..\BSAG.IOCTalk.Serialization.Json\BSAG.IOCTalk.Serialization.Json.csproj" />
-		<ProjectReference Include="..\BSAG.IOCTalk.Test.Common.Service\BSAG.IOCTalk.Test.Common.Service.csproj" />
-		<ProjectReference Include="..\BSAG.IOCTalk.Test.Interface\BSAG.IOCTalk.Test.Interface.csproj" />
-	</ItemGroup>
-
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <Version>2.0.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
+    <ProjectReference Include="..\BSAG.IOCTalk.Communication.PersistentQueue\BSAG.IOCTalk.Communication.PersistentQueue.csproj" />
+    <ProjectReference Include="..\BSAG.IOCTalk.Communication.Tcp\BSAG.IOCTalk.Communication.Tcp.csproj" />
+    <ProjectReference Include="..\BSAG.IOCTalk.Composition\BSAG.IOCTalk.Composition.csproj" />
+    <ProjectReference Include="..\BSAG.IOCTalk.Logging\BSAG.IOCTalk.Logging.csproj" />
+    <ProjectReference Include="..\BSAG.IOCTalk.Serialization.Json\BSAG.IOCTalk.Serialization.Json.csproj" />
+    <ProjectReference Include="..\BSAG.IOCTalk.Test.Common.Service\BSAG.IOCTalk.Test.Common.Service.csproj" />
+    <ProjectReference Include="..\BSAG.IOCTalk.Test.Interface\BSAG.IOCTalk.Test.Interface.csproj" />
+  </ItemGroup>
 </Project>

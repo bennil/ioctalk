@@ -177,7 +177,7 @@ namespace BSAG.IOCTalk.Composition
                 Type proxyImplementationType;
                 if (!interfaceTypeProxyImplCache.TryGetValue(interfaceType, out proxyImplementationType))
                 {
-                    if (forceProxyAutoCreation || !TryFindInterfaceImplementation(interfaceType, null, out proxyImplementationType))
+                    if (forceProxyAutoCreation || !TryFindInterfaceImplementation(interfaceType, null, null, out proxyImplementationType, out _))
                     {
                         // auto generate proxy
                         proxyImplementationType = TypeService.BuildProxyImplementation(interfaceType); // "[System.Composition.Import]");
@@ -566,7 +566,7 @@ namespace BSAG.IOCTalk.Composition
 
                     // check if a local export is present for the type
                     object instance;
-                    if (TryFindInterfaceImplementation(interfType, null, out Type implType))
+                    if (TryFindInterfaceImplementation(interfType, null, null, out Type implType, out _))
                     {
                         interfaceTypeCache[interfaceType] = implType;   // add string > implementation type mapping
                         return implType;
@@ -697,6 +697,7 @@ namespace BSAG.IOCTalk.Composition
                 return true;
             }
 
+            bool registerTargetInstance = true;
             Type targetType;
             var contract = currentContract;
             if (type.IsInterface)
@@ -709,7 +710,7 @@ namespace BSAG.IOCTalk.Composition
                     }
                 }
 
-                if (TryFindInterfaceImplementation(type, injectTargetType, out targetType) == false)
+                if (TryFindInterfaceImplementation(type, injectTargetType, pendingCreateList, out targetType, out registerTargetInstance) == false)
                 {
                     // not found > check if multiple import
                     if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
@@ -752,7 +753,8 @@ namespace BSAG.IOCTalk.Composition
             instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
             localShare.CheckOutParamsSubscriptions(instance, outParams, this, type, injectTargetType);
 
-            localShare.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
+            if (registerTargetInstance)
+                localShare.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
 
             if (contract != null
                 && this.localSessionServiceInterfaceTypesResolved.Contains(type))
@@ -1038,12 +1040,15 @@ namespace BSAG.IOCTalk.Composition
         }
 
 
-        internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, out Type targetType)
+        internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, List<Type> pendingCreateList, out Type targetType, out bool registerTargetInstance)
         {
             if (interfaceImplementationMapping.TryGetValue(interfaceType, out targetType))
+            {
+                registerTargetInstance = true;
                 return true;
+            }
             else
-                return localShare.TryFindInterfaceImplementation(interfaceType, injectTargetType, out targetType);  // redirect to parent container
+                return localShare.TryFindInterfaceImplementation(interfaceType, injectTargetType, pendingCreateList, out targetType, out registerTargetInstance);  // redirect to parent container
         }
 
         // ----------------------------------------------------------------------------------------
