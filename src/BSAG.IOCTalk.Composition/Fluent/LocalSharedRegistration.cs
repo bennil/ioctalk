@@ -8,21 +8,26 @@ namespace BSAG.IOCTalk.Composition.Fluent
 {
     public class LocalSharedRegistration<InterfaceType>
     {
-        LocalShareContext source;
+        protected LocalShareContext source;
 
         public LocalSharedRegistration(LocalShareContext source)
         {
             this.source = source;
         }
 
-        public LocalSharedRegistration<InterfaceType> InterceptWithImplementation<InterceptImplementation>()
+        /// <summary>
+        /// Intercepts the 
+        /// </summary>
+        /// <typeparam name="InterceptImplementation"></typeparam>
+        /// <returns></returns>
+        public LocalSharedRegistrationIntercept<InterfaceType> InterceptWithImplementation<InterceptImplementation>()
             where InterceptImplementation : class, InterfaceType
         {
             TypeHierachy typeHierachy = source.GetInterfaceImplementationTypeHierachy(typeof(InterfaceType));
-            
+
             typeHierachy.AddInterceptionType(typeof(InterceptImplementation));
 
-            return this;
+            return new LocalSharedRegistrationIntercept<InterfaceType>(source);
         }
     }
 }

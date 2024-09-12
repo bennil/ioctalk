@@ -547,32 +547,49 @@ namespace BSAG.IOCTalk.Composition
             return GetExport(type, injectTargetType, pendingCreateList);
         }
 
-        internal IEnumerable<Type> FindInterfaceImplementations(Type interfaceType, Type injectTargetType)
+        internal Type[] FindInterfaceImplementations(Type interfaceType, Type injectTargetType, List<Type> pendingCreateList, out bool registerTargetInstance)
         {
-            foreach (var a in this.assemblies)
+            bool skipSearch = false;
+            if (interfaceImplementationMapping.TryGetValue(interfaceType, out var targetTypeHierachy))
             {
-                Type[] types = null;
-                try
+                if (targetTypeHierachy.TryGetImplementationTypes(injectTargetType, pendingCreateList, out var hierarchyImplementations))
                 {
-                    types = a.GetTypes();
+                    skipSearch = true;
+                    registerTargetInstance = false;
+                    return hierarchyImplementations;
                 }
-                catch (Exception ex)
-                {
-                    // ignore loading error
-                    Console.WriteLine($"Error iterating types for assembly: {a}:\n{ex}");
-                }
+            }
 
-                if (types != null)
+            List<Type> validTypes = new List<Type>();
+            if (skipSearch == false)
+            {
+                foreach (var a in this.assemblies)
                 {
-                    foreach (var t in types)
+                    Type[] types = null;
+                    try
                     {
-                        if (interfaceType.IsAssignableFrom(t) && !t.IsAbstract)
+                        types = a.GetTypes();
+                    }
+                    catch (Exception ex)
+                    {
+                        // ignore loading error
+                        Console.WriteLine($"Error iterating types for assembly: {a}:\n{ex}");
+                    }
+
+                    if (types != null)
+                    {
+                        foreach (var t in types)
                         {
-                            yield return t;
+                            if (interfaceType.IsAssignableFrom(t) && !t.IsAbstract)
+                            {
+                                validTypes.Add(t);
+                            }
                         }
                     }
                 }
             }
+            registerTargetInstance = true;
+            return validTypes.ToArray();
         }
 
         public void AddSubContainer(ITalkContainer container)
@@ -646,7 +663,7 @@ namespace BSAG.IOCTalk.Composition
 
                         // create new instances
                         HashSet<Type> createdTypes = new HashSet<Type>();
-                        foreach (Type implType in this.FindInterfaceImplementations(targetInterfaceType, injectTargetType))
+                        foreach (Type implType in this.FindInterfaceImplementations(targetInterfaceType, injectTargetType, pendingCreateList, out bool registerSharedInstances))
                         {
                             if (!createdTypes.Contains(implType) && injectTargetType != implType)
                             {
@@ -661,7 +678,8 @@ namespace BSAG.IOCTalk.Composition
                                 CheckOutParamsSubscriptions(itemInstance, outParams, host, targetInterfaceType, injectTargetType);
                                 targetCollection.Add(itemInstance);
 
-                                RegisterSharedConstructorInstances(targetInterfaceType, itemInstance, outParams, outParamsInfo);
+                                if (registerSharedInstances)
+                                    RegisterSharedConstructorInstances(targetInterfaceType, itemInstance, outParams, outParamsInfo);
 
                                 createdTypes.Add(implType);
                             }
