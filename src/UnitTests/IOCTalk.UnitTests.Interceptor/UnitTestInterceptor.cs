@@ -139,5 +139,44 @@ namespace IOCTalk.UnitTests.Interceptor
             Assert.Equal(2, mainService.CallCount);
             Assert.Equal(2, service2.CallCount);
         }
+
+
+        [Fact]
+        public void TestInterceptServiceImplementationYEncapsulationsIndirectInjection()
+        {
+            LocalShareContext localShareContext = new LocalShareContext(nameof(UnitTestInterceptor));
+            localShareContext.RegisterLocalSharedService<ITestOutputHelper>(xUnitLog);
+
+            localShareContext.RegisterLocalSharedService<IOtherTestService, OtherTestService>();
+
+            localShareContext.RegisterLocalSharedService<IMyImportantService, MyImportantServiceImplementation>()
+                                .InterceptWithImplementation<MyImportantServiceLogInterception>()
+                                .InterceptWithImplementation<MyImportantServiceYRouter>()
+                                    .AddMultiImportBranchImplementation<MyDifferentImportantServiceImplementation>();
+
+            localShareContext.Init();
+
+            IOtherTestService otherTestService = localShareContext.GetExport<IOtherTestService>();
+            IMyImportantService myImportantService = otherTestService.InjectedService;
+
+            myImportantService.Multiply(1, 1);
+            myImportantService.Multiply(2, 2);
+            myImportantService.Multiply(3, 3);
+            myImportantService.Multiply(4, 4);
+
+
+            MyImportantServiceYRouter yRouter = (MyImportantServiceYRouter)myImportantService;
+
+            Assert.IsType<MyImportantServiceLogInterception>(yRouter.Service1);
+            Assert.IsType<MyDifferentImportantServiceImplementation>(yRouter.Service2);
+
+            MyImportantServiceLogInterception logInterception = (MyImportantServiceLogInterception)yRouter.Service1;
+            MyDifferentImportantServiceImplementation service2 = (MyDifferentImportantServiceImplementation)yRouter.Service2;
+
+            MyImportantServiceImplementation mainService = (MyImportantServiceImplementation)logInterception.NestedService;
+
+            Assert.Equal(2, mainService.CallCount);
+            Assert.Equal(2, service2.CallCount);
+        }
     }
 }

@@ -55,22 +55,40 @@ namespace BSAG.IOCTalk.Composition.Interception
             }
             else
             {
-                if (pendingCreateList == null)
+                bool isInterfaceChainImport = pendingCreateList != null && injectTargetType != null && InterfaceType.IsAssignableFrom(injectTargetType);
+
+                if (isInterfaceChainImport)
+                {
+                    registerTargetInstance = false;
+
+                    int currentInterceptChainCount = GetCurrentInterceptChainCount(pendingCreateList);
+
+                    int nextHierachyIndex = interceptionTypes.Count - currentInterceptChainCount - 1;
+                    if (nextHierachyIndex < 0)
+                        return MainImplementationType;
+                    else
+                        return interceptionTypes[nextHierachyIndex];
+                }
+                else
                 {
                     registerTargetInstance = true;      // only register last interception level in container intance mapping
                     return interceptionTypes.Last();    // return last interception
                 }
-                else
-                {
-                    registerTargetInstance = false;
-
-                    int hierachyIndex = interceptionTypes.Count - pendingCreateList.Count - 1;
-                    if (hierachyIndex < 0)
-                        return MainImplementationType;
-                    else
-                        return interceptionTypes[hierachyIndex];
-                }
             }
+        }
+
+        private int GetCurrentInterceptChainCount(List<Type> pendingCreateList)
+        {
+            int currentInterceptChainCount = 0;
+            for (int pendIndex = pendingCreateList.Count - 1; pendIndex >= 0; pendIndex--)
+            {
+                if (InterfaceType.IsAssignableFrom(pendingCreateList[pendIndex]))
+                    currentInterceptChainCount++;
+                else
+                    break;
+            }
+
+            return currentInterceptChainCount;
         }
 
         /// <summary>
@@ -88,7 +106,9 @@ namespace BSAG.IOCTalk.Composition.Interception
             }
             else
             {
-                int hierachyCurrentIndex = interceptionTypes.Count - pendingCreateList.Count;
+                int currentInterceptChainCount = GetCurrentInterceptChainCount(pendingCreateList);
+
+                int hierachyCurrentIndex = interceptionTypes.Count - currentInterceptChainCount;
 
                 var additionalBreakOutImplementations = breakoutTypes.Where(bt => bt.InterceptionHierarchyIndex == hierachyCurrentIndex).ToList();
                 if (additionalBreakOutImplementations.Any())
