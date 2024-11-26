@@ -15,7 +15,7 @@ namespace BSAG.IOCTalk.Composition.Fluent
             this.typeHierachy = typeHierachy;
         }
 
-        public MapInterfaceImplementationType<InterfaceType> AddMultiImportImplementation<InterceptImplementation>()
+        public MapInterfaceImplementationType<InterfaceType> MapAdditionalMultiImportImplementation<InterceptImplementation>()
             where InterceptImplementation : class, InterfaceType
         {
             if (source.IsMultiShared(typeof(InterfaceType)) == false)

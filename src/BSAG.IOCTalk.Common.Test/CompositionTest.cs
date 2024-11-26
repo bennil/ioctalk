@@ -177,7 +177,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             container.RegisterLocalSharedServices<IMultipleImplementation>();
             container.MapInterfaceImplementationType<IMultipleImplementation, MultipleImplementation1>()
-                         .AddMultiImportImplementation<MultipleImplementation2>();
+                         .MapAdditionalMultiImportImplementation<MultipleImplementation2>();
 
             container.Init();
 
