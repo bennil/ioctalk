@@ -16,6 +16,7 @@ using BSAG.IOCTalk.Test.Common.Service;
 using BSAG.IOCTalk.Common.Test.TestObjects.InterfaceMapTest;
 using BSAG.IOCTalk.Common.Exceptions;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace BSAG.IOCTalk.Common.Test
 {
@@ -162,6 +163,29 @@ namespace BSAG.IOCTalk.Common.Test
             var multiImportsService = hostContainer.GetExport<IMultipleLocalImportsService>();
 
             Assert.Equal(2, multiImportsService.LocalImplementations.Length);            
+        }
+
+
+        [Fact]
+        public void TestMethodMultipleLocalExplicitImports()
+        {
+            MyLocalService.InstanceCount = 0;
+            OtherLocalService.InstanceCount = 0;
+
+            LocalShareContext container = new LocalShareContext();
+            container.RegisterLocalSharedService<IMultipleLocalImportsService, MultipleLocalImportsService>();
+
+            container.RegisterLocalSharedServices<IMultipleImplementation>();
+            container.MapInterfaceImplementationType<IMultipleImplementation, MultipleImplementation1>()
+                         .AddMultiImportImplementation<MultipleImplementation2>();
+
+            container.Init();
+
+            var multiImportsService = container.GetExport<IMultipleLocalImportsService>();
+
+            Assert.Equal(2, multiImportsService.LocalImplementations.Length);
+            Assert.True(multiImportsService.LocalImplementations.Where(li => li.GetType().Equals(typeof(MultipleImplementation1))).Any());
+            Assert.True(multiImportsService.LocalImplementations.Where(li => li.GetType().Equals(typeof(MultipleImplementation2))).Any());
         }
 
 

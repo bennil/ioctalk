@@ -36,13 +36,13 @@ namespace BSAG.IOCTalk.Composition.Interception
         /// <param name="breakoutType"></param>
         public void AddBreakoutType(Type breakoutType)
         {
-            if (interceptionTypes == null)
-                throw new InvalidOperationException("Breakout implementations on top level not supported!");
-
             if (breakoutTypes == null)
                 breakoutTypes = new List<BreakoutType>();
 
-            breakoutTypes.Add(new BreakoutType(interceptionTypes.Count - 1, breakoutType));
+            if (interceptionTypes is null)
+                breakoutTypes.Add(new BreakoutType(0, breakoutType));     // top level multi implementation
+            else
+                breakoutTypes.Add(new BreakoutType(interceptionTypes.Count - 1, breakoutType));
         }
 
 
@@ -106,25 +106,34 @@ namespace BSAG.IOCTalk.Composition.Interception
             }
             else
             {
-                int currentInterceptChainCount = GetCurrentInterceptChainCount(pendingCreateList);
-
-                int hierachyCurrentIndex = interceptionTypes.Count - currentInterceptChainCount;
-
-                var additionalBreakOutImplementations = breakoutTypes.Where(bt => bt.InterceptionHierarchyIndex == hierachyCurrentIndex).ToList();
-                if (additionalBreakOutImplementations.Any())
+                if (interceptionTypes is null)
                 {
-                    // combine level implementation and breakout as array
-                    Type interceptType = GetNextImplementationType(injectTargetType, pendingCreateList, out var _);
-                    implementationTypes = new[] { interceptType }.Concat(additionalBreakOutImplementations.Select(ab => ab.AdditionalImplementationType)).ToArray();
-
+                    // no interception > top level multi import registration
+                    implementationTypes = new[] { MainImplementationType }.Concat(breakoutTypes.Select(ab => ab.AdditionalImplementationType)).ToArray();
                     return true;
                 }
-                else
+                else                
                 {
-                    // no breakout types at this level > return interception level as array
-                    Type interceptType = GetNextImplementationType(injectTargetType, pendingCreateList, out var _);
-                    implementationTypes = new[] { interceptType };
-                    return true;
+                    int currentInterceptChainCount = GetCurrentInterceptChainCount(pendingCreateList);
+
+                    int hierachyCurrentIndex = interceptionTypes.Count - currentInterceptChainCount;
+
+                    var additionalBreakOutImplementations = breakoutTypes.Where(bt => bt.InterceptionHierarchyIndex == hierachyCurrentIndex).ToList();
+                    if (additionalBreakOutImplementations.Any())
+                    {
+                        // combine level implementation and breakout as array
+                        Type interceptType = GetNextImplementationType(injectTargetType, pendingCreateList, out var _);
+                        implementationTypes = new[] { interceptType }.Concat(additionalBreakOutImplementations.Select(ab => ab.AdditionalImplementationType)).ToArray();
+
+                        return true;
+                    }
+                    else
+                    {
+                        // no breakout types at this level > return interception level as array
+                        Type interceptType = GetNextImplementationType(injectTargetType, pendingCreateList, out var _);
+                        implementationTypes = new[] { interceptType };
+                        return true;
+                    }
                 }
             }
         }

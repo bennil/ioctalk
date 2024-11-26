@@ -8,7 +8,7 @@ namespace BSAG.IOCTalk.Composition.Fluent
     {
         private TalkCompositionHost source;
 
-        public LocalSessionRegistration(TalkCompositionHost source)
+        internal LocalSessionRegistration(TalkCompositionHost source)
         {
             this.source = source;
         }

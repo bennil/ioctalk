@@ -118,15 +118,28 @@ namespace BSAG.IOCTalk.Composition
         /// </summary>
         public string Name => name;
 
+
         /// <summary>
         /// Assigns an interface type to a fixed implementation type. This prevents assembly scanning and improves discovery performance.
         /// </summary>
         /// <typeparam name="InterfaceType">The interface type</typeparam>
         /// <typeparam name="ImplementationType">The implmentation type</typeparam>
-        public void MapInterfaceImplementationType<InterfaceType, ImplementationType>()
+        void ITalkContainer.MapInterfaceImplementationType<InterfaceType, ImplementationType>()
+        {
+            MapInterfaceImplementationType<InterfaceType, ImplementationType>();
+        }
+
+        /// <summary>
+        /// Assigns an interface type to a fixed implementation type. This prevents assembly scanning and improves discovery performance.
+        /// </summary>
+        /// <typeparam name="InterfaceType">The interface type</typeparam>
+        /// <typeparam name="ImplementationType">The implmentation type</typeparam>
+        public MapInterfaceImplementationType<InterfaceType> MapInterfaceImplementationType<InterfaceType, ImplementationType>()
             where ImplementationType : class, InterfaceType
         {
-            MapInterfaceImplementationType(typeof(InterfaceType), typeof(ImplementationType));
+            var typeHierachy = MapInterfaceImplementationTypeInternal(typeof(InterfaceType), typeof(ImplementationType));
+
+            return new MapInterfaceImplementationType<InterfaceType>(this, typeHierachy);
         }
 
         /// <summary>
@@ -137,13 +150,22 @@ namespace BSAG.IOCTalk.Composition
         /// <exception cref="ArgumentException">Throws if unexpected types are received.</exception>
         public void MapInterfaceImplementationType(Type interfaceType, Type implementationType)
         {
+            MapInterfaceImplementationTypeInternal(interfaceType, implementationType);
+        }
+
+        private TypeHierachy MapInterfaceImplementationTypeInternal(Type interfaceType, Type implementationType)
+        {
             if (interfaceType.IsInterface == false)
                 throw new ArgumentException($"Interface type expected. Actual: {interfaceType.FullName}", nameof(interfaceType));
 
             if (implementationType.IsClass == false)
                 throw new ArgumentException($"Class type expected. Actual: {interfaceType.FullName}", nameof(implementationType));
 
-            interfaceImplementationMapping[interfaceType] = new TypeHierachy(interfaceType, implementationType);
+            var typeHierachy = new TypeHierachy(interfaceType, implementationType);
+            
+            interfaceImplementationMapping[interfaceType] = typeHierachy;
+
+            return typeHierachy;
         }
 
         internal TypeHierachy GetInterfaceImplementationTypeHierachy(Type interfaceType)
@@ -615,7 +637,7 @@ namespace BSAG.IOCTalk.Composition
 
         #region Multi Shared
 
-        private bool IsMultiShared(Type interfaceType)
+        internal bool IsMultiShared(Type interfaceType)
         {
             return localMultipleSharedInterfaceTypes != null && localMultipleSharedInterfaceTypes.Contains(interfaceType);
         }
@@ -1121,5 +1143,7 @@ namespace BSAG.IOCTalk.Composition
                 this.name = name;
             }
         }
+
+
     }
 }

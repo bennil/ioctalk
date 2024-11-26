@@ -10,7 +10,7 @@ namespace BSAG.IOCTalk.Composition.Fluent
         private Type interfaceType;
         private TalkCompositionHost source;
 
-        public RemoteServiceRegistration(TalkCompositionHost source)
+        internal RemoteServiceRegistration(TalkCompositionHost source)
         {
             this.interfaceType = typeof(InterfaceType);
             this.source = source;            

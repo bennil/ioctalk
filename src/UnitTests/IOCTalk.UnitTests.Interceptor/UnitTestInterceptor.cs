@@ -151,7 +151,8 @@ namespace IOCTalk.UnitTests.Interceptor
 
             localShareContext.RegisterLocalSharedService<IMyImportantService, MyImportantServiceImplementation>()
                                 .InterceptWithImplementation<MyImportantServiceLogInterception>()
-                                .InterceptWithImplementation<MyImportantServiceYRouter>()
+                                //.InterceptWithImplementation<MyImportantServiceYRouter>()
+                                .InterceptWithImplementation(typeof(MyImportantServiceYRouter))
                                     .AddMultiImportBranchImplementation<MyDifferentImportantServiceImplementation>();
 
             localShareContext.Init();

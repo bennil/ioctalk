@@ -7,7 +7,7 @@ namespace BSAG.IOCTalk.Composition.Fluent
 {
     public class LocalSharedRegistrationIntercept<InterfaceType> : LocalSharedRegistration<InterfaceType>
     {
-        public LocalSharedRegistrationIntercept(LocalShareContext source) 
+        internal LocalSharedRegistrationIntercept(LocalShareContext source) 
             : base(source)
         {
         }
