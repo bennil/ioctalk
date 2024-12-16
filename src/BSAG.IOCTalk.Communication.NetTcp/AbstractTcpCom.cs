@@ -26,7 +26,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
     /// Author(s): Benjamin Link
     /// created on: 06.09.2010
     /// </remarks>
-    public abstract class AbstractTcpCom
+    public abstract class AbstractTcpCom : ICommunicationUsage
     {
         #region AbstractTcpCom fields
         // ----------------------------------------------------------------------------------------
@@ -42,6 +42,10 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         private int receiveBufferSize = 65536;
         private int sendBufferSize = 65536;
 
+        long sentMessageCount = 0;
+        long sentByteCount = 0;
+        long receivedMessageCount = 0;
+        long receivedByteCount = 0;
 
         private AbstractWireFraming wireFraming;
 
@@ -190,6 +194,15 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         public Action<Socket> AdjustSocketHandler { get; set; }
 
 
+        public long ReceivedMessageCount => receivedMessageCount;
+
+        public long SentMessageCount => sentMessageCount;
+
+        public long ReceivedByteCount => receivedByteCount;
+
+        public long SentByteCount => sentByteCount;
+
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -282,6 +295,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                     }
                     // Tell the PipeWriter how much was read from the Socket.
                     writer.Advance(bytesRead);
+
+                    IncrementReceivedByteCount(bytesRead);
 
                     if (currentMemoryRequest <= bytesRead)
                     {
@@ -383,6 +398,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                         {
                             messageMemory = messagePayload.First;
                         }
+
+                        IncrementReceivedMessageCount();
 
                         if (RawMessageReceiveHandler != null)
                             await RawMessageReceiveHandler(rawMessageFormat, sessionId, messageMemory);
@@ -729,6 +746,26 @@ Msg data hex: {BitConverter.ToString(source, 0, length)}
 Msg data utf8: {Encoding.UTF8.GetString(source, 0, length)}");
         }
 
+        internal void IncrementSentMessageCount()
+        {
+            Interlocked.Increment(ref sentMessageCount);
+        }
+
+        internal void IncrementSentByteCount(long byteCount)
+        {
+            Interlocked.Add(ref sentByteCount, byteCount);
+        }
+
+
+        internal void IncrementReceivedMessageCount()
+        {
+            Interlocked.Increment(ref receivedMessageCount);
+        }
+
+        internal void IncrementReceivedByteCount(long byteCount)
+        {
+            Interlocked.Add(ref receivedByteCount, byteCount);
+        }
         #endregion
 
         // ----------------------------------------------------------------------------------------

@@ -6,6 +6,7 @@ using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Common.Session;
 using BSAG.IOCTalk.Composition.Condition;
 using BSAG.IOCTalk.Composition.Fluent;
+using BSAG.IOCTalk.Composition.Interception;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -32,14 +33,14 @@ namespace BSAG.IOCTalk.Composition
         private List<Type> localSessionServiceInterfaceTypes = new List<Type>();
 
         private Type[] localSessionServiceInterfaceTypesResolved;
-        private List<Type> remoteServiceInterfaceTypes = new List<Type>();
+        private List<TypeHierachy> remoteServiceInterfaceTypes = new List<TypeHierachy>();
         private List<Type> remoteServiceProxyTypes = new List<Type>();
         private Type[] remoteServiceInterfaceTypesResolved;
 
 
         private Dictionary<Type, Type> interfaceTypeProxyImplCache = new Dictionary<Type, Type>();
         private Dictionary<string, Type> interfaceTypeCache;
-        private Dictionary<Type, Type> interfaceImplementationMapping = new Dictionary<Type, Type>();
+        private Dictionary<Type, TypeHierachy> interfaceImplementationMapping = new Dictionary<Type, TypeHierachy>();
 
         private Dictionary<int, SessionContract> sessionIdContractMapping = new Dictionary<int, SessionContract>();
         private LocalShareContext localShare;
@@ -187,8 +188,11 @@ namespace BSAG.IOCTalk.Composition
                     localShare.AddAssembly(proxyImplementationType.Assembly);
                 }
 
-                remoteServiceInterfaceTypes.Add(interfaceType);
+                var interfaceTypeHierachy = MapInterfaceImplementationTypeInternal(interfaceType, proxyImplementationType);
+
+                remoteServiceInterfaceTypes.Add(interfaceTypeHierachy);
                 remoteServiceProxyTypes.Add(proxyImplementationType);
+
             }
         }
 
@@ -203,7 +207,7 @@ namespace BSAG.IOCTalk.Composition
         public LocalSessionRegistration<InterfaceType> RegisterLocalSessionService<InterfaceType, ImplementationType>()
             where ImplementationType : class, InterfaceType
         {
-            localShare.MapInterfaceImplementationType<InterfaceType, ImplementationType>();
+            MapInterfaceImplementationType<InterfaceType, ImplementationType>();
 
             return RegisterLocalSessionService<InterfaceType>();
         }
@@ -314,7 +318,7 @@ namespace BSAG.IOCTalk.Composition
                     isInitalized = true;
                     this.CommunicationService = communicationService;
 
-                    this.remoteServiceInterfaceTypesResolved = remoteServiceInterfaceTypes.ToArray();
+                    this.remoteServiceInterfaceTypesResolved = remoteServiceInterfaceTypes.Select(rsi => rsi.InterfaceType).ToArray();
                     this.localSessionServiceInterfaceTypesResolved = localSessionServiceInterfaceTypes.ToArray();
 
                     communicationService.SessionCreated += OnCommunicationService_SessionCreated;
@@ -396,16 +400,17 @@ namespace BSAG.IOCTalk.Composition
 
                     for (int i = 0; i < this.remoteServiceInterfaceTypes.Count; i++)
                     {
+                        var remoteProxyOrInterceptedType = remoteServiceInterfaceTypes[i].GetNextImplementationType(sessionContract.GetType(), null, out var _);
                         // get instance of service proxy implementation (remote call)
-                        Type remoteProxyType = this.remoteServiceProxyTypes[i];
+                        //Type remoteProxyType = this.remoteServiceProxyTypes[i];
 
                         try
                         {
-                            remoteServiceInstances[i] = this.GetExport(remoteProxyType);
+                            remoteServiceInstances[i] = this.GetExport(remoteProxyOrInterceptedType);
                         }
                         catch (Exception exportException)
                         {
-                            throw new TypeLoadException($"Unable to export instance of remote proxy type {remoteProxyType}!", exportException);
+                            throw new TypeLoadException($"Unable to get export instance of remote proxy/intercepted type {remoteProxyOrInterceptedType}!", exportException);
                         }
                     }
 
@@ -831,7 +836,7 @@ namespace BSAG.IOCTalk.Composition
             // check session created subscriptions
             for (int i = 0; i < this.remoteServiceInterfaceTypes.Count; i++)
             {
-                Type interfType = remoteServiceInterfaceTypes[i];
+                Type interfType = remoteServiceInterfaceTypes[i].InterfaceType;
                 SessionChangeSubscription subscr;
                 if (localShare.sessionCreatedSubscriptions.TryGetValue(interfType, out subscr))
                 {
@@ -985,7 +990,7 @@ namespace BSAG.IOCTalk.Composition
 
         public bool IsSubscriptionRegistered(Type serviceDelegateType)
         {
-            if (this.remoteServiceInterfaceTypes.Contains(serviceDelegateType))
+            if (this.remoteServiceInterfaceTypes.Where(rsi => rsi.InterfaceType.Equals(serviceDelegateType)).Any())
             {
                 return true;
             }
@@ -1011,6 +1016,17 @@ namespace BSAG.IOCTalk.Composition
         }
 
 
+
+        /// <summary>
+        /// Assigns an interface type to a fixed implementation type. This prevents assembly scanning and improves discovery performance.
+        /// </summary>
+        /// <typeparam name="InterfaceType">The interface type</typeparam>
+        /// <typeparam name="ImplementationType">The implmentation type</typeparam>
+        void ITalkContainer.MapInterfaceImplementationType<InterfaceType, ImplementationType>()
+        {
+            MapInterfaceImplementationType<InterfaceType, ImplementationType>();
+        }
+
         /// <summary>
         /// Assigns an interface type to a fixed implementation type. This prevents assembly scanning and improves discovery performance.
         /// </summary>
@@ -1019,7 +1035,9 @@ namespace BSAG.IOCTalk.Composition
         public void MapInterfaceImplementationType<InterfaceType, ImplementationType>()
             where ImplementationType : class, InterfaceType
         {
-            MapInterfaceImplementationType(typeof(InterfaceType), typeof(ImplementationType));
+            var typeHierachy = MapInterfaceImplementationTypeInternal(typeof(InterfaceType), typeof(ImplementationType));
+
+            //return new MapInterfaceImplementationType<InterfaceType>(this, typeHierachy);
         }
 
         /// <summary>
@@ -1030,21 +1048,36 @@ namespace BSAG.IOCTalk.Composition
         /// <exception cref="ArgumentException">Throws if unexpected types are received.</exception>
         public void MapInterfaceImplementationType(Type interfaceType, Type implementationType)
         {
+            MapInterfaceImplementationTypeInternal(interfaceType, implementationType);
+        }
+
+        private TypeHierachy MapInterfaceImplementationTypeInternal(Type interfaceType, Type implementationType)
+        {
             if (interfaceType.IsInterface == false)
                 throw new ArgumentException($"Interface type expected. Actual: {interfaceType.FullName}", nameof(interfaceType));
 
             if (implementationType.IsClass == false)
                 throw new ArgumentException($"Class type expected. Actual: {interfaceType.FullName}", nameof(implementationType));
 
-            interfaceImplementationMapping[interfaceType] = implementationType;
+            var typeHierachy = new TypeHierachy(interfaceType, implementationType);
+
+            interfaceImplementationMapping[interfaceType] = typeHierachy;
+
+            return typeHierachy;
+        }
+
+        internal TypeHierachy GetInterfaceImplementationTypeHierachy(Type interfaceType)
+        {
+            return interfaceImplementationMapping[interfaceType];
         }
 
 
         internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, List<Type> pendingCreateList, out Type targetType, out bool registerTargetInstance)
         {
-            if (interfaceImplementationMapping.TryGetValue(interfaceType, out targetType))
+            if (interfaceImplementationMapping.TryGetValue(interfaceType, out var targetTypeHierachy))
             {
-                registerTargetInstance = true;
+                targetType = targetTypeHierachy.GetNextImplementationType(injectTargetType, pendingCreateList, out registerTargetInstance);
+                registerTargetInstance = true;      // ?
                 return true;
             }
             else

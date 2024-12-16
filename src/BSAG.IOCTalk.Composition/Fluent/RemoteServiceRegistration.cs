@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BSAG.IOCTalk.Composition.Interception;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
@@ -31,5 +32,33 @@ namespace BSAG.IOCTalk.Composition.Fluent
             return this;
         }
 
+
+        /// <summary>
+        /// Intercepts the service registration (circuit breaker)
+        /// </summary>
+        /// <typeparam name="InterceptImplementation"></typeparam>
+        /// <returns></returns>
+        public LocalSessionRegistrationIntercept<InterfaceType> InterceptWithImplementation<InterceptImplementation>()
+            where InterceptImplementation : class, InterfaceType
+        {
+            return InterceptWithImplementationInternal(typeof(InterceptImplementation));
+        }
+
+        public LocalSessionRegistrationIntercept<InterfaceType> InterceptWithImplementation(Type implementationType)
+        {
+            if (typeof(InterfaceType).IsAssignableFrom(implementationType) == false)
+                throw new InvalidOperationException($"Intercept implementation type {implementationType.FullName} must implement the interface {typeof(InterfaceType).FullName}");
+
+            return InterceptWithImplementationInternal(implementationType);
+        }
+
+        private LocalSessionRegistrationIntercept<InterfaceType> InterceptWithImplementationInternal(Type implementationType)
+        {
+            TypeHierachy typeHierachy = source.GetInterfaceImplementationTypeHierachy(typeof(InterfaceType));
+
+            typeHierachy.AddInterceptionType(implementationType);
+
+            return new LocalSessionRegistrationIntercept<InterfaceType>(source);
+        }
     }
 }

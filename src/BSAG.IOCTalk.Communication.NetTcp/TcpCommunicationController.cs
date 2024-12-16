@@ -524,6 +524,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 var startMessageData = writer.DataBuffer.AsSpan(0, headerSize);
                 wireFraming.CreateTransportMessageEnd(writer, payloadSize, startMessageData);
 
+                communication.IncrementSentMessageCount();
+                communication.IncrementSentByteCount(writer.WrittenCount);
 
                 communication.Send(writer.WrittenSpan, receiverSessionId);
             }
@@ -559,6 +561,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
                 wireFraming.CreateTransportMessageEnd(writer, payloadSize, startMessageData.Span);
 
+                communication.IncrementSentMessageCount();
+                communication.IncrementSentByteCount(writer.WrittenCount);
 
                 await communication.SendAsync(writer.WrittenMemory, receiverSessionId);
             }

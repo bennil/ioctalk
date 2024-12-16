@@ -1,4 +1,9 @@
+using BSAG.IOCTalk.Common.Interface.Logging;
+using BSAG.IOCTalk.Common.Test;
+using BSAG.IOCTalk.Communication.NetTcp;
+using BSAG.IOCTalk.Communication.NetTcp.WireFraming;
 using BSAG.IOCTalk.Composition;
+using BSAG.IOCTalk.Serialization.Json;
 using IOCTalk.UnitTests.Interceptor.Implementation;
 using IOCTalk.UnitTests.Interceptor.Interface;
 using Xunit.Abstractions;
@@ -8,10 +13,11 @@ namespace IOCTalk.UnitTests.Interceptor
     public class UnitTestInterceptor
     {
         readonly ITestOutputHelper xUnitLog;
-
+        readonly UnitTestLogger logger;
         public UnitTestInterceptor(ITestOutputHelper xUnitLog)
         {
             this.xUnitLog = xUnitLog;
+            this.logger = new UnitTestLogger(xUnitLog);
         }
 
         [Fact]
@@ -179,5 +185,98 @@ namespace IOCTalk.UnitTests.Interceptor
             Assert.Equal(2, mainService.CallCount);
             Assert.Equal(2, service2.CallCount);
         }
+
+
+        #region Session registration tests
+
+        TaskCompletionSource sessionProcessedClient;
+        TaskCompletionSource sessionProcessedServer;
+
+        [Fact]
+        public async Task TestInterceptServiceImplementationSession()
+        {
+            LocalShareContext localShareContext = new LocalShareContext(nameof(UnitTestInterceptor));
+            localShareContext.RegisterLocalSharedService<ITestOutputHelper>(xUnitLog);
+            localShareContext.RegisterLocalSharedService<ILogger>(logger);
+
+            var tcpMyService = new TcpCommunicationController(new ShortWireFraming(), new JsonMessageSerializer());
+            var compositionHostService = new TalkCompositionHost(localShareContext, "MyService");
+
+            compositionHostService.RegisterLocalSessionService<IMyRemoteService, MyRemoteServiceImplementation>()
+                    .InterceptWithImplementation<MyRemoteServiceInterceptionImplementation>();
+
+            compositionHostService.SessionCreated += OnCompositionHostService_SessionCreated;
+
+            var tcpMyClient = new TcpCommunicationController(new ShortWireFraming(), new JsonMessageSerializer());
+            var compositionHostClient = new TalkCompositionHost(localShareContext, "MyClient");
+
+
+            compositionHostClient.RegisterRemoteService<IMyRemoteService>()
+                    .InterceptWithImplementation<MyRemoteServiceClientInterception>();
+
+            compositionHostClient.SessionCreated += OnCompositionHostClient_SessionCreated;
+            
+            sessionProcessedClient = new TaskCompletionSource();
+            sessionProcessedServer = new TaskCompletionSource();
+
+            compositionHostService.InitGenericCommunication(tcpMyService);
+
+            compositionHostClient.InitGenericCommunication(tcpMyClient);
+
+            // bind to tcp port 14341
+            tcpMyService.InitService(14341);
+
+            tcpMyClient.InitClient("127.0.0.1", 14341);
+
+            await sessionProcessedClient.Task.WaitAsync(TimeSpan.FromSeconds(25));
+            await sessionProcessedServer.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+
+        void OnCompositionHostClient_SessionCreated(object contractSession, BSAG.IOCTalk.Common.Session.SessionEventArgs e)
+        {
+            try
+            {
+                IMyRemoteService myRemoteServiceClient = e.SessionContract.GetSessionInstance<IMyRemoteService>();
+
+                Assert.IsType<MyRemoteServiceClientInterception>(myRemoteServiceClient);
+
+                string bar = "Test";
+                string result = myRemoteServiceClient.Foo(bar);
+                Assert.Contains(bar, result);
+
+                var clientInterception = (MyRemoteServiceClientInterception)myRemoteServiceClient;
+                Assert.Equal(1, clientInterception.CallCounter);
+
+                sessionProcessedClient.SetResult();
+            }
+            catch (Exception ex)
+            {
+                sessionProcessedClient.SetException(ex);
+            }
+        }
+
+        async void OnCompositionHostService_SessionCreated(object contractSession, BSAG.IOCTalk.Common.Session.SessionEventArgs e)
+        {
+            try
+            {
+                IMyRemoteService myRemoteServiceClient = e.SessionContract.GetSessionInstance<IMyRemoteService>();
+
+                Assert.IsType<MyRemoteServiceInterceptionImplementation>(myRemoteServiceClient);
+
+                // wait for client call
+                await sessionProcessedClient.Task.WaitAsync(TimeSpan.FromSeconds(25));
+
+                var serviceInterception = (MyRemoteServiceInterceptionImplementation)myRemoteServiceClient;
+                Assert.Equal(1, serviceInterception.ServiceCallCount);
+
+                sessionProcessedServer.SetResult();
+            }
+            catch (Exception ex)
+            {
+                sessionProcessedServer.SetException(ex);
+            }
+        }
+
+        #endregion
     }
 }
