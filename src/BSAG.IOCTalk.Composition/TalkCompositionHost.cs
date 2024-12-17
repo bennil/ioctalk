@@ -167,10 +167,10 @@ namespace BSAG.IOCTalk.Composition
         public void RegisterRemoteService(Type interfaceType, bool forceProxyAutoCreation = false)
         {
             if (!interfaceType.IsInterface)
-                throw new ArgumentException("Given service type must be an interface!", nameof(interfaceType));
+                throw new ArgumentException("Given service type must be an interface! Host: " + name, nameof(interfaceType));
 
             if (localSessionServiceInterfaceTypesResolved != null)
-                throw new Exception($"{GetType().FullName} is already initialized.");
+                throw new Exception($"{GetType().FullName} is already initialized. Host: {name}");
 
             lock (syncObj)
             {
@@ -215,10 +215,10 @@ namespace BSAG.IOCTalk.Composition
         public void RegisterLocalSessionService(Type interfaceType)
         {
             if (!interfaceType.IsInterface)
-                throw new ArgumentException("Given service type must be an interface!", nameof(interfaceType));
+                throw new ArgumentException($"Given service type must be an interface! Host: {name}", nameof(interfaceType));
 
             if (remoteServiceInterfaceTypesResolved != null)
-                throw new Exception($"{GetType().FullName} is already initialized.");
+                throw new Exception($"{GetType().FullName} is already initialized. Host: {name}");
 
             localSessionServiceInterfaceTypes.Add(interfaceType);
         }
@@ -297,7 +297,7 @@ namespace BSAG.IOCTalk.Composition
                 if (!isInitalized)  // only inialize once
                 {
                     if (CommunicationService == null)
-                        throw new NullReferenceException($"{nameof(CommunicationService)} must be provided!");
+                        throw new NullReferenceException($"{nameof(CommunicationService)} must be provided! Host: {name}");
 
                     InitGenericCommunication(CommunicationService, true, initSubContainers);
                 }
@@ -410,7 +410,7 @@ namespace BSAG.IOCTalk.Composition
                         }
                         catch (Exception exportException)
                         {
-                            throw new TypeLoadException($"Unable to get export instance of remote proxy/intercepted type {remoteProxyOrInterceptedType}!", exportException);
+                            throw new TypeLoadException($"Unable to get export instance of remote proxy/intercepted type {remoteProxyOrInterceptedType}! Host: {name}", exportException);
                         }
                     }
 
@@ -425,7 +425,7 @@ namespace BSAG.IOCTalk.Composition
                         }
                         catch (Exception exportException)
                         {
-                            throw new TypeLoadException($"Unable to export instance of local type {localType}!", exportException);
+                            throw new TypeLoadException($"Unable to export instance of local type {localType}! Host: {name}", exportException);
                         }
                     }
 
@@ -523,7 +523,7 @@ namespace BSAG.IOCTalk.Composition
 
             if (!interfaceType.IsInterface)
             {
-                throw new InvalidOperationException(string.Format("The exposed sub type \"{0}\" must be an interface!", interfaceType.FullName));
+                throw new InvalidOperationException($"The exposed sub type \"{interfaceType.FullName}\" must be an interface! Host: {name}");
             }
 
             exposedSubInterfaceTypeMapping[sourceType] = interfaceType;
@@ -594,13 +594,13 @@ namespace BSAG.IOCTalk.Composition
                         }
                         else
                         {
-                            throw new Exception("Unable to auto generate a class implemenation for the interface \"" + interfaceType + "\"! Provide a local implementation.");
+                            throw new Exception("Unable to auto generate a class implemenation for the interface \"" + interfaceType + "\"! Provide a local implementation. Host: " + name);
                         }
                     }
                 }
                 else
                 {
-                    throw new TypeLoadException($"Coult not load type {interfaceType}!");
+                    throw new TypeLoadException($"Coult not load type {interfaceType}! Host: {name}");
                 }
             }
 
@@ -626,7 +626,7 @@ namespace BSAG.IOCTalk.Composition
 
         public ISession GetSessionByServiceInstance(object serviceObjectInstance)
         {
-            throw new NotSupportedException("Not supported anymore in .net core implementation - use session contract mapping instead");
+            throw new NotSupportedException($"Not supported anymore in .net core implementation - use session contract mapping instead; Host: {name}");
         }
 
 
@@ -652,14 +652,14 @@ namespace BSAG.IOCTalk.Composition
             {
                 if (localShare.Assemblies.Count == 0)
                 {
-                    throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! No assemblies loaded. Are you missing a \"AddExecutionDirAssemblies()\" or \"AddReferencedAssemblies()\"?");
+                    throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! No assemblies loaded. Are you missing a \"AddExecutionDirAssemblies()\" or \"AddReferencedAssemblies()\"? Host: {name}");
                 }
                 else
                 {
                     if (injectTargetType != null)
-                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! Inject Target type: {injectTargetType.FullName}");
+                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! Inject Target type: {injectTargetType.FullName}; Host: {name}");
                     else
-                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"");
+                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"; Host: {name}");
                 }
             }
 
@@ -780,7 +780,7 @@ namespace BSAG.IOCTalk.Composition
             {
                 // return current session id
                 if (currentSession is null)
-                    throw new NullReferenceException($"Unable to inject \"{parameterName}\" to {injectTargetType.FullName} because no session in current context is available! Type: {type}");
+                    throw new NullReferenceException($"Unable to inject \"{parameterName}\" to {injectTargetType.FullName} because no session in current context is available! Type: {type}; Host: {name}");
 
                 return currentSession.SessionId;
             }
@@ -1054,10 +1054,10 @@ namespace BSAG.IOCTalk.Composition
         private TypeHierachy MapInterfaceImplementationTypeInternal(Type interfaceType, Type implementationType)
         {
             if (interfaceType.IsInterface == false)
-                throw new ArgumentException($"Interface type expected. Actual: {interfaceType.FullName}", nameof(interfaceType));
+                throw new ArgumentException($"Interface type expected. Actual: {interfaceType.FullName}; Host: {name}", nameof(interfaceType));
 
             if (implementationType.IsClass == false)
-                throw new ArgumentException($"Class type expected. Actual: {interfaceType.FullName}", nameof(implementationType));
+                throw new ArgumentException($"Class type expected. Actual: {interfaceType.FullName}; Host: {name}", nameof(implementationType));
 
             var typeHierachy = new TypeHierachy(interfaceType, implementationType);
 

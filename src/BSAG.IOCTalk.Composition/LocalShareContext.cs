@@ -156,10 +156,10 @@ namespace BSAG.IOCTalk.Composition
         private TypeHierachy MapInterfaceImplementationTypeInternal(Type interfaceType, Type implementationType)
         {
             if (interfaceType.IsInterface == false)
-                throw new ArgumentException($"Interface type expected. Actual: {interfaceType.FullName}", nameof(interfaceType));
+                throw new ArgumentException($"Interface type expected. Actual: {interfaceType.FullName}; Share context: {name}", nameof(interfaceType));
 
             if (implementationType.IsClass == false)
-                throw new ArgumentException($"Class type expected. Actual: {interfaceType.FullName}", nameof(implementationType));
+                throw new ArgumentException($"Class type expected. Actual: {interfaceType.FullName}; Share context: {name}", nameof(implementationType));
 
             var typeHierachy = new TypeHierachy(interfaceType, implementationType);
             
@@ -389,14 +389,14 @@ namespace BSAG.IOCTalk.Composition
             {
                 if (assemblies.Count == 0)
                 {
-                    throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! No assemblies loaded. Are you missing a \"AddExecutionDirAssemblies()\" or \"AddReferencedAssemblies()\"?");
+                    throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! No assemblies loaded. Are you missing a \"AddExecutionDirAssemblies()\" or \"AddReferencedAssemblies()\"? Share context: {name}");
                 }
                 else
                 {
                     if (injectTargetType != null)
-                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! Inject Target type: {injectTargetType.FullName}");
+                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"! Inject Target type: {injectTargetType.FullName}; Share context: {name}");
                     else
-                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"");
+                        throw new TypeAccessException($"Unable to find a local implementation of \"{type.FullName}\"; Share context: {name}");
                 }
             }
 
@@ -624,7 +624,7 @@ namespace BSAG.IOCTalk.Composition
                 {
                     if (!container.ParentContainer.Equals(this))
                     {
-                        throw new InvalidOperationException("Different sub container already registered!");
+                        throw new InvalidOperationException($"Different sub container already registered!; Share context: {name}");
                     }
                 }
                 else
@@ -820,7 +820,7 @@ namespace BSAG.IOCTalk.Composition
 
                                 if (!CheckIfSubscriptionInterfaceIsRegistered(serviceDelegateType))
                                 {
-                                    throw new InvalidOperationException($"Cannot subscribe session events for {serviceDelegateType.FullName} in {injectTargetType}! No registration was found in the assigned container hosts. Are you missing a RegisterRemoteService<{serviceDelegateType.Name}>()?");
+                                    throw new InvalidOperationException($"Cannot subscribe session events for {serviceDelegateType.FullName} in {injectTargetType}! No registration was found in the assigned container hosts. Are you missing a RegisterRemoteService<{serviceDelegateType.Name}>()? Share context: {name}");
                                 }
                             }
 
@@ -843,7 +843,7 @@ namespace BSAG.IOCTalk.Composition
 
                                 if (!CheckIfSubscriptionInterfaceIsRegistered(serviceDelegateType))
                                 {
-                                    throw new InvalidOperationException($"Cannot subscribe session events for {serviceDelegateType.FullName} in {injectTargetType}! No registration was found in the assigned container hosts. Are you missing a RegisterRemoteService<{serviceDelegateType.Name}>()?");
+                                    throw new InvalidOperationException($"Cannot subscribe session events for {serviceDelegateType.FullName} in {injectTargetType}! No registration was found in the assigned container hosts. Are you missing a RegisterRemoteService<{serviceDelegateType.Name}>()? Share context: {name}");
                                 }
                             }
 
@@ -858,12 +858,12 @@ namespace BSAG.IOCTalk.Composition
                         }
                         else
                         {
-                            throw new NotSupportedException($"The Action subscription method name \"{methodName}\" is not supported! Method name must end either with \"Created\" or \"Terminated\".");
+                            throw new NotSupportedException($"The Action subscription method name \"{methodName}\" is not supported! Method name must end either with \"Created\" or \"Terminated\". Share context: {name}");
                         }
                     }
                     else
                     {
-                        throw new InvalidOperationException($"Unexpected out parameter in \"{instance.GetType().FullName}\" constructor! Only delegate types (e.g. Action<IMyService>) are allowed.");
+                        throw new InvalidOperationException($"Unexpected out parameter in \"{instance.GetType().FullName}\" constructor! Only delegate types (e.g. Action<IMyService>) are allowed. Share context: {name}");
                     }
                 }
             }
@@ -937,13 +937,13 @@ namespace BSAG.IOCTalk.Composition
         public void RegisterLocalSharedService(Type interfaceType)
         {
             if (!interfaceType.IsInterface)
-                throw new ArgumentException("Given service type must be an interface!", nameof(interfaceType));
+                throw new ArgumentException($"Given service type must be an interface! Share context: {name}", nameof(interfaceType));
 
             if (localSharedInterfaceTypes == null)
                 localSharedInterfaceTypes = new List<Type>();
 
             if (localMultipleSharedInterfaceTypes != null && localMultipleSharedInterfaceTypes.Contains(interfaceType))
-                throw new InvalidOperationException("You cannot register single and mutliple shared implementation instances for the interface type: " + interfaceType.FullName);
+                throw new InvalidOperationException($"You cannot register single and mutliple shared implementation instances for the interface type: {interfaceType.FullName}; Share context: {name}");
 
             localSharedInterfaceTypes.Add(interfaceType);
         }
@@ -964,13 +964,13 @@ namespace BSAG.IOCTalk.Composition
         public void RegisterLocalSharedServices(Type interfaceType)
         {
             if (!interfaceType.IsInterface)
-                throw new ArgumentException("Given service type must be an interface!", nameof(interfaceType));
+                throw new ArgumentException($"Given service type must be an interface! Share context: {name}", nameof(interfaceType));
 
             if (localMultipleSharedInterfaceTypes == null)
                 localMultipleSharedInterfaceTypes = new List<Type>();
 
             if (localSharedInterfaceTypes != null && localSharedInterfaceTypes.Contains(interfaceType))
-                throw new InvalidOperationException("You cannot register single and mutliple shared implementation instances for the interface type: " + interfaceType.FullName);
+                throw new InvalidOperationException($"You cannot register single and mutliple shared implementation instances for the interface type: {interfaceType.FullName}; Share context: {name}");
 
             localMultipleSharedInterfaceTypes.Add(interfaceType);
         }
@@ -979,7 +979,7 @@ namespace BSAG.IOCTalk.Composition
         public void RegisterLocalSharedService<T>(T instance)
         {
             if (instance == null)
-                throw new ArgumentNullException("instance");
+                throw new ArgumentNullException("instance", $"Instance argument cannot be null! Share context: {name}");
 
             Type type = typeof(T);
 
@@ -993,7 +993,7 @@ namespace BSAG.IOCTalk.Composition
             {
                 if (!object.ReferenceEquals(instance, existingService))
                 {
-                    throw new InvalidOperationException($"Only one local shared singelton service for the interface {type.FullName} is allowed!");
+                    throw new InvalidOperationException($"Only one local shared singelton service for the interface {type.FullName} is allowed! Share context: {name}");
                 }
             }
             else
@@ -1041,7 +1041,7 @@ namespace BSAG.IOCTalk.Composition
             }
             else
             {
-                throw new InvalidOperationException($"No manual mangaged service registration for {type.FullName}");
+                throw new InvalidOperationException($"No manual mangaged service registration for {type.FullName}; Share context: {name}");
             }
         }
 
