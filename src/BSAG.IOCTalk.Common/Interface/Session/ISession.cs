@@ -50,6 +50,11 @@ namespace BSAG.IOCTalk.Common.Interface.Session
         IDictionary<long, IInvokeState> PendingRequests { get; }
 
         /// <summary>
+        /// Gets the underlying communication object
+        /// </summary>
+        object UnderlyingCommunicationObject { get; }
+
+        /// <summary>
         /// Closes the session.
         /// </summary>
         void Close();

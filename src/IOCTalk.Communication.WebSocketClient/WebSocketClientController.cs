@@ -175,7 +175,7 @@ namespace IOCTalk.Communication.WebSocketClient
                 currentSocket = socket;
                 isSocketClosedExecuted = 0;
 
-                CreateSession(sessionId, $"Websocket client {sessionId} - {socket}", () => socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "ForceClose", CancellationToken.None));
+                CreateSession(sessionId, $"Websocket client {sessionId} - {socket}", () => socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "ForceClose", CancellationToken.None), socket);
 
                 StarReceivingData(sessionId);
 

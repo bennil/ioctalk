@@ -1058,7 +1058,7 @@ namespace BSAG.IOCTalk.Composition
             {
                 if (inMemorySession == null)
                 {
-                    inMemorySession = new Session(communicationService, 0, "In-Memory Session");
+                    inMemorySession = new Session(communicationService, 0, "In-Memory Session", null);
                     inMemorySessionContract = new SessionContract(host, inMemorySession, new object[0], new object[0]);
                 }
 

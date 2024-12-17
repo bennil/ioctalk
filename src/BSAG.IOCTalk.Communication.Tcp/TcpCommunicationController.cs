@@ -525,7 +525,7 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             try
             {
-                this.CreateSession(e.Client.SessionId, e.Client.SessionInfo, e.Client.ForceClose);
+                this.CreateSession(e.Client.SessionId, e.Client.SessionInfo, e.Client.ForceClose, e.Client);
             }
             catch (Exception ex)
             {

@@ -146,7 +146,7 @@ namespace BSAG.IOCTalk.Logging.DataStream.Replay
 
                     if (message.StartsWith(DataStreamLogger.SessionCreatedTag))
                     {
-                        ReplaySession session = new ReplaySession(streamLogger.CommunicationSource, remoteHostId, $"Replay session {remoteHostId} - {time}");
+                        ReplaySession session = new ReplaySession(streamLogger.CommunicationSource, remoteHostId, $"Replay session {remoteHostId} - {time}", null);
                         sessions.Add(session.SessionId, session);
                         currentSession = session;
                     }

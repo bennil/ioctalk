@@ -8,7 +8,7 @@ namespace BSAG.IOCTalk.Logging.DataStream.Replay
 {
     public class ReplaySession : Session
     {
-        public ReplaySession(IGenericCommunicationService communicationService, int sessionId, string description) : base(communicationService, sessionId, description)
+        public ReplaySession(IGenericCommunicationService communicationService, int sessionId, string description, object underlyingCommunicationObject) : base(communicationService, sessionId, description, underlyingCommunicationObject)
         {
         }
     }

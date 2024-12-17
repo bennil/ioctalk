@@ -54,7 +54,7 @@ namespace BSAG.IOCTalk.Common.Session
         protected ConcurrentDictionary<long, IInvokeState> pendingRequests;
 
         Action forceCloseCallback;
-
+        object underlyingCommunicationObject;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -70,7 +70,9 @@ namespace BSAG.IOCTalk.Common.Session
         /// <param name="communicationService">The communication service.</param>
         /// <param name="sessionId">The session id.</param>
         /// <param name="description">The description.</param>
-        public AbstractSession(IGenericCommunicationService communicationService, int sessionId, string description, Action forceCloseCallback)
+        /// <param name="forceCloseCallback">Force close connection delegate</param>
+        /// <param name="underlyingCommunicationObject">Unterlying communication object</param>
+        public AbstractSession(IGenericCommunicationService communicationService, int sessionId, string description, Action forceCloseCallback, object underlyingCommunicationObject)
         {
             this.communicationService = communicationService;
             this.sessionId = sessionId;
@@ -78,6 +80,7 @@ namespace BSAG.IOCTalk.Common.Session
             this.pendingRequests = new ConcurrentDictionary<long, IInvokeState>();
             this.isActive = true; // session is active on creation
             this.forceCloseCallback = forceCloseCallback;
+            this.underlyingCommunicationObject = underlyingCommunicationObject;
         }
 
         // ----------------------------------------------------------------------------------------
@@ -135,6 +138,7 @@ namespace BSAG.IOCTalk.Common.Session
 
         public IContract Contract => contract;
 
+        public object UnderlyingCommunicationObject => underlyingCommunicationObject;
 
         // ----------------------------------------------------------------------------------------
         #endregion

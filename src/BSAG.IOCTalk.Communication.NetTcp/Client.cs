@@ -22,7 +22,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
     /// Author(s): Benjamin Link
     /// created on: 22.09.2010
     /// </remarks>
-    public class Client
+    public class Client : ICommunicationUsage
     {
         #region Client fields
         // ----------------------------------------------------------------------------------------
@@ -44,6 +44,11 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         CancellationTokenSource cancelTokenSource;
 
         SemaphoreSlim semaphoreSlimSendLock = new SemaphoreSlim(1, 1);
+        
+        long sentMessageCount = 0;
+        long sentByteCount = 0;
+        long receivedMessageCount = 0;
+        long receivedByteCount = 0;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -169,6 +174,15 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
         public CancellationTokenSource Cancellation => cancelTokenSource;
 
+        public long ReceivedMessageCount => receivedMessageCount;
+
+        public long SentMessageCount => sentMessageCount;
+
+        public long ReceivedByteCount => receivedByteCount;
+
+        public long SentByteCount => sentByteCount;
+
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -204,6 +218,9 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
 
                 stream.Write(dataBytes, 0, length);
+
+                IncrementSentMessageCount();     // Plus 1 because of send call per message
+                IncrementSentByteCount(length);
             }
             catch (ObjectDisposedException)
             {
@@ -257,8 +274,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
                 stream.Write(data);
 
-
-
+                IncrementSentMessageCount();     // Plus 1 because of send call per message
+                IncrementSentByteCount(data.Length);
             }
             catch (ObjectDisposedException)
             {
@@ -304,6 +321,9 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 await semaphoreSlimSendLock.WaitAsync();
 
                 await stream.WriteAsync(dataBytes, 0, length);
+
+                IncrementSentMessageCount();     // Plus 1 because of send call per message
+                IncrementSentByteCount(length);
             }
             catch (ObjectDisposedException)
             {
@@ -370,6 +390,9 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
                 //todo: cancelation token ?
                 await stream.WriteAsync(dataBytes);
+
+                IncrementSentMessageCount();     // Plus 1 because of send call per message
+                IncrementSentByteCount(length);
             }
             catch (ObjectDisposedException)
             {
@@ -445,6 +468,28 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             parentCom.Close(this, "ForceClose");
         }
 
+
+
+        internal void IncrementSentMessageCount()
+        {
+            sentMessageCount++;     // No Interlocked.Increment because of single thread source
+        }
+
+        internal void IncrementSentByteCount(long byteCount)
+        {
+            sentByteCount += byteCount;
+        }
+
+
+        internal void IncrementReceivedMessageCount()
+        {
+            receivedMessageCount++;
+        }
+
+        internal void IncrementReceivedByteCount(long byteCount)
+        {
+            receivedByteCount += byteCount;
+        }
         // ----------------------------------------------------------------------------------------
         #endregion
 

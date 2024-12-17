@@ -48,7 +48,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             InvokeMethodInfo mInfo = new InvokeMethodInfo(typeof(IMyLocalService), nameof(IMyLocalService.RandomMethod));
 
-            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session", null);
             persistComm.InvokeMethod(this, mInfo, session, new object[0]);  // 1. not connected call
             persistComm.InvokeMethod(this, mInfo, session, new object[0]);  // 2. not connected call
 
@@ -80,7 +80,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             InvokeMethodInfo mInfo = new InvokeMethodInfo(typeof(IMyLocalService), nameof(IMyLocalService.DataMethod));
 
-            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session", null);
 
             string complexDataString = "json within method parameter string: {\"Type\":12,\"RequestId\":8,\"Target\":null,\"Name\":null,\"Payload\":{\"Name\":\"AccessViolationException\",\"TypeName\":\"System.AccessViolationException\",\"Text\":\"System.AccessViolationException: No login received"
                 + Environment.NewLine
@@ -135,7 +135,7 @@ namespace BSAG.IOCTalk.Common.Test
             InvokeMethodInfo mInfoTrxData = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.PushTrxData));
             InvokeMethodInfo mInfoTrxCommit = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.CompleteTransactionTest));
 
-            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session", null);
             Guid startTrxReturn = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
             persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
             persistComm.InvokeMethod(this, mInfoTrxCommit, session, new object[] { startTrxReturn });  // transaction commit
@@ -194,7 +194,7 @@ namespace BSAG.IOCTalk.Common.Test
             InvokeMethodInfo mInfoTrxData = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.PushTrxData));
             InvokeMethodInfo mInfoTrxCommit = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.CompleteTransactionTest));
 
-            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session", null);
             Guid startTrxReturn = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
             persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
             persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
@@ -275,7 +275,7 @@ namespace BSAG.IOCTalk.Common.Test
             InvokeMethodInfo mInfoTrxData = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.PushTrxData));
             InvokeMethodInfo mInfoTrxCommit = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.CompleteTransactionTest));
 
-            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session", null);
             Guid startTrxReturn = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
 
             // create connection after transaction start
@@ -348,7 +348,7 @@ namespace BSAG.IOCTalk.Common.Test
             // raise connection before first transaction call
             dummyCom.RaiseConnectionCreated();
 
-            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session", null);
             Guid startTrxReturn = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
 
             persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
@@ -415,7 +415,7 @@ namespace BSAG.IOCTalk.Common.Test
             InvokeMethodInfo mInfoTrxData = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.PushTrxData));
             InvokeMethodInfo mInfoTrxCommit = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.CompleteTransactionTest));
 
-            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session", null);
             Guid startTrxReturn = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
             persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
             persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
@@ -482,7 +482,7 @@ namespace BSAG.IOCTalk.Common.Test
             InvokeMethodInfo mInfoTrxData = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.PushTrxData));
             InvokeMethodInfo mInfoTrxCommit = new InvokeMethodInfo(typeof(ITrxTestService), nameof(ITrxTestService.CompleteTransactionTest));
 
-            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session");
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session", null);
             Guid startTrxReturn = (Guid)persistComm.InvokeMethod(this, mInfoBeginTrx, session, new object[0]);  // Start transaction call
             persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
             persistComm.InvokeMethod(this, mInfoTrxData, session, new object[] { startTrxReturn });  // Push transaction data 
@@ -651,7 +651,7 @@ namespace BSAG.IOCTalk.Common.Test
             public void RaiseConnectionCreated()
             {
                 if (SessionCreated != null)
-                    SessionCreated(this, new SessionEventArgs(new Session.Session(this, 0, "new unit test session"), null));
+                    SessionCreated(this, new SessionEventArgs(new Session.Session(this, 0, "new unit test session", null), null));
             }
 
             public bool RaiseConnectionLost { get; set; }

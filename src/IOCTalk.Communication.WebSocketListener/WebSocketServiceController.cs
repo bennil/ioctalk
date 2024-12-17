@@ -145,7 +145,7 @@ namespace IOCTalk.Communication.WebSocketListener
                         var client = new Client(this, webSocket, OnRawMessageReceived, wireFraming);
                         clients[client.SessionId] = client;
 
-                        CreateSession(client.SessionId, $"Websocket {client.SessionId} - {webSocketContext.RequestUri}", () => webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "ForceClose", CancellationToken.None));
+                        CreateSession(client.SessionId, $"Websocket {client.SessionId} - {webSocketContext.RequestUri}", () => webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "ForceClose", CancellationToken.None), webSocket);
 
                         client.StarReceivingData();
                     }

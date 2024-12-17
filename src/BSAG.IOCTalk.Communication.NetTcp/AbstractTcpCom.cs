@@ -272,6 +272,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             Socket clientSocket = state.Client.socket;
             Stream clientStream = state.Client.stream;
             PipeWriter writer = state.ReceivePipe.Writer;
+            Client client = state.Client;
 
             var cancelToken = state.Client.Cancellation.Token;
 
@@ -297,6 +298,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                     writer.Advance(bytesRead);
 
                     IncrementReceivedByteCount(bytesRead);
+                    client.IncrementReceivedByteCount(bytesRead);
 
                     if (currentMemoryRequest <= bytesRead)
                     {
@@ -374,6 +376,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
             var cancelToken = socketState.Client.Cancellation.Token;
             var sessionId = socketState.Client.SessionId;
+            var client = socketState.Client;
 
             try
             {
@@ -400,6 +403,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                         }
 
                         IncrementReceivedMessageCount();
+                        client.IncrementReceivedMessageCount();
 
                         if (RawMessageReceiveHandler != null)
                             await RawMessageReceiveHandler(rawMessageFormat, sessionId, messageMemory);

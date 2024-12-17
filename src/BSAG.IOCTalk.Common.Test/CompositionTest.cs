@@ -36,7 +36,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             hostContainer.InitGenericCommunication(dummyComm);
 
-            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session");
+            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session", null);
 
             SessionContract contract = (SessionContract)hostContainer.CreateSessionContractInstance(session);
 
@@ -61,7 +61,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             hostContainer.InitGenericCommunication(dummyComm);
 
-            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session");
+            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session", null);
 
             var result = hostContainer.CreateSessionContractInstance(session);
 
@@ -84,7 +84,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             hostContainer.InitGenericCommunication(dummyComm);
 
-            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session");
+            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session", null);
 
             var result = hostContainer.CreateSessionContractInstance(session);
 
@@ -112,7 +112,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             hostContainer.InitGenericCommunication(dummyComm);
 
-            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session");
+            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session", null);
 
             var result = hostContainer.CreateSessionContractInstance(session);
 
@@ -136,7 +136,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             hostContainer.InitGenericCommunication(dummyComm);
 
-            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session");
+            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session", null);
 
             var result = hostContainer.CreateSessionContractInstance(session);
 
@@ -204,7 +204,7 @@ namespace BSAG.IOCTalk.Common.Test
 
             hostContainer.InitGenericCommunication(dummyComm);
 
-            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session");
+            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session", null);
 
             var contract = hostContainer.CreateSessionContractInstance(session);
 
