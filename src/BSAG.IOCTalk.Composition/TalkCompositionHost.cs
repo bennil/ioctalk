@@ -27,7 +27,6 @@ namespace BSAG.IOCTalk.Composition
         // TalkCompositionHost fields
         // ----------------------------------------------------------------------------------------
 
-        private SessionManagerNeu sessionManager = new SessionManagerNeu(); // todo: consolidate
         private List<IDiscoveryCondition> discoveryConditionItems;  // todo: check if needed in Host or only in LocalShareContext
 
         private List<Type> localSessionServiceInterfaceTypes = new List<Type>();
@@ -98,7 +97,6 @@ namespace BSAG.IOCTalk.Composition
 
         public object DIContainer => this;
 
-        public SessionManagerNeu SessionManager => sessionManager;
 
         public Type[] LocalServiceInterfaceTypes
         {
