@@ -176,7 +176,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
         {
             if (dataStreamQueue != null)
             {
-                dataStreamQueue.Writer.Complete();   // release caller queue
+                dataStreamQueue.Writer.TryComplete();   // release caller queue
             }
         }
 

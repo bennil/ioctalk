@@ -175,7 +175,7 @@ namespace BSAG.IOCTalk.Logging
         public void Dispose()
         {
             if (logItemQueue != null)
-                logItemQueue.Writer.Complete();   // release caller queue thread
+                logItemQueue.Writer.TryComplete();   // release caller queue thread
 
             if (fileWriter != null)
                 fileWriter.Close();

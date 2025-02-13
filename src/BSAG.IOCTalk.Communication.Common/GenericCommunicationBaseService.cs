@@ -401,10 +401,10 @@ namespace BSAG.IOCTalk.Communication.Common
                 isActive = false;
 
                 if (receiverQueue != null)
-                    receiverQueue.Writer.Complete();
+                    receiverQueue.Writer.TryComplete();
 
                 if (callerQueue != null)
-                    callerQueue.Writer.Complete();   // release caller queue thread
+                    callerQueue.Writer.TryComplete();   // release caller queue thread
 
                 if (DataStreamLogger != null)
                     DataStreamLogger.Dispose();
