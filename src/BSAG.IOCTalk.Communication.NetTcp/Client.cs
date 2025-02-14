@@ -38,10 +38,10 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         private EndPoint localEndPoint = null;
         private EndPoint remoteEndPoint = null;
         private int connectionSessionId;
-        private SpinLock spinLock = new SpinLock();
         private ILogger logger;
         AbstractTcpCom parentCom;
         CancellationTokenSource cancelTokenSource;
+        CancellationToken cancelToken;
 
         SemaphoreSlim semaphoreSlimSendLock = new SemaphoreSlim(1, 1);
         
@@ -86,7 +86,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             this.connectTimeUtc = DateTime.UtcNow;
             this.connectionSessionId = GenericCommunicationBaseService.GetNewConnectionSessionId();
             this.cancelTokenSource = new CancellationTokenSource();
-
+            this.cancelToken = cancelTokenSource.Token;
         }
 
         // ----------------------------------------------------------------------------------------
@@ -202,19 +202,12 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             if (!socket.Connected)
                 throw new OperationCanceledException("Remote connction lost");
 
-            bool lockTaken = false;
             try
             {
                 int length = dataBytes.Length;
 
                 // lock socket send
-                do
-                {
-                    spinLock.Enter(ref lockTaken);
-
-                    if (!lockTaken)
-                        Thread.Sleep(0);
-                } while (!lockTaken);
+                semaphoreSlimSendLock.Wait(cancelToken);
 
 
                 stream.Write(dataBytes, 0, length);
@@ -248,7 +241,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             }
             finally
             {
-                spinLock.Exit();
+                semaphoreSlimSendLock.Release();
             }
         }
 
@@ -257,19 +250,11 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             if (!socket.Connected)
                 throw new OperationCanceledException("Remote connction lost");
 
-            bool lockTaken = false;
             try
             {
 
                 // lock socket send
-                do
-                {
-                    spinLock.Enter(ref lockTaken);
-
-                    if (!lockTaken)
-                        Thread.Sleep(0);
-                } while (!lockTaken);
-
+                semaphoreSlimSendLock.Wait(cancelToken);
 
 
                 stream.Write(data);
@@ -303,7 +288,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             }
             finally
             {
-                spinLock.Exit();
+                semaphoreSlimSendLock.Release();
             }
         }
 
@@ -318,9 +303,9 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 int length = dataBytes.Length;
 
                 // synchronize socket (stream) write
-                await semaphoreSlimSendLock.WaitAsync();
+                await semaphoreSlimSendLock.WaitAsync(cancelToken);
 
-                await stream.WriteAsync(dataBytes, 0, length);
+                await stream.WriteAsync(dataBytes, 0, length, cancelToken);
 
                 IncrementSentMessageCount();     // Plus 1 because of send call per message
                 IncrementSentByteCount(length);
@@ -386,10 +371,10 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 int length = dataBytes.Length;
 
                 // synchronize socket (stream) write
-                await semaphoreSlimSendLock.WaitAsync();
+                await semaphoreSlimSendLock.WaitAsync(cancelToken);
 
                 //todo: cancelation token ?
-                await stream.WriteAsync(dataBytes);
+                await stream.WriteAsync(dataBytes, cancelToken);
 
                 IncrementSentMessageCount();     // Plus 1 because of send call per message
                 IncrementSentByteCount(length);

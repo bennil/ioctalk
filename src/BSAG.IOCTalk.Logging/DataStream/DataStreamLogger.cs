@@ -316,6 +316,7 @@ namespace BSAG.IOCTalk.Logging.DataStream
 
                 string[] files = Directory.GetFiles(directory, "*.dlog");
 
+                int deletedFileCount = 0;
                 for (int i = 0; i < files.Length; i++)
                 {
                     string file = files[i];
@@ -324,11 +325,15 @@ namespace BSAG.IOCTalk.Logging.DataStream
 
                     if (lastWriteTimeUtc < deleteTimeLimit)
                     {
-                        File.Delete(file);
+                        log.Info($"Delete old data stream file \"{file}\" from {lastWriteTimeUtc} UTC");
 
-                        log.Info($"Old data stream file \"{file}\" from {lastWriteTimeUtc} UTC deleted; KeepStreamLogsDays: {keepStreamLogsDays}");
+                        File.Delete(file);
+                        deletedFileCount++;
                     }
                 }
+
+                if (deletedFileCount > 0)
+                    log.Info($"{deletedFileCount} outdated data stream file(s) deleted; KeepStreamLogsDays: {keepStreamLogsDays}; Expiry date: {deleteTimeLimit.ToShortDateString()}");
             }
             catch (Exception ex)
             {
