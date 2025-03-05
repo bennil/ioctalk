@@ -175,7 +175,19 @@ namespace IOCTalk.Communication.WebSocketClient
                 currentSocket = socket;
                 isSocketClosedExecuted = 0;
 
-                CreateSession(sessionId, $"Websocket client {sessionId} - {socket}", () => socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "ForceClose", CancellationToken.None), socket);
+                CreateSession(sessionId, $"Websocket client {sessionId} - {socket}", () =>
+                {
+                    try
+                    {
+                        if (socket.State == WebSocketState.Open || socket.State == WebSocketState.Connecting)
+                            socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "ForceClose", CancellationToken.None);
+                    }
+                    catch
+                    {
+                        // ignore close exceptions
+                    }
+                }
+                , socket);
 
                 StarReceivingData(sessionId);
 
@@ -283,7 +295,7 @@ namespace IOCTalk.Communication.WebSocketClient
             {
 
                 while (currentSocket != null
-                    &&currentSocket.State == WebSocketState.Open && !cts.Token.IsCancellationRequested)
+                    && currentSocket.State == WebSocketState.Open && !cts.Token.IsCancellationRequested)
                 {
                     Memory<byte> memory = writer.GetMemory(currentMemoryRequest);
 
@@ -445,7 +457,7 @@ namespace IOCTalk.Communication.WebSocketClient
             return Interlocked.Exchange(ref isSocketClosedExecuted, 1) == 0;
         }
 
-        internal void OnClosed(int sessionId, string source)        
+        internal void OnClosed(int sessionId, string source)
         {
             if (AcquireIsSocketClosedExecuted())    // execute only once
             {

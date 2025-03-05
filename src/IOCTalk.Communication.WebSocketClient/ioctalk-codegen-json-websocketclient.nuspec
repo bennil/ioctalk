@@ -1,16 +1,15 @@
 <?xml version="1.0"?>
 <package >
 	<metadata>
-		<id>ioctalk-codegen-binary-json-tcp</id>
-		<version>2.4.17</version>
-		<title>ioctalk-codegen-binary-json-tcp</title>
+		<id>ioctalk-codegen-json-websocketclient</id>
+		<version>1.0.0</version>
+		<title>ioctalk-codegen-json-websocketclient</title>
 		<authors>ben</authors>
 		<owners>ben</owners>
 		<description>Implement microservices without any technical dependency in your functional service implementations. Use ioctalk dependency injection to communicate seamlessly with remote and local services.</description>
-		<releaseNotes>.NET Standard 2.1 version using improved tcp lib, binary and json serialization and proxy code generation at build time.</releaseNotes>
+		<releaseNotes>.NET Standard 2.1 version using improved websocket client, json serialization and proxy code generation at build time.</releaseNotes>
 		<projectUrl>https://github.com/bennil/ioctalk</projectUrl>
 		<license type="expression">Apache-2.0</license>
-		<readme>docs\README-ioctalk-codegen-binary-json-tcp.md</readme>
 		<dependencies>
 			<group targetFramework="netstandard2.1">
 				<dependency id="System.IO.Pipelines" version="8.0.0.0" />
@@ -22,9 +21,6 @@
 		<file src="bin\Release\netstandard2.1\*.dll" target="lib\netstandard2.1" />
 		<file src="bin\Release\netstandard2.1\*.pdb" target="lib\netstandard2.1" />
 
-		<file src="..\BSAG.IOCTalk.Serialization.Binary\bin\Release\netstandard2.1\BSAG.IOCTalk.Serialization.Binary*.dll" target="lib\netstandard2.1" />
-		<file src="..\BSAG.IOCTalk.Serialization.Binary\bin\Release\netstandard2.1\BSAG.IOCTalk.Serialization.Binary*.pdb" target="lib\netstandard2.1" />
-
 		<file src="..\BSAG.IOCTalk.Serialization.Json\bin\Release\netstandard2.1\BSAG.IOCTalk.Serialization.Json*.dll" target="lib\netstandard2.1" />
 		<file src="..\BSAG.IOCTalk.Serialization.Json\bin\Release\netstandard2.1\BSAG.IOCTalk.Serialization.Json*.pdb" target="lib\netstandard2.1" />
 
@@ -34,12 +30,8 @@
 		<file src="..\BSAG.IOCTalk.Logging\bin\Release\netstandard2.1\BSAG.IOCTalk.Logging*.dll" target="lib\netstandard2.1" />
 		<file src="..\BSAG.IOCTalk.Logging\bin\Release\netstandard2.1\BSAG.IOCTalk.Logging*.pdb" target="lib\netstandard2.1" />
 
-		<file src="..\BSAG.IOCTalk.Communication.PersistentQueue\bin\Release\netstandard2.1\BSAG.IOCTalk.Communication.PersistentQueue*.dll" target="lib\netstandard2.1" />
-		<file src="..\BSAG.IOCTalk.Communication.PersistentQueue\bin\Release\netstandard2.1\BSAG.IOCTalk.Communication.PersistentQueue*.pdb" target="lib\netstandard2.1" />
-
 
 		<file src="..\IOCTalk.CodeGenerator\bin\Release\netstandard2.0\*" target="analyzers/dotnet/cs" />
 
-		<file src="docs\README-ioctalk-codegen-binary-json-tcp.md" target="docs\" />
 	</files>
 </package>

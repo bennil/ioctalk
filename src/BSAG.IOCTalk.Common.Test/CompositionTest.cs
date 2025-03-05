@@ -159,10 +159,10 @@ namespace BSAG.IOCTalk.Common.Test
             hostContainer.AddReferencedAssemblies();
 
             hostContainer.InitGenericCommunication(dummyComm);
-                        
+
             var multiImportsService = hostContainer.GetExport<IMultipleLocalImportsService>();
 
-            Assert.Equal(2, multiImportsService.LocalImplementations.Length);            
+            Assert.Equal(2, multiImportsService.LocalImplementations.Length);
         }
 
 
@@ -263,6 +263,30 @@ namespace BSAG.IOCTalk.Common.Test
             var myService = localShareContext.GetExport<IMyLocalService>();
 
             Assert.Equal(typeof(MyLocalService), myService.GetType());
+        }
+
+
+        [Fact]
+        public void TestMethodSessionServiceDifferentImportOrderTargetAlsoImplements()
+        {
+            MyLocalService.InstanceCount = 0;
+            OtherLocalService.InstanceCount = 0;
+
+            DummyCommunicationService dummyComm = new DummyCommunicationService();
+
+            TalkCompositionHost hostContainer = new TalkCompositionHost();
+            hostContainer.RegisterLocalSessionService<ISessionServiceRegOrderTest1, SessionServiceRegOrderTest1>();
+            hostContainer.RegisterLocalSessionService<ISessionServiceRegOrderTest2, SessionServiceRegOrderTest2>()
+                         .TargetAlsoImplements<ISessionServiceRegOrderTest2Other>();
+
+            hostContainer.InitGenericCommunication(dummyComm);
+
+            Common.Session.Session session = new Common.Session.Session(dummyComm, 123, "Unit Test Dummy Session", null);
+
+            var result = hostContainer.CreateSessionContractInstance(session);
+
+            Assert.Equal(1, SessionServiceRegOrderTest1.InstanceCount);
+            Assert.Equal(1, SessionServiceRegOrderTest2.InstanceCount);
         }
     }
 

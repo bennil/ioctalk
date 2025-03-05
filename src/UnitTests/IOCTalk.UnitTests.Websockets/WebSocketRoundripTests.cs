@@ -132,7 +132,6 @@ namespace IOCTalk.UnitTests.Websockets
             var ct = new CancellationTokenSource(timeoutMs);
             ct.Token.Register(() => onConnectionEstablished.TrySetCanceled(), useSynchronizationContext: false);
 
-            int port = 33254;
             var log = new UnitTestLogger(xUnitLog);
 
             WebSocketClientController websocketClient;
@@ -211,7 +210,7 @@ namespace IOCTalk.UnitTests.Websockets
             Assert.Equal(number, localService.CurrentNumber);
 
             websocketClient.Shutdown();
-            //websocketBackendService.Shutdown();       // blocks sometimes?
+            websocketBackendService.Shutdown();
         }
 
         private void OnCompositionHostClient_SessionCreatedStressTest(object contractSession, SessionEventArgs e)

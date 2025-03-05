@@ -1278,6 +1278,12 @@ namespace BSAG.IOCTalk.Communication.Common
                 // call remote invoke request
                 object implementationInstance = containerHost.GetInterfaceImplementationInstance(session, message.Target);
 
+                if (session.IsActive == false)
+                {
+                    logger.Info($"Ignore received \"{message.Target}\" {message.Name} call because session ID {session.SessionId} is disconnected");
+                    return;
+                }
+
                 if (implementationInstance == null)
                 {
                     throw new Exception($"No implementation for the interface \"{message.Target}\" found! Container host: {this.containerHost.Name}; Session: {session.SessionId} - {session.Description}");
@@ -1412,6 +1418,12 @@ namespace BSAG.IOCTalk.Communication.Common
 
                 // call remote invoke request
                 object implementationInstance = containerHost.GetInterfaceImplementationInstance(session, message.Target);
+
+                if (session.IsActive == false)
+                {
+                    logger.Info($"Ignore received \"{message.Target}\" {message.Name} async call because session ID {session.SessionId} is disconnected");
+                    return;
+                }
 
                 if (implementationInstance == null)
                 {

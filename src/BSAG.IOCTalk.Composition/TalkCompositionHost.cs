@@ -759,12 +759,29 @@ namespace BSAG.IOCTalk.Composition
             if (registerTargetInstance)
                 localShare.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
 
-            if (contract != null
-                && this.localSessionServiceInterfaceTypesResolved.Contains(type))
+            if (contract != null)
             {
                 // update contract service cache here as well to be not dependent on the registration order in nested cases
-                int cachedAtIndex = Array.IndexOf<Type>(this.localSessionServiceInterfaceTypesResolved, type);
-                contract.LocalServices[cachedAtIndex] = instance;
+                int foundIndexAlternative;
+                if (this.localSessionServiceInterfaceTypesResolved.Contains(type))
+                {
+                    int cachedAtIndex = Array.IndexOf<Type>(this.localSessionServiceInterfaceTypesResolved, type);
+                    contract.LocalServices[cachedAtIndex] = instance;
+                }
+                else if (LocalSessionServiceTypeMappings != null
+                        && LocalSessionServiceTypeMappings.TryGetValue(type, out var alternativeLocalSourceType)
+                        && (foundIndexAlternative = Array.IndexOf<Type>(LocalServiceInterfaceTypes, alternativeLocalSourceType)) >= 0)
+                {
+                    // TargetAlsoImplements registration
+                    if (localSessionServiceInterfaceTypesResolved[foundIndexAlternative].IsAssignableFrom(instance.GetType()))
+                    {
+                        contract.LocalServices[foundIndexAlternative] = instance;
+                    }
+                    else
+                    {
+                        logger.Warn($"Could not set TargetAlsoImplements interface instance \"{type}\" to local service interface instance \"{localSessionServiceInterfaceTypesResolved[foundIndexAlternative].FullName}\" because is not assignable.");
+                    }
+                }
             }
 
             //todo: parent container handling
