@@ -12,6 +12,7 @@ using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.WebSockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +31,7 @@ namespace IOCTalk.Communication.WebSocketClient
         AbstractWireFraming wireFraming;
         ObjectPool<OutputBuffer> outputBufferObjectPool;
         int isSocketClosedExecuted = 0;
+        bool isBrowserRuntime = false;
 
         public WebSocketClientController(IGenericMessageSerializer messageSerializer)
         {
@@ -48,6 +50,7 @@ namespace IOCTalk.Communication.WebSocketClient
                 throw new InvalidOperationException("Websocket client already initalized");
 
             this.connectUrl = connectUrl;
+            this.isBrowserRuntime = RuntimeInformation.OSDescription.Contains("Browser", StringComparison.OrdinalIgnoreCase);
 
             // hardcoded in websocket context
             wireFraming = new WebsocketWireFraming();
@@ -105,7 +108,7 @@ namespace IOCTalk.Communication.WebSocketClient
                     //}
 
                     if (Logger != null)
-                        Logger.Info($"Connect to {connectUrl}...");
+                        Logger.Info($"Connect to {connectUrl} (IsBrowser: {isBrowserRuntime})...");
 
                     clientConnectCount++;
 
@@ -477,6 +480,36 @@ namespace IOCTalk.Communication.WebSocketClient
         public bool IsAsyncVoidSendCurrentlyPossible(ISession session)
         {
             return true;
+        }
+
+        /// <summary>
+        /// ThreadPool.RegisterWaitForSingleObject is not supported in browser wasm
+        /// todo: remove override if supported
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="timeout"></param>
+        /// <param name="invokeState"></param>
+        /// <param name="sessionId"></param>
+        /// <param name="requestId"></param>
+        /// <returns></returns>
+        protected override async Task WaitHandleTaskAsyncResponseHelper(WaitHandle handle, TimeSpan timeout, IInvokeState invokeState, int sessionId, long requestId)
+        {
+            if (isBrowserRuntime)
+            {
+                // Use polling workaround because brwoser does not support ThreadPool.RegisterWaitForSingleObject and only one thred (otherwise deadlock if simple waithandle.wait)
+                var session = sessionDictionary[sessionId];
+
+                while (session.PendingRequests.ContainsKey(requestId) == true)
+                {
+                    await Task.Delay(5);
+                }
+
+                Logger.Debug("Polling wait browser workaround completed");
+            }
+            else
+            {
+                await base.WaitHandleTaskAsyncResponseHelper(handle, timeout, invokeState, sessionId, requestId);
+            }
         }
     }
 }

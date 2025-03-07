@@ -2,7 +2,7 @@
 <package >
 	<metadata>
 		<id>ioctalk-codegen-json-websocketclient</id>
-		<version>1.0.0</version>
+		<version>2.4.21</version>
 		<title>ioctalk-codegen-json-websocketclient</title>
 		<authors>ben</authors>
 		<owners>ben</owners>

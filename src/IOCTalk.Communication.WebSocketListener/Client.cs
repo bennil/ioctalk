@@ -258,8 +258,9 @@ namespace IOCTalk.Communication.WebSocketListener
             {
                 Dispose();
 
-                if (webSocket.State == WebSocketState.Open)
-                    webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Close from " + source, cancellationToken);
+                // caused deadlocks if already closed
+                //if (webSocket.State == WebSocketState.Open)
+                //    webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Close from " + source, cancellationToken);
 
 
                 //OnConnectionClosed(client, source);

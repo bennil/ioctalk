@@ -429,7 +429,7 @@ namespace BSAG.IOCTalk.Communication.Common
             {
                 // create session
                 description += $" ({containerHost.Name})";
-                newSession = new Session(this, sessionId, description, underlyingCommunicationObject,  forceCloseCallback);
+                newSession = new Session(this, sessionId, description, underlyingCommunicationObject, forceCloseCallback);
 
                 if (newSession != null)
                 {
@@ -1767,7 +1767,7 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
-        private static Task WaitHandleTaskAsyncResponseHelper(WaitHandle handle, TimeSpan timeout, IInvokeState invokeState, int sessionId, long requestId)
+        protected virtual Task WaitHandleTaskAsyncResponseHelper(WaitHandle handle, TimeSpan timeout, IInvokeState invokeState, int sessionId, long requestId)
         {
             var tcs = new TaskCompletionSource<object>();
             var registration = ThreadPool.RegisterWaitForSingleObject(handle, (state, timedOut) =>
@@ -1775,12 +1775,10 @@ namespace BSAG.IOCTalk.Communication.Common
                 var localTcs = (TaskCompletionSource<object>)state;
                 if (timedOut)
                 {
-                    localTcs.SetException(new TimeoutException($"Request timeout occured! Request: {invokeState.Method.Name}; timeout time: {timeout}; session ID: {sessionId}; request ID: {requestId}"));
+                    invokeState.Exception = new TimeoutException($"Request timeout occured! Request: {invokeState.Method.Name}; timeout time: {timeout}; session ID: {sessionId}; request ID: {requestId}");
                 }
-                else
-                {
-                    localTcs.SetResult(null);
-                }
+
+                localTcs.SetResult(null);
             }, tcs, timeout, true);
 
             // clean up the RegisterWaitHandle

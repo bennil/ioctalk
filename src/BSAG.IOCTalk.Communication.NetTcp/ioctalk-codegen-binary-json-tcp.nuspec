@@ -2,7 +2,7 @@
 <package >
 	<metadata>
 		<id>ioctalk-codegen-binary-json-tcp</id>
-		<version>2.4.17</version>
+		<version>2.4.21</version>
 		<title>ioctalk-codegen-binary-json-tcp</title>
 		<authors>ben</authors>
 		<owners>ben</owners>

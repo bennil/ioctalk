@@ -106,7 +106,7 @@ namespace IOCTalk.UnitTests.Websockets
             Assert.Equal(expectedArrayLength, response3.Length);
 
 
-            websocketClient.Shutdown();
+            //websocketClient.Shutdown();       // deadlock with xUnit execution occured?
             websocketBackendService.Shutdown();
         }
 
@@ -171,6 +171,7 @@ namespace IOCTalk.UnitTests.Websockets
 
                 websocketClient = new WebSocketClientController(new BinaryMessageSerializer());
                 websocketClient.LogDataStream = false;
+                websocketClient.RequestTimeoutSeconds = 3;
 
                 compositionHostClient.SessionCreated += OnCompositionHostClient_SessionCreatedStressTest;
 
@@ -209,7 +210,7 @@ namespace IOCTalk.UnitTests.Websockets
 
             Assert.Equal(number, localService.CurrentNumber);
 
-            websocketClient.Shutdown();
+            //websocketClient.Shutdown();       // deadlock with xUnit execution occured?
             websocketBackendService.Shutdown();
         }
 
