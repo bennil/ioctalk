@@ -1,6 +1,7 @@
 ﻿using Bond.IO.Safe;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
+using BSAG.IOCTalk.Common.Interface.Container;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Session;
 using BSAG.IOCTalk.Communication.Common;
@@ -58,6 +59,17 @@ namespace IOCTalk.Communication.WebSocketClient
             wireFraming.Init(this);
 
             outputBufferObjectPool = new ObjectPool<OutputBuffer>(() => new OutputBuffer(CreateMessageBufferInitialSize));
+
+            if (LogDataStream)
+            {
+                string containerName = string.Empty;
+                if (containerHost is ITalkContainer cont
+                    && cont.Name != null)
+                {
+                    containerName = cont.Name + "_";
+                }
+                dataStreamLogger.Init(this, $"{containerName}-WebsocketClient-{RemoveInvalidFilenameCharacters(connectUrl)}", null);
+            }
 
             Task.Run(StartAutoReconnectAsync);
         }
@@ -232,10 +244,16 @@ namespace IOCTalk.Communication.WebSocketClient
 
         public void SendMessage(IGenericMessage message, int receiverSessionId, object context)
         {
-            // workaround because no sync support in websocket api
-            //Task.Run(() => SendMessageAsync(message, receiverSessionId, context)).GetAwaiter().GetResult();
-            SendMessageAsync(message, receiverSessionId, context).GetAwaiter().GetResult();
-            //SendMessageAsync(message, receiverSessionId, context); //.GetAwaiter().GetResult();
+            if (isBrowserRuntime == true)
+            {
+                string errorMsg = $"Unable to call the remote method \"{message.Target} {message.Name}\" without async because .NET WebAssembly does not support multiple threads yet!";
+                logger.Error(errorMsg);
+                throw new NotSupportedException(errorMsg);
+            }
+            SendMessageAsync(message, receiverSessionId, context).ConfigureAwait(false).GetAwaiter().GetResult();
+#if DEBUG
+            logger.Debug("Send sync/async complete");
+#endif
         }
 
         public async ValueTask SendMessageAsync(IGenericMessage message, int receiverSessionId, object context)
@@ -276,7 +294,15 @@ namespace IOCTalk.Communication.WebSocketClient
         async ValueTask Send(ReadOnlyMemory<byte> data)
         {
             if (currentSocket != null)
+            {
+#if DEBUG
+                logger.Debug("Websocket send...");
+#endif
                 await currentSocket.SendAsync(data, WebSocketMessageType.Binary, true, cts.Token);
+#if DEBUG
+                logger.Debug("Websocket send complete");
+#endif
+            }
             else
                 throw new OperationCanceledException();
 
@@ -292,7 +318,7 @@ namespace IOCTalk.Communication.WebSocketClient
             PipeWriter writer = receivePipe.Writer;
 
 
-            int currentMemoryRequest = 1024;
+            int currentMemoryRequest = 512;
 
             try
             {
@@ -313,7 +339,6 @@ namespace IOCTalk.Communication.WebSocketClient
                     // Tell the PipeWriter how much was read from the Socket.
                     writer.Advance(receiveResult.Count);
 
-
                     if (currentMemoryRequest <= receiveResult.Count)
                     {
                         // received data diff fill out buffer
@@ -322,10 +347,12 @@ namespace IOCTalk.Communication.WebSocketClient
                             currentMemoryRequest = receiveResult.Count + 12;
                     }
 
-
                     if (receiveResult.EndOfMessage)
                     {
                         // Make the data available to the PipeReader.
+#if DEBUG
+                        logger.Debug($"Rcv flush because EndOfMessage");
+#endif
                         FlushResult result = await writer.FlushAsync();
 
                         if (result.IsCompleted)
@@ -397,15 +424,24 @@ namespace IOCTalk.Communication.WebSocketClient
 
             try
             {
-
+                bool readMsg;
                 while (cts.Token.IsCancellationRequested == false)
                 {
+#if DEBUG
+                    logger.Debug($"ReadAsync sessionID: {sessionId}..");
+#endif
                     ReadResult result = await reader.ReadAsync(cts.Token);
+#if DEBUG
+                    logger.Debug($"ReadReceivePipeAsync read buffer length: {result.Buffer.Length}");
+#endif
                     ReadOnlySequence<byte> buffer = result.Buffer;
                     RawMessageFormat rawMessageFormat;
 
-                    while (wireFraming.TryReadMessage(ref buffer, out ReadOnlySequence<byte> messagePayload, out rawMessageFormat))
+                    while (readMsg = wireFraming.TryReadMessage(ref buffer, out ReadOnlySequence<byte> messagePayload, out rawMessageFormat))
                     {
+#if DEBUG
+                        logger.Debug($"ReadMessage: {rawMessageFormat}; {sessionId}");
+#endif
                         ReadOnlyMemory<byte> messageMemory;
                         if (messagePayload.IsSingleSegment == false)
                         {
@@ -421,6 +457,11 @@ namespace IOCTalk.Communication.WebSocketClient
 
                         await OnRawMessageReceived(rawMessageFormat, sessionId, messageMemory);
                     }
+
+#if DEBUG
+                    if (readMsg == false)
+                        logger.Debug("No more message in buffer...");
+#endif
 
                     // Tell the PipeReader how much of the buffer has been consumed.
                     reader.AdvanceTo(buffer.Start, buffer.End);
@@ -496,15 +537,21 @@ namespace IOCTalk.Communication.WebSocketClient
         {
             if (isBrowserRuntime)
             {
-                // Use polling workaround because brwoser does not support ThreadPool.RegisterWaitForSingleObject and only one thred (otherwise deadlock if simple waithandle.wait)
+                // Use polling workaround because brwoser does not support ThreadPool.RegisterWaitForSingleObject and only one thread (otherwise deadlock if simple waithandle.wait)
                 var session = sessionDictionary[sessionId];
 
-                while (session.PendingRequests.ContainsKey(requestId) == true)
+                if (session.PendingRequests.ContainsKey(requestId) == true)
                 {
+                    Logger.Debug("Wait for browser workaround completion...");
                     await Task.Delay(5);
-                }
 
-                Logger.Debug("Polling wait browser workaround completed");
+                    while (session.PendingRequests.ContainsKey(requestId) == true)
+                    {
+                        await Task.Delay(50);
+                    }
+
+                    Logger.Debug("Polling wait browser workaround completed");
+                }
             }
             else
             {

@@ -1209,6 +1209,8 @@ namespace BSAG.IOCTalk.Communication.Common
 
                         session.PendingRequests.Remove(message.RequestId);
                     }
+                    else
+                        logger.Warn($"{message.Type}: Could not find request ID {message.RequestId} in session ID {session.SessionId} pending requests!");
                     break;
 
 
@@ -1261,6 +1263,10 @@ namespace BSAG.IOCTalk.Communication.Common
                         }
                     }
 
+                    break;
+
+                default:
+                    logger.Error($"Unexpected received message type: {message.Type}; ReqID: {message.RequestId}; Name: {message.Name}; Target: {message.Target}");
                     break;
             }
         }

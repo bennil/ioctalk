@@ -1,6 +1,7 @@
 ﻿using Bond.IO.Safe;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
+using BSAG.IOCTalk.Common.Interface.Container;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Session;
 using BSAG.IOCTalk.Communication.Common;
@@ -9,6 +10,7 @@ using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
@@ -62,6 +64,17 @@ namespace IOCTalk.Communication.WebSocketListener
             wireFraming.Init(this);
 
             outputBufferObjectPool = new ObjectPool<OutputBuffer>(() => new OutputBuffer(CreateMessageBufferInitialSize));
+
+            if (LogDataStream)
+            {
+                string containerName = string.Empty;
+                if (containerHost is ITalkContainer cont
+                    && cont.Name != null)
+                {
+                    containerName = cont.Name + "_";
+                }
+                dataStreamLogger.Init(this, $"{containerName}-WebsocketListener-{RemoveInvalidFilenameCharacters(listenUri)}", null);
+            }
 
             logger.Info($"Websocket listener start with bindings: {string.Join(", ", httpListener.Prefixes)}");
 
@@ -194,5 +207,6 @@ namespace IOCTalk.Communication.WebSocketListener
 
             ProcessSessionTerminated(sessionId, source);
         }
+
     }
 }

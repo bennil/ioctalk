@@ -48,8 +48,14 @@ namespace IOCTalk.Communication.WebSocketFraming
 
         public override bool TryReadMessage(ref ReadOnlySequence<byte> buffer, out ReadOnlySequence<byte> messagePayload, out RawMessageFormat rawMessageFormat)
         {
+#if DEBUG
+            Logger.Debug("WebsocketWireFraming.TryReadMessage");
+#endif
             if (buffer.IsEmpty)
             {
+#if DEBUG
+                Logger.Debug("WebsocketWireFraming.TryReadMessage: buffer is empty");
+#endif
                 messagePayload = default;
                 rawMessageFormat = default;
                 return false;
@@ -58,6 +64,9 @@ namespace IOCTalk.Communication.WebSocketFraming
             if (buffer.FirstSpan.Length < HeaderSize)
             {
                 // not enough data to read header
+#if DEBUG
+                Logger.Debug($"WebsocketWireFraming.TryReadMessage: header size to small: {buffer.FirstSpan.Length} ");
+#endif
                 messagePayload = default;
                 rawMessageFormat = default;
                 return false;
@@ -79,7 +88,9 @@ namespace IOCTalk.Communication.WebSocketFraming
                 else
                 {
                     rawMessageFormat = messageFormat;
-
+#if DEBUG
+                    Logger.Debug("WebsocketWireFraming.TryReadMessage complete");
+#endif
                     buffer = buffer.Slice(messagePayload.End);  // consume buffer data
                     return true;
                 }

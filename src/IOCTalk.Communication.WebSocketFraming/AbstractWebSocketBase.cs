@@ -7,6 +7,8 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using System.Linq;
 
 namespace IOCTalk.Communication.WebSocketFraming
 {
@@ -67,6 +69,21 @@ namespace IOCTalk.Communication.WebSocketFraming
             {
                 logger.Error(ex.ToString());
             }
+        }
+
+
+        public static string RemoveInvalidFilenameCharacters(string filename)
+        {
+            if (string.IsNullOrEmpty(filename))
+                return filename;
+
+            // Get invalid characters for filenames
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+
+            // Remove all invalid characters
+            string validFilename = new string(filename.Where(c => !invalidChars.Contains(c)).ToArray());
+
+            return validFilename;
         }
     }
 }
