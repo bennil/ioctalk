@@ -81,18 +81,11 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             this.SerializerTypeName = null;
         }
 
-
-        ///// <summary>
-        ///// Creates a new instance of the <c>TcpCommunicationController</c> class.
-        ///// </summary>
-        ///// <param name="wireFraming">Wire framing format</param>
-        ///// <param name="logger">Use given logger</param>
-        //public TcpCommunicationController(AbstractWireFraming wireFraming, ILogger logger)
-        //{
-        //    this.logger = logger;
-        //    this.wireFraming = wireFraming;
-        //}
-
+        public TcpCommunicationController(AbstractWireFraming wireFraming, IGenericMessageSerializer messageSerializer, ILogger logger)
+            : this(wireFraming, messageSerializer)
+        {
+            this.logger = logger;
+        }
 
 
         // ----------------------------------------------------------------------------------------

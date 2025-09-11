@@ -2,6 +2,7 @@
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Communication.Raw;
 using BSAG.IOCTalk.Common.Interface.Container;
+using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Session;
 using BSAG.IOCTalk.Communication.Common;
@@ -36,6 +37,11 @@ namespace IOCTalk.Communication.WebSocketListener
             this.serializer = messageSerializer;
         }
 
+        public WebSocketServiceController(IGenericMessageSerializer messageSerializer, ILogger logger)
+            : this(messageSerializer)
+        {
+            this.logger = logger;
+        }
 
         /// <summary>
         /// Initial create message buffer size
