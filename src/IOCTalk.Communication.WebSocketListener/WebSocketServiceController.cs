@@ -37,11 +37,6 @@ namespace IOCTalk.Communication.WebSocketListener
             this.serializer = messageSerializer;
         }
 
-        public WebSocketServiceController(IGenericMessageSerializer messageSerializer, ILogger logger)
-            : this(messageSerializer)
-        {
-            this.logger = logger;
-        }
 
         /// <summary>
         /// Initial create message buffer size

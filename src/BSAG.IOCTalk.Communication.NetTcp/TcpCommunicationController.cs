@@ -81,13 +81,6 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             this.SerializerTypeName = null;
         }
 
-        public TcpCommunicationController(AbstractWireFraming wireFraming, IGenericMessageSerializer messageSerializer, ILogger logger)
-            : this(wireFraming, messageSerializer)
-        {
-            this.logger = logger;
-        }
-
-
         // ----------------------------------------------------------------------------------------
         #endregion
 
