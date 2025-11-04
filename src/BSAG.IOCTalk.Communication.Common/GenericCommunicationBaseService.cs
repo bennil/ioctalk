@@ -1265,6 +1265,9 @@ namespace BSAG.IOCTalk.Communication.Common
 
                     break;
 
+                case MessageType.Heartbeat: // ignore
+                    break;
+
                 default:
                     logger.Error($"Unexpected received message type: {message.Type}; ReqID: {message.RequestId}; Name: {message.Name}; Target: {message.Target}");
                     break;

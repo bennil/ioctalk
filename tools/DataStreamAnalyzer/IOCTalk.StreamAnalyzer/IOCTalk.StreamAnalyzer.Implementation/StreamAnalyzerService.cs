@@ -702,7 +702,15 @@ namespace IOCTalk.StreamAnalyzer.Implementation
                             }
                             else
                             {
-                                break;
+                                if ((line.Length > startTimeStr.Length
+                                    && string.Compare(line.Substring(0, startTimeStr.Length), startTimeStr) < 0)    // earlier than target time
+                                    || string.IsNullOrWhiteSpace(line)
+                                    || (line.Length > startTimeStr.Length && (line[2] != ':' || line[5] != ':')))
+                                {
+                                    // continue searching
+                                }
+                                else
+                                    break;
                             }
                         }
                         lineNumber++;
