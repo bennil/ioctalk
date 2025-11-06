@@ -11,9 +11,9 @@ namespace BSAG.IOCTalk.Communication.Common
     internal class QueueObserverItem : IQueueObserverItem
     {
         object queueInstance;
-        Func<int> getCurrentCountFunc;
+        Func<int?> getCurrentCountFunc;
 
-        internal QueueObserverItem(object queueInstance, Func<int> getCurrentCountFunc, string name)
+        internal QueueObserverItem(object queueInstance, Func<int?> getCurrentCountFunc, string name)
         {
             this.queueInstance = queueInstance;
             this.getCurrentCountFunc = getCurrentCountFunc;
@@ -27,13 +27,13 @@ namespace BSAG.IOCTalk.Communication.Common
 
         public static QueueObserverItem FromChannelQueue<T>(Channel<T> queueInstance, string name)
         {
-            return new QueueObserverItem(queueInstance, () => queueInstance.Reader.Count, name);
+            return new QueueObserverItem(queueInstance, () => queueInstance.Reader.CanCount ? queueInstance.Reader.Count : (int?)null, name);
         }
 
 
         public string Name { get; private set; }
 
-        public int CurrentQueueCount => getCurrentCountFunc();
+        public int? CurrentQueueCount => getCurrentCountFunc();
 
         //public int? MaxCount { get; private set; }
     }

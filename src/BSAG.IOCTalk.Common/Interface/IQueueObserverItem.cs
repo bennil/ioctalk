@@ -8,7 +8,7 @@ namespace BSAG.IOCTalk.Common.Interface
     {
         string Name { get; }
 
-        int CurrentQueueCount { get; }
+        int? CurrentQueueCount { get; }
 
         //int? MaxCount { get; }
     }
