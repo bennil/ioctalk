@@ -3,7 +3,8 @@ using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Session;
 using BSAG.IOCTalk.Common.Test;
 using BSAG.IOCTalk.Common.Test.TestObjects;
-using BSAG.IOCTalk.Communication.Tcp;
+using BSAG.IOCTalk.Communication.NetTcp;
+using BSAG.IOCTalk.Communication.NetTcp.WireFraming;
 using BSAG.IOCTalk.Composition;
 using BSAG.IOCTalk.Serialization.Json;
 using BSAG.IOCTalk.Test.Common.Service;
@@ -70,8 +71,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostService.RegisterLocalSharedService<IMyRemoteAsyncAwaitTestService, MyRemoteAsyncTestService>();
 
 
-                tcpBackendService = new TcpCommunicationController(log);
-                tcpBackendService.Serializer = serializerService;
+                tcpBackendService = new TcpCommunicationController(new ShortWireFraming(), serializerService);
                 tcpBackendService.LogDataStream = false;
 
                 compositionHostService.InitGenericCommunication(tcpBackendService);
@@ -89,8 +89,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
 
                 compositionHostClient.RegisterRemoteService<IMyRemoteAsyncAwaitTestService>();
 
-                tcpClient = new TcpCommunicationController(log);
-                tcpClient.Serializer = serializerClient;
+                tcpClient = new TcpCommunicationController(new ShortWireFraming(), serializerService);
                 tcpClient.LogDataStream = false;
                 tcpClient.RequestTimeoutSeconds = 15;
 
@@ -165,8 +164,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostService.RegisterLocalSharedService<IStressTestService>();
 
 
-                tcpBackendService = new TcpCommunicationController(log);
-                tcpBackendService.Serializer = new BinaryMessageSerializer();
+                tcpBackendService = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
 
                 compositionHostService.InitGenericCommunication(tcpBackendService);
 
@@ -184,8 +182,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
                 compositionHostClient.RegisterRemoteService<IStressTestService>();
                 compositionHostClient.RegisterAsyncVoidMethod<IStressTestService>(nameof(IStressTestService.AsyncCallTest));
 
-                tcpClient = new TcpCommunicationController(log);
-                tcpClient.Serializer = new BinaryMessageSerializer();
+                tcpClient = new TcpCommunicationController(new ShortWireFraming(), new BinaryMessageSerializer());
 
                 compositionHostClient.SessionCreated += OnCompositionHostClient_SessionCreated_StressTest;
 

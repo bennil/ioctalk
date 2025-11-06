@@ -208,7 +208,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
         public void InitClient(string host, int port)
         {
-            InitClientInternal(host, port, new TcpClientCom(wireFraming));
+            InitClientInternal(host, port, new TcpClientCom(wireFraming, this));
         }
 
         public void InitClient(string host, int port, SecureTcpClient secureTcpClient)
@@ -218,7 +218,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
         public void InitService(int port)
         {
-            InitServiceInternal(port, new TcpServiceCom(wireFraming));
+            InitServiceInternal(port, new TcpServiceCom(wireFraming, this));
         }
 
         public void InitService(int port, SecureTcpServer secureTcpServer)

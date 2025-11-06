@@ -51,6 +51,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
 
         int segmentedPayloadMessageBytesCount = 0;
         ILogger logger;
+        TcpCommunicationController parent;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -62,9 +63,10 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         /// <summary>
         /// Erstellt eine neue Instanz der Klasse <c>AbstractTcpCom</c>.
         /// </summary>
-        public AbstractTcpCom(AbstractWireFraming wireFraming)
+        public AbstractTcpCom(AbstractWireFraming wireFraming, TcpCommunicationController parent)
         {
             this.wireFraming = wireFraming;
+            this.parent = parent;
         }
 
         // ----------------------------------------------------------------------------------------
@@ -203,6 +205,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         public long SentByteCount => sentByteCount;
 
 
+        public TcpCommunicationController ParentController => parent;
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -232,9 +236,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
                 && client.socket != null
                 && client.AcquireIsSocketClosedExecuted())
             {
-                client.Cancellation.Cancel();
-
-                client.socket.Close();
+                client.Dispose();
 
                 OnConnectionClosed(client, source);
                 return true;

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <IsTestProject>true</IsTestProject>
@@ -15,8 +15,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BSAG.IOCTalk.Common\BSAG.IOCTalk.Common.csproj" />
+    <ProjectReference Include="..\BSAG.IOCTalk.Communication.NetTcp\BSAG.IOCTalk.Communication.NetTcp.csproj" />
     <ProjectReference Include="..\BSAG.IOCTalk.Communication.PersistentQueue\BSAG.IOCTalk.Communication.PersistentQueue.csproj" />
-    <ProjectReference Include="..\BSAG.IOCTalk.Communication.Tcp\BSAG.IOCTalk.Communication.Tcp.csproj" />
     <ProjectReference Include="..\BSAG.IOCTalk.Composition\BSAG.IOCTalk.Composition.csproj" />
     <ProjectReference Include="..\BSAG.IOCTalk.Logging\BSAG.IOCTalk.Logging.csproj" />
     <ProjectReference Include="..\BSAG.IOCTalk.Serialization.Json\BSAG.IOCTalk.Serialization.Json.csproj" />

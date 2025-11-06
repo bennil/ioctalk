@@ -162,7 +162,7 @@ namespace BSAG.IOCTalk.Composition
                 throw new ArgumentException($"Class type expected. Actual: {interfaceType.FullName}; Share context: {name}", nameof(implementationType));
 
             var typeHierachy = new TypeHierachy(interfaceType, implementationType);
-            
+
             interfaceImplementationMapping[interfaceType] = typeHierachy;
 
             return typeHierachy;
@@ -944,6 +944,9 @@ namespace BSAG.IOCTalk.Composition
 
             if (localMultipleSharedInterfaceTypes != null && localMultipleSharedInterfaceTypes.Contains(interfaceType))
                 throw new InvalidOperationException($"You cannot register single and mutliple shared implementation instances for the interface type: {interfaceType.FullName}; Share context: {name}");
+
+            if (localSharedInterfaceTypes.Contains(interfaceType) == true)
+                throw new InvalidOperationException($"Interface type {interfaceType.FullName} already registered as local shared service!");
 
             localSharedInterfaceTypes.Add(interfaceType);
         }

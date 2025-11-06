@@ -12,6 +12,7 @@ using BSAG.IOCTalk.Common.Exceptions;
 using System.IO;
 using System.Threading.Tasks;
 using BSAG.IOCTalk.Communication.Common;
+using BSAG.IOCTalk.Common.Interface;
 
 namespace BSAG.IOCTalk.Communication.NetTcp
 {
@@ -22,7 +23,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
     /// Author(s): Benjamin Link
     /// created on: 22.09.2010
     /// </remarks>
-    public class Client : ICommunicationUsage
+    public class Client : ICommunicationUsage, IDisposable
     {
         #region Client fields
         // ----------------------------------------------------------------------------------------
@@ -49,6 +50,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         long sentByteCount = 0;
         long receivedMessageCount = 0;
         long receivedByteCount = 0;
+
+        IQueueObserver queueObserver;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -87,6 +90,9 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             this.connectionSessionId = GenericCommunicationBaseService.GetNewConnectionSessionId();
             this.cancelTokenSource = new CancellationTokenSource();
             this.cancelToken = cancelTokenSource.Token;
+
+            queueObserver = QueueObserver.GetQueueObserverFromContainer(parentCom.ParentController.ContainerHost, GetType());
+            queueObserver?.RegisterQueue(queueReceivedPackets, $"ioctalk Communication Client ReceivePacketsQueue {SessionId} - {SessionInfo}");
         }
 
         // ----------------------------------------------------------------------------------------
@@ -474,6 +480,14 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         internal void IncrementReceivedByteCount(long byteCount)
         {
             receivedByteCount += byteCount;
+        }
+
+        public void Dispose()
+        {
+            Cancellation?.Cancel();
+            socket?.Close();
+
+            queueObserver?.UnregisterQueue(queueReceivedPackets);
         }
         // ----------------------------------------------------------------------------------------
         #endregion

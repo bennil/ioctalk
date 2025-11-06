@@ -1,6 +1,8 @@
 ﻿using BSAG.IOCTalk.Common.Interface.Logging;
-using BSAG.IOCTalk.Communication.Tcp;
+using BSAG.IOCTalk.Communication.NetTcp;
+using BSAG.IOCTalk.Communication.NetTcp.WireFraming;
 using BSAG.IOCTalk.Composition;
+using BSAG.IOCTalk.Serialization.Json;
 using BSAG.IOCTalk.Test.Common.Service;
 using BSAG.IOCTalk.Test.Common.Service.Expose;
 using BSAG.IOCTalk.Test.Interface.Expose;
@@ -58,7 +60,7 @@ namespace BSAG.IOCTalk.Common.Test
                 compositionHostService.RegisterExposedSubInterfaceForType<IExposeTestLevel1, ExposeTestLevel1>();
                 compositionHostService.RegisterExposedSubInterfaceForType<IExposeTestOther, ExposeTestBase>();
 
-                tcpBackendService = new TcpCommunicationController(log);
+                tcpBackendService = new TcpCommunicationController(new ShortWireFraming(), new JsonMessageSerializer());
 
                 compositionHostService.InitGenericCommunication(tcpBackendService);
 
@@ -81,7 +83,7 @@ namespace BSAG.IOCTalk.Common.Test
                 compositionHostClient.RegisterExposedSubInterfaceForType<IExposeTestLevel1, ExposeTestLevel1>();
                 compositionHostClient.RegisterExposedSubInterfaceForType<IExposeTestOther, ExposeTestBase>();
 
-                tcpClient = new TcpCommunicationController(log);
+                tcpClient = new TcpCommunicationController(new ShortWireFraming(), new JsonMessageSerializer());
                 tcpClient.LogDataStream = true;
 
                 compositionHostClient.SessionCreated += OnCompositionHostClient_SessionCreated;

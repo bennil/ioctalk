@@ -36,8 +36,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp.Security
         /// <summary>
         /// Creates and initializes an instance of the class <c>SecureTcpClient</c>.
         /// </summary>
-        public SecureTcpClient(AbstractWireFraming wireFraming)
-            : base(wireFraming)
+        public SecureTcpClient(AbstractWireFraming wireFraming, TcpCommunicationController parent)
+            : base(wireFraming, parent)
         {
         }
 
@@ -45,8 +45,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp.Security
         /// Creates and initializes an instance of the class <c>SecureTcpClient</c>.
         /// </summary>
         /// <param name="clientCertificate">Provides the given certificate to the server.</param>
-        public SecureTcpClient(X509Certificate2 clientCertificate, AbstractWireFraming wireFraming)
-            : this(wireFraming)
+        public SecureTcpClient(X509Certificate2 clientCertificate, AbstractWireFraming wireFraming, TcpCommunicationController parent)
+            : this(wireFraming, parent)
         {
             this.clientCertificate = clientCertificate;
             this.ProvideClientCertificate = true;

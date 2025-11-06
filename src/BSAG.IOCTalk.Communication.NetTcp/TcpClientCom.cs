@@ -49,8 +49,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         //{
         //}
 
-        public TcpClientCom(AbstractWireFraming wireFraming)
-            : base(wireFraming)
+        public TcpClientCom(AbstractWireFraming wireFraming, TcpCommunicationController parent)
+            : base(wireFraming, parent)
         {
         }
 

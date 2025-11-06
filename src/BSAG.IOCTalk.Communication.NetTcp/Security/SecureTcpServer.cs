@@ -35,8 +35,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp.Security
         /// <summary>
         /// Creates and initializes an instance of the class <c>SecureTcpServer</c>.
         /// </summary>
-        public SecureTcpServer(AbstractWireFraming wireFraming)
-            :base(wireFraming)
+        public SecureTcpServer(AbstractWireFraming wireFraming, TcpCommunicationController parent)
+            :base(wireFraming, parent)
         {
         }
 
@@ -44,8 +44,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp.Security
         /// Creates and initializes an instance of the class <c>SecureTcpServer</c>.
         /// </summary>
         /// <param name="certificate">Used certificate</param>
-        public SecureTcpServer(X509Certificate2 certificate, AbstractWireFraming wireFraming)
-            : this(wireFraming)
+        public SecureTcpServer(X509Certificate2 certificate, AbstractWireFraming wireFraming, TcpCommunicationController parent)
+            : this(wireFraming, parent)
         {
             this.certificate = certificate;
         }

@@ -1,8 +1,10 @@
 ﻿using BSAG.IOCTalk.Common.Interface.Logging;
 using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Common.Test.TestObjects;
-using BSAG.IOCTalk.Communication.Tcp;
+using BSAG.IOCTalk.Communication.NetTcp;
+using BSAG.IOCTalk.Communication.NetTcp.WireFraming;
 using BSAG.IOCTalk.Composition;
+using BSAG.IOCTalk.Serialization.Json;
 using BSAG.IOCTalk.Test.Common.Service;
 using BSAG.IOCTalk.Test.Interface;
 using System;
@@ -158,7 +160,7 @@ namespace BSAG.IOCTalk.Common.Test
                 compositionHostService.RegisterRemoteService<IMyRemoteAsyncAwaitTestClient>(true);
                 compositionHostService.SessionCreated += OnCompositionHostService_SessionCreated;
 
-                tcpBackendService = new TcpCommunicationController(log);
+                tcpBackendService = new TcpCommunicationController(new ShortWireFraming(), new JsonMessageSerializer());
                 tcpBackendService.LogDataStream = true;
 
                 compositionHostService.InitGenericCommunication(tcpBackendService);
@@ -178,7 +180,7 @@ namespace BSAG.IOCTalk.Common.Test
                 compositionHostClient.RegisterLocalSessionService<IMyRemoteAsyncAwaitTestClient, MyRemoteAsyncTestClient>();
                 
 
-                tcpClient = new TcpCommunicationController(log);
+                tcpClient = new TcpCommunicationController(new ShortWireFraming(), new JsonMessageSerializer());
                 tcpClient.LogDataStream = true;
                 tcpClient.RequestTimeoutSeconds = 15;
 

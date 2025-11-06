@@ -20,6 +20,7 @@ using Xunit.Abstractions;
 
 namespace BSAG.IOCTalk.Serialization.Binary.Test
 {
+    [Collection("Sequential")]
     public class TcpRoundTripNetTcpTests
     {
         TaskCompletionSource<bool> onConnectionEstablished;

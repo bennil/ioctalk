@@ -1,7 +1,6 @@
 ﻿using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Reflection;
-using BSAG.IOCTalk.Communication.Tcp;
 using BSAG.IOCTalk.Test.Interface;
 using System;
 using System.Collections.Generic;

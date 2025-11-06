@@ -1,4 +1,5 @@
 ﻿using BSAG.IOCTalk.Common.Exceptions;
+using BSAG.IOCTalk.Common.Interface;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using BSAG.IOCTalk.Common.Interface.Container;
 using BSAG.IOCTalk.Common.Interface.Logging;
@@ -6,7 +7,6 @@ using BSAG.IOCTalk.Common.Interface.Reflection;
 using BSAG.IOCTalk.Common.Interface.Session;
 using BSAG.IOCTalk.Common.Reflection;
 using BSAG.IOCTalk.Common.Session;
-using BSAG.IOCTalk.Communication.Common.Collections;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -112,6 +112,8 @@ namespace BSAG.IOCTalk.Communication.Common
         private long lastSentMessageCounter = 0;
 
         private static int lastConnectionSessionId = 0;
+
+        IQueueObserver queueObserver;
 
         // ----------------------------------------------------------------------------------------
         #endregion
@@ -401,10 +403,16 @@ namespace BSAG.IOCTalk.Communication.Common
                 isActive = false;
 
                 if (receiverQueue != null)
+                {
                     receiverQueue.Writer.TryComplete();
+                    queueObserver?.UnregisterQueue(receiverQueue);
+                }
 
                 if (callerQueue != null)
+                {
                     callerQueue.Writer.TryComplete();   // release caller queue thread
+                    queueObserver?.UnregisterQueue(callerQueue);
+                }
 
                 if (DataStreamLogger != null)
                     DataStreamLogger.Dispose();
@@ -627,6 +635,9 @@ namespace BSAG.IOCTalk.Communication.Common
                 channelOptions.SingleWriter = true;
 
                 callerQueue = Channel.CreateBounded<Tuple<ISession, IGenericMessage>>(channelOptions);
+                queueObserver = QueueObserver.GetQueueObserverFromContainer(containerHost, GetType());
+                queueObserver?.RegisterQueue<Tuple<ISession, IGenericMessage>>(callerQueue, $"ioctalk {containerHost.Name} Communication CallerQueue");
+
                 Task.Run(CallerThreadProcess);
             }
 
@@ -642,105 +653,18 @@ namespace BSAG.IOCTalk.Communication.Common
                 receiverChannelOptions.SingleWriter = true;
 
                 receiverQueue = Channel.CreateBounded<Tuple<int, byte[]>>(receiverChannelOptions);
+
+                if (queueObserver is null)
+                    queueObserver = QueueObserver.GetQueueObserverFromContainer(containerHost, GetType());
+                queueObserver?.RegisterQueue<Tuple<int, byte[]>>(receiverQueue, $"ioctalk {containerHost.Name} Communication CallerQueue");
+
                 Task.Run(ReceiverProcessTask);
             }
         }
 
 
-        /// <summary>
-        /// Invokes a remote interface method by a given lambda method expression.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source">The source.</param>
-        /// <param name="expression">The expression.</param>
-        /// <returns></returns>
-        //public object InvokeMethod<T>(object source, Expression<Action<T>> expression)
-        //{
-        //    MethodCallExpression methodCall = expression.Body as MethodCallExpression;
-        //    if (methodCall == null)
-        //    {
-        //        throw new Exception("Lambda expression must be a method call!");
-        //    }
-        //    object[] parameters = null;
-        //    List<ParameterInfo> outParameters = null;
-        //    List<FieldInfo> outParameterFieldInfos = null;
-        //    List<object> outParameterTargetValues = null;
-        //    if (methodCall.Arguments.Count > 0)
-        //    {
-        //        parameters = new object[methodCall.Arguments.Count];
-        //        ParameterInfo[] parameterInfos = methodCall.Method.GetParameters();
-        //        for (int i = 0; i < methodCall.Arguments.Count; i++)
-        //        {
-        //            object argument = methodCall.Arguments[i];
-
-        //            // get value from lambda expression
-        //            MemberExpression memberExpression = argument as MemberExpression;
-        //            FieldInfo fieldInfo = memberExpression.Member as FieldInfo;
-        //            ConstantExpression constantExpression = (memberExpression.Expression as ConstantExpression);
-        //            parameters[i] = fieldInfo.GetValue(constantExpression.Value);
-
-        //            // check out parameter
-        //            var parameterInfo = parameterInfos[i];
-        //            if (parameterInfo.IsOut)
-        //            {
-        //                if (outParameterFieldInfos == null)
-        //                {
-        //                    outParameters = new List<ParameterInfo>();
-        //                    outParameterFieldInfos = new List<FieldInfo>();
-        //                    outParameterTargetValues = new List<object>();
-        //                }
-
-        //                outParameters.Add(parameterInfo);
-        //                outParameterFieldInfos.Add(fieldInfo);
-        //                outParameterTargetValues.Add(constantExpression.Value);
-        //            }
-        //        }
-        //    }
-
-        //    try
-        //    {
-        //        // todo: directly call InvokeMethod(object source, IInvokeMethodInfo invokeInfo, object[] parameters)
-        //        return InvokeMethod(source, methodCall.Method, parameters);
-        //    }
-        //    finally
-        //    {
-        //        if (outParameters != null)
-        //        {
-        //            for (int i = 0; i < outParameters.Count; i++)
-        //            {
-        //                object outValue = parameters[outParameters[i].Position];
-        //                outParameterFieldInfos[i].SetValue(outParameterTargetValues[i], outValue);
-        //            }
-        //        }
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Invokes a remote interface method.
-        ///// </summary>
-        ///// <param name="source">The source.</param>
-        ///// <param name="method">The method.</param>
-        ///// <param name="parameters">The parameters.</param>
-        ///// <returns></returns>
-        //public virtual object InvokeMethod(object source, MethodInfo method, object[] parameters)
-        //{
-        //    return InvokeMethod(source, new InvokeMethodInfo(method), parameters);
-        //}
 
 
-
-        ///// <summary>
-        ///// Invokes a remote interface method.
-        ///// </summary>
-        ///// <param name="source">The source.</param>
-        ///// <param name="invokeInfo">The invoke info (cached reflection infos).</param>
-        ///// <param name="parameters">The parameters.</param>
-        ///// <returns></returns>
-        //public virtual object InvokeMethod(object source, IInvokeMethodInfo invokeInfo, object[] parameters)
-        //{
-        //    ISession session = containerHost.GetSessionByServiceInstance(source);
-        //    return InvokeMethod(source, invokeInfo, session, parameters);
-        //}
 
         /// <summary>
         /// Invokes a remote interface method.

@@ -18,5 +18,8 @@ namespace BSAG.IOCTalk.Common.Interface.Container
 
         void MapInterfaceImplementationType<InterfaceType, ImplementationType>()
             where ImplementationType : class, InterfaceType;
+
+
+        void RegisterLocalSharedService<T>(T instance);
     }
 }

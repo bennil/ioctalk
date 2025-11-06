@@ -36,8 +36,8 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         // TcpServiceCom constructors
         // ----------------------------------------------------------------------------------------
 
-        public TcpServiceCom(AbstractWireFraming wireFraming)
-            : base(wireFraming)
+        public TcpServiceCom(AbstractWireFraming wireFraming, TcpCommunicationController parent)
+            : base(wireFraming, parent)
         {
             MaxConnectionCount = 1000;
         }
@@ -217,6 +217,12 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             clients.Clear();
         }
 
+        public override bool Close(Client client, string source)
+        {
+            clients.Remove(client.SessionId);
+
+            return base.Close(client, source);
+        }
 
 
         /// <summary>
