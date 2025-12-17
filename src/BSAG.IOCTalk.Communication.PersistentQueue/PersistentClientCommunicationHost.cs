@@ -878,7 +878,11 @@ namespace BSAG.IOCTalk.Communication.PersistentQueue
                             }
 
                             // call underlying communication layer
-                            object returnValue = underlyingCom.InvokeMethod(this, invokeInfo, newSession, paramValues);
+                            object returnValue;
+                            if (invokeInfo.IsAsyncAwaitRemoteMethod == true)
+                                returnValue = await underlyingCom.InvokeMethodAsync(this, invokeInfo, newSession, paramValues);
+                            else
+                                returnValue = underlyingCom.InvokeMethod(this, invokeInfo, newSession, paramValues);
 
                             resendMethodInvokeCount++;
 

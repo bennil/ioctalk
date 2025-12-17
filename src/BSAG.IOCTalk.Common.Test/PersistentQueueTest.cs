@@ -62,6 +62,38 @@ namespace BSAG.IOCTalk.Common.Test
 
 
         [Fact]
+        public async Task TestPersistentAsyncCall()
+        {
+            IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
+
+            PersistentTestCommService dummyCom = new PersistentTestCommService(xUnitLog);
+            dummyCom.RaiseConnectionLost = true;
+
+            PersistentClientCommunicationHost persistComm = new PersistentClientCommunicationHost(dummyCom);
+            persistComm.ResendDelay = TimeSpan.Zero;
+            persistComm.RegisterPersistentMethod<IMyLocalService>(nameof(IMyLocalService.RandomMethodAsync));
+            persistComm.RegisterContainerHost(talkCompositionHost, null);
+            persistComm.Init();
+
+            CleanupPeristentDirectory(persistComm);
+
+            InvokeMethodInfo mInfo = new InvokeMethodInfo(typeof(IMyLocalService), nameof(IMyLocalService.RandomMethodAsync));
+
+            ISession session = new BSAG.IOCTalk.Common.Session.Session(dummyCom, 1, "Unit Test Session", null);
+            await persistComm.InvokeMethodAsync(this, mInfo, session, new object[0]);  // 1. not connected call
+            await persistComm.InvokeMethodAsync(this, mInfo, session, new object[0]);  // 2. not connected call
+
+            dummyCom.RaiseConnectionLost = false;
+            dummyCom.RaiseConnectionCreated();
+
+            // wait until local pending messages are processed
+            await Task.Delay(500);
+
+            Assert.Equal(2, dummyCom.InvokeCounter);
+        }
+
+
+        [Fact]
         public void TestPersistentComplexDataCall()
         {
             IOCTalk.Composition.TalkCompositionHost talkCompositionHost = new Composition.TalkCompositionHost();
@@ -698,7 +730,8 @@ namespace BSAG.IOCTalk.Common.Test
 
             public Task<object> InvokeMethodAsync(object source, IInvokeMethodInfo invokeInfo, ISession session, object[] parameters)
             {
-                throw new NotImplementedException();
+                var result = InvokeMethod(source, invokeInfo, session, parameters);
+                return Task.FromResult(result);
             }
 
             public void RegisterContainerHost(IGenericContainerHost containerHost, ILogger logger)

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace BSAG.IOCTalk.Test.Common.Service
 {
@@ -20,6 +21,11 @@ namespace BSAG.IOCTalk.Test.Common.Service
         }
 
         public void RandomMethod()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RandomMethodAsync()
         {
             throw new NotImplementedException();
         }
