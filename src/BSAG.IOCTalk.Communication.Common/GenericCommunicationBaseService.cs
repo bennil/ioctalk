@@ -1292,6 +1292,12 @@ namespace BSAG.IOCTalk.Communication.Common
                         }
 
                         responseObject = TypeService.GetAsyncAwaitResultValue(task);
+
+                        if (methodInfo.IsVoidReturnMethod)
+                        {
+                            // do not serialize Task
+                            returnObject = null;
+                        }
                     }
 
                     try
