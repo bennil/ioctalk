@@ -514,6 +514,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         {
             socket.ReceiveBufferSize = receiveBufferSize;
             socket.SendBufferSize = sendBufferSize;
+            socket.NoDelay = true;  // enable TCP_NODELAY by default: https://brooker.co.za/blog/2024/05/09/nagle.html
 
             if (AdjustSocketHandler != null)
                 AdjustSocketHandler(socket);
