@@ -12,6 +12,8 @@ using System.Text.RegularExpressions;
 using System.Linq.Expressions;
 using BSAG.IOCTalk.Common.Exceptions;
 using System.Threading.Tasks;
+using BSAG.IOCTalk.Common.Interface.Reflection;
+
 #if !AheadOfTimeOnly && !CodeGen
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -954,18 +956,29 @@ namespace BSAG.IOCTalk.Common.Reflection
             return type;
         }
 
-        public static object GetAsyncAwaitResultValue(object value)
+        public static object GetAsyncAwaitResultValue(Task task, IInvokeMethodInfo methodInfo)
         {
-            if (value == null)
-                return value;
+            if (task is null)
+                return null;
 
-            var type = value.GetType();
-            if (value is Task task)
+            if (methodInfo.IsAsyncAwaitRemoteMethod)
             {
-                if (type.IsGenericType)
+                if (task.IsFaulted == true)
+                    throw task.Exception;
+
+                if (task.IsCompleted == false)
+                    throw new InvalidOperationException($"Async result can only be retrieved from a completed task! Method: \"{methodInfo.InterfaceMethod.Name} {methodInfo.QualifiedMethodName}\"");
+
+                if (methodInfo.IsVoidReturnMethod)
+                {
+                    // void task
+                    return null;
+                }
+                else
                 {
                     // extract return value from Task<T>
                     var currentResultProvider = taskTResultProviderLast;
+                    var type = task.GetType();
 
                     if (currentResultProvider == null || currentResultProvider.Type.Equals(type) == false)
                     {
@@ -973,16 +986,11 @@ namespace BSAG.IOCTalk.Common.Reflection
                         taskTResultProviderLast = currentResultProvider;
                     }
 
-                    return currentResultProvider.Getter(value);
-                }
-                else
-                {
-                    // void task
-                    return null;
+                    return currentResultProvider.Getter(task);
                 }
             }
-
-            return value;
+            else
+                throw new InvalidOperationException($"Unexpected MethodInfo.IsAsyncAwaitRemoteMethod = false for method \"{methodInfo.InterfaceMethod.Name} {methodInfo.QualifiedMethodName}\" and task type: {task?.GetType().FullName}");
         }
 
         private static Func<object[], object> CompileConstructorParamDelegate(Type type, out Type[] paramTypes, out string[] paramNames, out ParameterInfo[] outParams, out ParameterInfo[] cParams)

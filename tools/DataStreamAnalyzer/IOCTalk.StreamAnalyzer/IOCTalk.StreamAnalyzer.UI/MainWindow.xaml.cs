@@ -106,27 +106,28 @@ namespace IOCTalk.StreamAnalyzer
                 }
                 string fileName = openFile.FileName;
 
-                //// export test code
+                // export test code
                 FileExportFilter fileExport = null;
+                // todo: create UI for filter
                 //FileExportFilter fileExport = new FileExportFilter
                 //{
-                //    MessageNames = new string[] { "Post(x)" },
+                //    MessageNames = new string[] { "OnPosAsync(Telematiclink.Interface.Geo.IPosEx)" },
                 //    ExportDirectory = $".{System.IO.Path.DirectorySeparatorChar}FileExportFilter",
                 //    //GroupByKeys = new string[] { "Context", "DevId", "Protocol" },
-                //    GroupByKeys = new string[] { "DevId", "Protocol" },
+                //    GroupByKeys = new string[] { "DeviceId" },
                 //    IncludeResponse = true,
                 //    Conditions = new FilterItem[]
                 //    {
-                //        new FilterItem
-                //        {
-                //            Key ="Context",
-                //            Value = "x"
-                //        }
+                //        //new FilterItem
+                //        //{
+                //        //    Key ="Context",
+                //        //    Value = "x"
+                //        //}
                 //    },
-                //    SeparateOnKey = "Message",
-                //    SeparateOnKeyValue = "",
-                //    ExportOnlyKey = "Message",
-                //    ExportWithSpaceSequence = 2
+                //    //SeparateOnKey = "Message",
+                //    //SeparateOnKeyValue = "",
+                //    //ExportOnlyKey = "Message",
+                //    //ExportWithSpaceSequence = 2
                 //};
 
                 ShowPleaseWait();

@@ -1281,22 +1281,23 @@ namespace BSAG.IOCTalk.Communication.Common
                         responseObject = returnObject;
                     }
 
-                    if (responseObject is Task task)
+                    if (methodInfo.IsAsyncAwaitRemoteMethod)
                     {
-                        // Method result is wrapped in Task<?> (this can happen in ProcessPendingCallerThreadInvokesOnce - sync wait processing other async method)
-                        if (task.IsCompleted == false)
+                        if (responseObject is Task task)
                         {
-                            // Block sync method until async result is completed
-                            if (task.Wait(requestTimeout) == false)
-                                throw new TimeoutException($"Timeout unwarpping async result from method {methodInfo.QualifiedMethodName}; SessionID: {session.SessionId} Timeout: {requestTimeout}");
+                            // Method result is wrapped in Task<?> (this can happen in ProcessPendingCallerThreadInvokesOnce - sync wait processing other async method)
+                            if (task.IsCompleted == false)
+                            {
+                                // Block sync method until async result is completed
+                                if (task.Wait(requestTimeout) == false)
+                                    throw new TimeoutException($"Timeout unwarpping async result from method {methodInfo.QualifiedMethodName}; SessionID: {session.SessionId} Timeout: {requestTimeout}");
+                            }
+
+                            responseObject = TypeService.GetAsyncAwaitResultValue(task, methodInfo);
                         }
-
-                        responseObject = TypeService.GetAsyncAwaitResultValue(task);
-
-                        if (methodInfo.IsVoidReturnMethod)
+                        else
                         {
-                            // do not serialize Task
-                            returnObject = null;
+                            throw new MethodAccessException($"Unexpected async/await method return type! Unsupported type: {returnObject?.GetType()?.FullName}");
                         }
                     }
 
@@ -1413,7 +1414,7 @@ namespace BSAG.IOCTalk.Communication.Common
                         {
                             await task;
 
-                            returnObject = TypeService.GetAsyncAwaitResultValue(task);
+                            returnObject = TypeService.GetAsyncAwaitResultValue(task, methodInfo);
                         }
                         //else if (returnObject is ValueTask valueTask)
                         //{
@@ -1421,13 +1422,7 @@ namespace BSAG.IOCTalk.Communication.Common
                         //}
                         else
                         {
-                            throw new MethodAccessException($"Unexpected async/await method return type! Unsupported type: {returnObject?.GetType().FullName}");
-                        }
-
-                        if (methodInfo.IsVoidReturnMethod)
-                        {
-                            // do not serialize Task
-                            returnObject = null;
+                            throw new MethodAccessException($"Unexpected async/await method return type! Unsupported type: {returnObject?.GetType()?.FullName}");
                         }
                     }
 
