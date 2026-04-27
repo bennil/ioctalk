@@ -1,10 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.IO;
 using BSAG.IOCTalk.Common.Exceptions;
 using BSAG.IOCTalk.Common.Attributes;
 
@@ -21,7 +19,7 @@ namespace BSAG.IOCTalk.Common.Exceptions
     public class ExceptionWrapper : IExceptionWrapper
     {
         #region fields
-        
+
         /// <summary>
         /// Remote Invoke Exception Data dictionary key
         /// </summary>
@@ -49,8 +47,6 @@ namespace BSAG.IOCTalk.Common.Exceptions
             this.TypeName = exType.FullName;
             this.Message = ex.Message;
             this.Text = ex.ToString();
-
-            TrySerializeException(ex);
         }
 
 
@@ -91,80 +87,37 @@ namespace BSAG.IOCTalk.Common.Exceptions
         public string Message { get; set; }
 
 
-        /// <summary>
-        /// Gets or sets the serialized exception binary data.
-        /// </summary>
-        /// <value>
-        /// The binary data.
-        /// </value>
-        public byte[] BinaryData { get; set; }
+        // Historically held a BinaryFormatter blob of the original exception. The field is
+        // retained on the wire contract for compatibility with peers that still send it, but
+        // the value is discarded on receive and never produced on send. BinaryFormatter cannot
+        // safely deserialize untrusted bytes (RCE via well-known gadget chains), so the blob
+        // must never reach Deserialize().
+        [Obsolete("BinaryFormatter exception payload is no longer transmitted or consumed. Value is ignored.", false)]
+        public byte[] BinaryData
+        {
+            get => null;
+            set { /* intentionally discarded */ }
+        }
 
         #endregion
 
         #region methods
 
         /// <summary>
-        /// Try exception serialization.
+        /// Try exception serialization. No-op: original exception object is no longer transmitted.
         /// </summary>
-        /// <param name="ex">The exception.</param>
         public bool TrySerializeException(Exception ex)
         {
-            if (ex.GetType().IsSerializable)
-            {
-                BinaryFormatter binaryFormatter = new BinaryFormatter();
-                MemoryStream mStream = new MemoryStream();
-                try
-                {
-                    binaryFormatter.Serialize(mStream, ex);
-                    mStream.Position = 0;
-                    byte[] exBinary = new byte[mStream.Length];
-                    mStream.Read(exBinary, 0, exBinary.Length);
-                    mStream.Close();
-
-                    this.BinaryData = exBinary;
-                    return true;
-                }
-                catch
-                {
-                    // Local exception can't be serialized
-                    this.BinaryData = null;
-                }
-                finally
-                {
-                    mStream.Close();
-                }
-            }
             return false;
         }
 
         /// <summary>
-        /// Try deserialize the binary wrapped exception.
+        /// Try deserialize the binary wrapped exception. No-op: BinaryFormatter is unsafe on
+        /// untrusted input. Callers should fall back to <see cref="NonSerializableRemoteException"/>
+        /// constructed from the wrapper's Name/TypeName/Message/Text fields.
         /// </summary>
-        /// <param name="exception">The exception.</param>
-        /// <returns></returns>
         public bool TryDeserializeException(out Exception exception)
         {
-            if (BinaryData != null)
-            {
-                MemoryStream mStream = null;
-                try
-                {
-                    BinaryFormatter binaryFormatter = new BinaryFormatter();
-                    mStream = new MemoryStream(this.BinaryData);
-                    exception = (Exception)binaryFormatter.Deserialize(mStream);
-                    mStream.Close();
-                    return true;
-                }
-                catch
-                {
-                    // Remote exception can't be deserialized
-                }
-                finally
-                {
-                    if (mStream != null)
-                        mStream.Close();
-                }
-            }
             exception = null;
             return false;
         }

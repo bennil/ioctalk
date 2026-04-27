@@ -1143,32 +1143,18 @@ namespace BSAG.IOCTalk.Communication.Common
                     IInvokeState invokeExceptionParam;
                     if (session.PendingRequests.TryGetValue(message.RequestId, out invokeExceptionParam))
                     {
-                        // throw exception in the caller stack
-                        Exception exception = null;
-                        IExceptionWrapper exWrapper = null;
-                        if (message.Payload is IExceptionWrapper)
+                        // The original remote exception object is intentionally NOT reconstructed.
+                        // BinaryFormatter deserialization of bytes received from a peer is unsafe
+                        // (well-known gadget chains achieve RCE). Surface the wrapper metadata via
+                        // NonSerializableRemoteException for diagnostics instead.
+                        Exception exception;
+                        if (message.Payload is IExceptionWrapper exWrapper)
                         {
-                            exWrapper = (IExceptionWrapper)message.Payload;
-
-                            if (exWrapper.TryDeserializeException(out exception))
-                            {
-                                // original exception could be deserialized
-                                // add remote invoke identifier
-                                ExceptionWrapper.AddRemoteInvokeIdentification(exception);
-                            }
+                            exception = new NonSerializableRemoteException(invokeExceptionParam, message.Payload.ToString(), exWrapper.Name, exWrapper.TypeName, exWrapper.Message);
                         }
-
-                        if (exception == null)
+                        else
                         {
-                            // create generic remote invoke exception with payload text (ex.ToString)
-                            if (exWrapper != null)
-                            {
-                                exception = new NonSerializableRemoteException(invokeExceptionParam, message.Payload.ToString(), exWrapper.Name, exWrapper.TypeName, exWrapper.Message);
-                            }
-                            else
-                            {
-                                exception = new NonSerializableRemoteException(invokeExceptionParam, message.Payload.ToString());
-                            }
+                            exception = new NonSerializableRemoteException(invokeExceptionParam, message.Payload.ToString());
                         }
 
                         invokeExceptionParam.Exception = exception;

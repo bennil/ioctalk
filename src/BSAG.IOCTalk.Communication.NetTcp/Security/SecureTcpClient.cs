@@ -220,31 +220,58 @@ namespace BSAG.IOCTalk.Communication.NetTcp.Security
             {
                 return true;
             }
-            else
+
+            if (!CheckLocalCertFile)
             {
-                if (CheckLocalCertFile)
-                {
-                    X509Certificate2 customCertAuthority = new X509Certificate2(LocalCertFilename);
-
-                    // Check if CA certificate is available in the chain.
-                    var isInChain = chain.ChainElements.Cast<X509ChainElement>()
-                                              .Select(element => element.Certificate)
-                                              .Where(chainCertificate => chainCertificate.Subject == customCertAuthority.Subject)
-                                              .Where(chainCertificate => chainCertificate.GetRawCertData().SequenceEqual(customCertAuthority.GetRawCertData()))
-                                              .Any();
-
-                    if (!isInChain)
-                    {
-                        this.Logger.Error($"Certificate error: {sslPolicyErrors} - local cert also not in chain; Certificate: {certificate}");
-                    }
-                    return isInChain;
-                }
-                else
-                {
-                    this.Logger.Error($"Certificate error: {sslPolicyErrors}; Certificate: {certificate}");
-                    return false;
-                }
+                this.Logger.Error($"Certificate error: {sslPolicyErrors}; Certificate: {certificate}");
+                return false;
             }
+
+            // CheckLocalCertFile bypasses the system trust store by anchoring to a private CA.
+            // It must NOT mask hostname mismatches or a missing remote certificate - those errors
+            // would let an attacker MITM with any cert signed by the same custom CA but issued for
+            // a different name.
+            if ((sslPolicyErrors & ~SslPolicyErrors.RemoteCertificateChainErrors) != 0)
+            {
+                this.Logger.Error($"Certificate error not bypassable by local CA: {sslPolicyErrors}; Certificate: {certificate}");
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(LocalCertFilename))
+            {
+                this.Logger.Error("CheckLocalCertFile is enabled but LocalCertFilename is not set");
+                return false;
+            }
+
+            // Of the chain status flags, only UntrustedRoot/PartialChain are expected when the
+            // server's CA is not in the OS trust store. Anything else (expired, revoked, wrong
+            // key usage, ...) remains fatal.
+            foreach (var status in chain.ChainStatus)
+            {
+                if (status.Status == X509ChainStatusFlags.NoError
+                    || status.Status == X509ChainStatusFlags.UntrustedRoot
+                    || status.Status == X509ChainStatusFlags.PartialChain)
+                    continue;
+
+                this.Logger.Error($"Chain status not bypassable by local CA: {status.Status} - {status.StatusInformation}; Certificate: {certificate}");
+                return false;
+            }
+
+            X509Certificate2 customCertAuthority = new X509Certificate2(LocalCertFilename);
+
+            // Verify a chain element matches the configured local CA by raw certificate bytes
+            // (subject DN alone would let an attacker spoof the CA with a same-DN forgery).
+            var localCaInChain = chain.ChainElements.Cast<X509ChainElement>()
+                                      .Select(element => element.Certificate)
+                                      .Any(chainCertificate => chainCertificate.GetRawCertData().SequenceEqual(customCertAuthority.GetRawCertData()));
+
+            if (!localCaInChain)
+            {
+                this.Logger.Error($"Certificate error: {sslPolicyErrors} - local cert not in chain; Certificate: {certificate}");
+                return false;
+            }
+
+            return true;
         }
 
         #endregion

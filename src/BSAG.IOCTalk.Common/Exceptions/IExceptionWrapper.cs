@@ -50,11 +50,11 @@ namespace BSAG.IOCTalk.Common.Exceptions
 
 
         /// <summary>
-        /// Gets or sets the serialized exception binary data.
+        /// Obsolete. Was the BinaryFormatter-serialized original exception. Implementations must
+        /// discard incoming values and return null - BinaryFormatter cannot safely deserialize
+        /// bytes received from a remote peer.
         /// </summary>
-        /// <value>
-        /// The binary data.
-        /// </value>
+        [Obsolete("BinaryFormatter exception payload is no longer transmitted or consumed. Value is ignored.", false)]
         byte[] BinaryData { get; set; }
 
         #endregion
