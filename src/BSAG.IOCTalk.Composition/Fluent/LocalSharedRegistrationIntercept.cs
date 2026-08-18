@@ -17,14 +17,14 @@ namespace BSAG.IOCTalk.Composition.Fluent
         /// </summary>
         /// <typeparam name="InterceptImplementation"></typeparam>
         /// <returns></returns>
-        public LocalSharedRegistrationIntercept<InterfaceType> AddMultiImportBranchImplementation<InterceptImplementation>()
+        public LocalSharedRegistrationMultiImportBranch<InterfaceType> AddMultiImportBranchImplementation<InterceptImplementation>()
         where InterceptImplementation : class, InterfaceType
         {
             TypeHierachy typeHierachy = source.GetInterfaceImplementationTypeHierachy(typeof(InterfaceType));
 
             typeHierachy.AddBreakoutType(typeof(InterceptImplementation));
 
-            return this;
+            return new LocalSharedRegistrationMultiImportBranch<InterfaceType>(source);
         }
     }
 }

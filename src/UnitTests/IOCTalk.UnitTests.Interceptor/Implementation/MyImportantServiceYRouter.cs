@@ -21,8 +21,8 @@ namespace IOCTalk.UnitTests.Interceptor.Implementation
             this.service1 = services[0];
             this.service2 = services[1];
 
-            if (service1.GetType().Equals(service2.GetType()))
-                throw new InvalidOperationException($"Y service router does not expect two services with the same type in this unit test context! Type: {service1.GetType()}");
+            if (object.ReferenceEquals(service1, service2))
+                throw new InvalidOperationException($"Y service router does not expect the same service instance twice in this unit test context! Type: {service1.GetType()}");
         }
 
 

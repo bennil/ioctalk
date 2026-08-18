@@ -148,6 +148,90 @@ namespace IOCTalk.UnitTests.Interceptor
 
 
         [Fact]
+        public void TestInterceptServiceImplementationYEncapsulationsMultiImportBranchInterception()
+        {
+            LocalShareContext localShareContext = new LocalShareContext(nameof(UnitTestInterceptor));
+            localShareContext.RegisterLocalSharedService<ITestOutputHelper>(xUnitLog);
+
+            localShareContext.RegisterLocalSharedService<IMyImportantService, MyImportantServiceImplementation>()
+                                .InterceptWithImplementation<MyImportantServiceYRouter>()
+                                    .AddMultiImportBranchImplementation<MyDifferentImportantServiceImplementation>()
+                                        .InterceptMultiImportWithImplementation<MyImportantServiceLogInterception>();
+
+            localShareContext.Init();
+
+            IMyImportantService myImportantService = localShareContext.GetExport<IMyImportantService>();
+
+            myImportantService.Multiply(1, 1);
+            myImportantService.Multiply(2, 2);
+            myImportantService.Multiply(3, 3);
+            myImportantService.Multiply(4, 4);
+
+
+            MyImportantServiceYRouter yRouter = (MyImportantServiceYRouter)myImportantService;
+
+            Assert.IsType<MyImportantServiceImplementation>(yRouter.Service1);
+
+            // expect branch implementation encapsulated by the multi import interception
+            Assert.IsType<MyImportantServiceLogInterception>(yRouter.Service2);
+            MyImportantServiceLogInterception branchInterception = (MyImportantServiceLogInterception)yRouter.Service2;
+            Assert.IsType<MyDifferentImportantServiceImplementation>(branchInterception.NestedService);
+
+            MyImportantServiceImplementation service1 = (MyImportantServiceImplementation)yRouter.Service1;
+            MyDifferentImportantServiceImplementation service2 = (MyDifferentImportantServiceImplementation)branchInterception.NestedService;
+
+            Assert.Equal(2, service1.CallCount);
+            Assert.Equal(2, service2.CallCount);
+        }
+
+        [Fact]
+        public void TestInterceptServiceImplementationYEncapsulationsMultiImportBranchAndMainInterception()
+        {
+            LocalShareContext localShareContext = new LocalShareContext(nameof(UnitTestInterceptor));
+            localShareContext.RegisterLocalSharedService<ITestOutputHelper>(xUnitLog);
+
+            localShareContext.RegisterLocalSharedService<IMyImportantService, MyImportantServiceImplementation>()
+                                    .InterceptWithImplementation<MyImportantServiceLogInterception>()
+                                .InterceptWithImplementation<MyImportantServiceYRouter>()
+                                    .AddMultiImportBranchImplementation<MyDifferentImportantServiceImplementation>()
+                                        .InterceptMultiImportWithImplementation<MyImportantServiceLogInterception>();
+
+            localShareContext.Init();
+
+            IMyImportantService myImportantService = localShareContext.GetExport<IMyImportantService>();
+
+            myImportantService.Multiply(1, 1);
+            myImportantService.Multiply(2, 2);
+            myImportantService.Multiply(3, 3);
+            myImportantService.Multiply(4, 4);
+
+
+            MyImportantServiceYRouter yRouter = (MyImportantServiceYRouter)myImportantService;
+
+            // expect main chain: log interception encapsulating the main implementation
+            Assert.IsType<MyImportantServiceLogInterception>(yRouter.Service1);
+            MyImportantServiceLogInterception mainInterception = (MyImportantServiceLogInterception)yRouter.Service1;
+            Assert.IsType<MyImportantServiceImplementation>(mainInterception.NestedService);
+
+            // expect branch implementation encapsulated by the multi import interception (same interception type as in the main chain)
+            Assert.IsType<MyImportantServiceLogInterception>(yRouter.Service2);
+            MyImportantServiceLogInterception branchInterception = (MyImportantServiceLogInterception)yRouter.Service2;
+            Assert.IsType<MyDifferentImportantServiceImplementation>(branchInterception.NestedService);
+
+            Assert.NotSame(yRouter.Service1, yRouter.Service2);
+
+            MyImportantServiceImplementation service1 = (MyImportantServiceImplementation)mainInterception.NestedService;
+            MyDifferentImportantServiceImplementation service2 = (MyDifferentImportantServiceImplementation)branchInterception.NestedService;
+
+            Assert.Equal(2, service1.CallCount);
+            Assert.Equal(2, service2.CallCount);
+        }
+
+
+        // Note: calling InterceptMultiImportWithImplementation without a preceding AddMultiImportBranchImplementation
+        // is a compile error by design (only LocalSharedRegistrationMultiImportBranch/LocalSessionRegistrationMultiImportBranch offer the method).
+
+        [Fact]
         public void TestInterceptServiceImplementationYEncapsulationsIndirectInjection()
         {
             LocalShareContext localShareContext = new LocalShareContext(nameof(UnitTestInterceptor));

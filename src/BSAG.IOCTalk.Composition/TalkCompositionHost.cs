@@ -645,8 +645,13 @@ namespace BSAG.IOCTalk.Composition
 
         public object GetExport(Type type, Type injectTargetType, List<Type> pendingCreateList)
         {
+            return GetExport(type, injectTargetType, pendingCreateList, null);
+        }
+
+        internal object GetExport(Type type, Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext)
+        {
             object instance;
-            if (!TryGetExport(type, injectTargetType, pendingCreateList, out instance))
+            if (!TryGetExport(type, injectTargetType, pendingCreateList, branchContext, out instance))
             {
                 if (localShare.Assemblies.Count == 0)
                 {
@@ -676,6 +681,11 @@ namespace BSAG.IOCTalk.Composition
 
 
         public bool TryGetExport(Type type, Type injectTargetType, List<Type> pendingCreateList, out object instance)
+        {
+            return TryGetExport(type, injectTargetType, pendingCreateList, null, out instance);
+        }
+
+        internal bool TryGetExport(Type type, Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext, out object instance)
         {
             if (discoveryConditionItems != null)
             {
@@ -713,12 +723,12 @@ namespace BSAG.IOCTalk.Composition
                     }
                 }
 
-                if (TryFindInterfaceImplementation(type, injectTargetType, pendingCreateList, out targetType, out registerTargetInstance) == false)
+                if (TryFindInterfaceImplementation(type, injectTargetType, pendingCreateList, branchContext, out targetType, out registerTargetInstance) == false)
                 {
                     // not found > check if multiple import
                     if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
                     {
-                        var multiImportColl = localShare.CollectLocalMultiImports(this, type, injectTargetType, pendingCreateList);
+                        var multiImportColl = localShare.CollectLocalMultiImports(this, type, injectTargetType, pendingCreateList, branchContext);
                         if (multiImportColl != null)
                         {
                             instance = multiImportColl;
@@ -734,7 +744,7 @@ namespace BSAG.IOCTalk.Composition
             }
             else if (type.IsArray)
             {
-                var multiImportColl = this.localShare.CollectLocalMultiImports(this, type, injectTargetType, pendingCreateList);
+                var multiImportColl = this.localShare.CollectLocalMultiImports(this, type, injectTargetType, pendingCreateList, branchContext);
                 if (multiImportColl != null)
                 {
                     instance = multiImportColl;
@@ -753,7 +763,7 @@ namespace BSAG.IOCTalk.Composition
 
             object[] outParams;
             ParameterInfo[] outParamsInfo;
-            instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
+            instance = TypeService.CreateInstance(targetType, (t, paramName, targetT, pendingList) => DetermineConstructorImportInstance(t, paramName, targetT, pendingList, branchContext), pendingCreateList, out outParams, out outParamsInfo);
             localShare.CheckOutParamsSubscriptions(instance, outParams, this, type, injectTargetType);
 
             if (registerTargetInstance)
@@ -791,6 +801,11 @@ namespace BSAG.IOCTalk.Composition
 
         internal object DetermineConstructorImportInstance(Type type, string parameterName, Type injectTargetType, List<Type> pendingCreateList)
         {
+            return DetermineConstructorImportInstance(type, parameterName, injectTargetType, pendingCreateList, null);
+        }
+
+        internal object DetermineConstructorImportInstance(Type type, string parameterName, Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext)
+        {
             if (string.Compare(parameterName, "sessionId", true) == 0)
             {
                 // return current session id
@@ -801,7 +816,7 @@ namespace BSAG.IOCTalk.Composition
             }
             else
             {
-                var targetInstance = GetExport(type, injectTargetType, pendingCreateList);
+                var targetInstance = GetExport(type, injectTargetType, pendingCreateList, branchContext);
                 return targetInstance;
             }
         }
@@ -1089,14 +1104,19 @@ namespace BSAG.IOCTalk.Composition
 
         internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, List<Type> pendingCreateList, out Type targetType, out bool registerTargetInstance)
         {
+            return TryFindInterfaceImplementation(interfaceType, injectTargetType, pendingCreateList, null, out targetType, out registerTargetInstance);
+        }
+
+        internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext, out Type targetType, out bool registerTargetInstance)
+        {
             if (interfaceImplementationMapping.TryGetValue(interfaceType, out var targetTypeHierachy))
             {
-                targetType = targetTypeHierachy.GetNextImplementationType(injectTargetType, pendingCreateList, out registerTargetInstance);
+                targetType = targetTypeHierachy.GetNextImplementationType(injectTargetType, pendingCreateList, branchContext, out registerTargetInstance);
                 registerTargetInstance = true;      // ?
                 return true;
             }
             else
-                return localShare.TryFindInterfaceImplementation(interfaceType, injectTargetType, pendingCreateList, out targetType, out registerTargetInstance);  // redirect to parent container
+                return localShare.TryFindInterfaceImplementation(interfaceType, injectTargetType, pendingCreateList, branchContext, out targetType, out registerTargetInstance);  // redirect to parent container
         }
 
         // ----------------------------------------------------------------------------------------

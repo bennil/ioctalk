@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -46,8 +46,33 @@ namespace BSAG.IOCTalk.Composition.Interception
         }
 
 
+        /// <summary>
+        /// Encapsulates the last registered multi import branch (breakout) implementation with the given interception type.
+        /// </summary>
+        /// <param name="interceptType"></param>
+        public void AddBreakoutInterceptionType(Type interceptType)
+        {
+            if (breakoutTypes == null || breakoutTypes.Count == 0)
+                throw new InvalidOperationException($"No multi import branch implementation registered for the interface {InterfaceType.FullName}! Call AddMultiImportBranchImplementation before InterceptMultiImportWithImplementation.");
+
+            breakoutTypes[breakoutTypes.Count - 1].AddInterceptionType(interceptType);
+        }
+
+
         internal Type GetNextImplementationType(Type injectTargetType, List<Type> pendingCreateList, out bool registerTargetInstance)
         {
+            return GetNextImplementationType(injectTargetType, pendingCreateList, null, out registerTargetInstance);
+        }
+
+        internal Type GetNextImplementationType(Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext, out bool registerTargetInstance)
+        {
+            if (TryGetBranchImplementationType(injectTargetType, pendingCreateList, branchContext, out Type branchImplementationType))
+            {
+                // creation within a multi import breakout branch > resolve against the branch interception chain
+                registerTargetInstance = false;
+                return branchImplementationType;
+            }
+
             if (interceptionTypes == null)
             {
                 registerTargetInstance = true;
@@ -77,8 +102,33 @@ namespace BSAG.IOCTalk.Composition.Interception
             }
         }
 
+        /// <summary>
+        /// Resolves the next implementation type within a multi import breakout branch based on the given creation context (position based resolution).
+        /// </summary>
+        private bool TryGetBranchImplementationType(Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext, out Type branchImplementationType)
+        {
+            if (branchContext != null
+                && object.ReferenceEquals(branchContext.Hierachy, this)
+                && injectTargetType != null
+                && InterfaceType.IsAssignableFrom(injectTargetType))
+            {
+                int branchDepth = GetCurrentInterceptChainCount(pendingCreateList) - branchContext.BaseChainCount;
+                if (branchDepth >= 1 && branchDepth <= branchContext.Branch.InterceptionCount)
+                {
+                    branchImplementationType = branchContext.Branch.GetImplementationTypeAtDepth(branchDepth);
+                    return true;
+                }
+            }
+
+            branchImplementationType = null;
+            return false;
+        }
+
         private int GetCurrentInterceptChainCount(List<Type> pendingCreateList)
         {
+            if (pendingCreateList == null)
+                return 0;
+
             int currentInterceptChainCount = 0;
             for (int pendIndex = pendingCreateList.Count - 1; pendIndex >= 0; pendIndex--)
             {
@@ -95,13 +145,20 @@ namespace BSAG.IOCTalk.Composition.Interception
         /// For collection constructor injections
         /// </summary>
         /// <returns></returns>
-        internal bool TryGetImplementationTypes(Type injectTargetType, List<Type> pendingCreateList, out Type[] implementationTypes)
+        internal bool TryGetMultiImportSlots(Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext, out MultiImportSlot[] multiImportSlots)
         {
+            if (TryGetBranchImplementationType(injectTargetType, pendingCreateList, branchContext, out Type branchImplementationType))
+            {
+                // collection import within a multi import breakout branch > continue single branch chain
+                multiImportSlots = new[] { new MultiImportSlot(branchImplementationType, branchContext) };
+                return true;
+            }
+
             if (breakoutTypes == null)
             {
                 // no breakout types > return interception level as array
                 Type interceptType = GetNextImplementationType(injectTargetType, pendingCreateList, out var _);
-                implementationTypes = new[] { interceptType };
+                multiImportSlots = new[] { new MultiImportSlot(interceptType, null) };
                 return true;
             }
             else
@@ -109,10 +166,13 @@ namespace BSAG.IOCTalk.Composition.Interception
                 if (interceptionTypes is null)
                 {
                     // no interception > top level multi import registration
-                    implementationTypes = new[] { MainImplementationType }.Concat(breakoutTypes.Select(ab => ab.AdditionalImplementationType)).ToArray();
+                    int baseChainCount = GetCurrentInterceptChainCount(pendingCreateList);
+                    multiImportSlots = new[] { new MultiImportSlot(MainImplementationType, null) }
+                        .Concat(breakoutTypes.Select(bt => new MultiImportSlot(bt.GetOuterImplementationType(), new MultiImportBranchContext(this, bt, baseChainCount))))
+                        .ToArray();
                     return true;
                 }
-                else                
+                else
                 {
                     int currentInterceptChainCount = GetCurrentInterceptChainCount(pendingCreateList);
 
@@ -121,9 +181,11 @@ namespace BSAG.IOCTalk.Composition.Interception
                     var additionalBreakOutImplementations = breakoutTypes.Where(bt => bt.InterceptionHierarchyIndex == hierachyCurrentIndex).ToList();
                     if (additionalBreakOutImplementations.Any())
                     {
-                        // combine level implementation and breakout as array
+                        // combine level implementation and breakout branches as array
                         Type interceptType = GetNextImplementationType(injectTargetType, pendingCreateList, out var _);
-                        implementationTypes = new[] { interceptType }.Concat(additionalBreakOutImplementations.Select(ab => ab.AdditionalImplementationType)).ToArray();
+                        multiImportSlots = new[] { new MultiImportSlot(interceptType, null) }
+                            .Concat(additionalBreakOutImplementations.Select(bt => new MultiImportSlot(bt.GetOuterImplementationType(), new MultiImportBranchContext(this, bt, currentInterceptChainCount))))
+                            .ToArray();
 
                         return true;
                     }
@@ -131,7 +193,7 @@ namespace BSAG.IOCTalk.Composition.Interception
                     {
                         // no breakout types at this level > return interception level as array
                         Type interceptType = GetNextImplementationType(injectTargetType, pendingCreateList, out var _);
-                        implementationTypes = new[] { interceptType };
+                        multiImportSlots = new[] { new MultiImportSlot(interceptType, null) };
                         return true;
                     }
                 }

@@ -384,8 +384,13 @@ namespace BSAG.IOCTalk.Composition
 
         public object GetExport(Type type, Type injectTargetType, List<Type> pendingCreateList)
         {
+            return GetExport(type, injectTargetType, pendingCreateList, null);
+        }
+
+        internal object GetExport(Type type, Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext)
+        {
             object instance;
-            if (!TryGetExport(type, injectTargetType, pendingCreateList, out instance))
+            if (!TryGetExport(type, injectTargetType, pendingCreateList, branchContext, out instance))
             {
                 if (assemblies.Count == 0)
                 {
@@ -409,6 +414,11 @@ namespace BSAG.IOCTalk.Composition
         }
 
         public bool TryGetExport(Type type, Type injectTargetType, List<Type> pendingCreateList, out object instance)
+        {
+            return TryGetExport(type, injectTargetType, pendingCreateList, null, out instance);
+        }
+
+        internal bool TryGetExport(Type type, Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext, out object instance)
         {
             if (discoveryConditionItems != null)
             {
@@ -454,12 +464,12 @@ namespace BSAG.IOCTalk.Composition
                 //    }
                 //}
 
-                if (!TryFindInterfaceImplementation(type, injectTargetType, pendingCreateList, out targetType, out registerTargetInstance))
+                if (!TryFindInterfaceImplementation(type, injectTargetType, pendingCreateList, branchContext, out targetType, out registerTargetInstance))
                 {
                     // not found > check if multiple import
                     if (type.GetInterface(typeof(System.Collections.IEnumerable).FullName) != null)
                     {
-                        var multiImportColl = this.CollectLocalMultiImports(null, type, injectTargetType, pendingCreateList);
+                        var multiImportColl = this.CollectLocalMultiImports(null, type, injectTargetType, pendingCreateList, branchContext);
                         if (multiImportColl != null)
                         {
                             instance = multiImportColl;
@@ -476,7 +486,7 @@ namespace BSAG.IOCTalk.Composition
             }
             else if (type.IsArray)
             {
-                var multiImportColl = this.CollectLocalMultiImports(null, type, injectTargetType, pendingCreateList);
+                var multiImportColl = this.CollectLocalMultiImports(null, type, injectTargetType, pendingCreateList, branchContext);
                 if (multiImportColl != null)
                 {
                     instance = multiImportColl;
@@ -495,7 +505,7 @@ namespace BSAG.IOCTalk.Composition
 
             object[] outParams;
             ParameterInfo[] outParamsInfo;
-            instance = TypeService.CreateInstance(targetType, DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
+            instance = TypeService.CreateInstance(targetType, (t, paramName, targetT, pendingList) => DetermineConstructorImportInstance(t, paramName, targetT, pendingList, branchContext), pendingCreateList, out outParams, out outParamsInfo);
             this.CheckOutParamsSubscriptions(instance, outParams, null, type, injectTargetType);
 
             if (registerTargetInstance)
@@ -506,9 +516,14 @@ namespace BSAG.IOCTalk.Composition
 
         internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, List<Type> pendingCreateList, out Type targetType, out bool registerTargetInstance)
         {
+            return TryFindInterfaceImplementation(interfaceType, injectTargetType, pendingCreateList, null, out targetType, out registerTargetInstance);
+        }
+
+        internal bool TryFindInterfaceImplementation(Type interfaceType, Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext, out Type targetType, out bool registerTargetInstance)
+        {
             if (interfaceImplementationMapping.TryGetValue(interfaceType, out var targetTypeHierachy))
             {
-                targetType = targetTypeHierachy.GetNextImplementationType(injectTargetType, pendingCreateList, out registerTargetInstance);
+                targetType = targetTypeHierachy.GetNextImplementationType(injectTargetType, pendingCreateList, branchContext, out registerTargetInstance);
                 return true;
             }
 
@@ -532,7 +547,7 @@ namespace BSAG.IOCTalk.Composition
 
             if (ParentContainer is LocalShareContext parentLsc)
             {
-                return parentLsc.TryFindInterfaceImplementation(interfaceType, injectTargetType, pendingCreateList, out targetType, out registerTargetInstance);
+                return parentLsc.TryFindInterfaceImplementation(interfaceType, injectTargetType, pendingCreateList, branchContext, out targetType, out registerTargetInstance);
             }
             else
             {
@@ -566,23 +581,28 @@ namespace BSAG.IOCTalk.Composition
 
         internal object DetermineConstructorImportInstance(Type type, string parameterName, Type injectTargetType, List<Type> pendingCreateList)
         {
-            return GetExport(type, injectTargetType, pendingCreateList);
+            return GetExport(type, injectTargetType, pendingCreateList, null);
         }
 
-        internal Type[] FindInterfaceImplementations(Type interfaceType, Type injectTargetType, List<Type> pendingCreateList, out bool registerTargetInstance)
+        internal object DetermineConstructorImportInstance(Type type, string parameterName, Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext)
+        {
+            return GetExport(type, injectTargetType, pendingCreateList, branchContext);
+        }
+
+        internal MultiImportSlot[] FindInterfaceImplementations(Type interfaceType, Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext, out bool registerTargetInstance)
         {
             bool skipSearch = false;
             if (interfaceImplementationMapping.TryGetValue(interfaceType, out var targetTypeHierachy))
             {
-                if (targetTypeHierachy.TryGetImplementationTypes(injectTargetType, pendingCreateList, out var hierarchyImplementations))
+                if (targetTypeHierachy.TryGetMultiImportSlots(injectTargetType, pendingCreateList, branchContext, out var hierarchySlots))
                 {
                     skipSearch = true;
                     registerTargetInstance = false;
-                    return hierarchyImplementations;
+                    return hierarchySlots;
                 }
             }
 
-            List<Type> validTypes = new List<Type>();
+            List<MultiImportSlot> validTypes = new List<MultiImportSlot>();
             if (skipSearch == false)
             {
                 foreach (var a in this.assemblies)
@@ -604,7 +624,7 @@ namespace BSAG.IOCTalk.Composition
                         {
                             if (interfaceType.IsAssignableFrom(t) && !t.IsAbstract)
                             {
-                                validTypes.Add(t);
+                                validTypes.Add(new MultiImportSlot(t, null));
                             }
                         }
                     }
@@ -644,6 +664,11 @@ namespace BSAG.IOCTalk.Composition
 
 
         internal IEnumerable CollectLocalMultiImports(TalkCompositionHost host, Type type, Type injectTargetType, List<Type> pendingCreateList)
+        {
+            return CollectLocalMultiImports(host, type, injectTargetType, pendingCreateList, null);
+        }
+
+        internal IEnumerable CollectLocalMultiImports(TalkCompositionHost host, Type type, Type injectTargetType, List<Type> pendingCreateList, MultiImportBranchContext branchContext)
         {
             // multiple imports
             // 1. determine generic target interface type
@@ -685,17 +710,27 @@ namespace BSAG.IOCTalk.Composition
 
                         // create new instances
                         HashSet<Type> createdTypes = new HashSet<Type>();
-                        foreach (Type implType in this.FindInterfaceImplementations(targetInterfaceType, injectTargetType, pendingCreateList, out bool registerSharedInstances))
+                        foreach (MultiImportSlot slot in this.FindInterfaceImplementations(targetInterfaceType, injectTargetType, pendingCreateList, branchContext, out bool registerSharedInstances))
                         {
-                            if (!createdTypes.Contains(implType) && injectTargetType != implType)
+                            Type implType = slot.ImplementationType;
+
+                            bool createItemInstance;
+                            if (registerSharedInstances)
+                                createItemInstance = !createdTypes.Contains(implType) && injectTargetType != implType;    // assembly scan result > avoid duplicates and self import recursion
+                            else
+                                createItemInstance = true;    // type hierachy (interception) slots are resolved deliberately; the same type may occur in the main chain and in a breakout branch
+
+                            if (createItemInstance)
                             {
+                                MultiImportBranchContext itemBranchContext = slot.BranchContext ?? branchContext;
+
                                 object[] outParams;
                                 ParameterInfo[] outParamsInfo;
                                 object itemInstance;
                                 if (host != null)
-                                    itemInstance = TypeService.CreateInstance(implType, host.DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
+                                    itemInstance = TypeService.CreateInstance(implType, (t, paramName, targetT, pendingList) => host.DetermineConstructorImportInstance(t, paramName, targetT, pendingList, itemBranchContext), pendingCreateList, out outParams, out outParamsInfo);
                                 else
-                                    itemInstance = TypeService.CreateInstance(implType, this.DetermineConstructorImportInstance, pendingCreateList, out outParams, out outParamsInfo);
+                                    itemInstance = TypeService.CreateInstance(implType, (t, paramName, targetT, pendingList) => this.DetermineConstructorImportInstance(t, paramName, targetT, pendingList, itemBranchContext), pendingCreateList, out outParams, out outParamsInfo);
 
                                 CheckOutParamsSubscriptions(itemInstance, outParams, host, targetInterfaceType, injectTargetType);
                                 targetCollection.Add(itemInstance);
