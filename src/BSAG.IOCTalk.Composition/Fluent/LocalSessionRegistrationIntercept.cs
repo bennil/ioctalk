@@ -1,4 +1,4 @@
-﻿using BSAG.IOCTalk.Composition.Interception;
+using BSAG.IOCTalk.Composition.Interception;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,7 +7,7 @@ namespace BSAG.IOCTalk.Composition.Fluent
 {
     public class LocalSessionRegistrationIntercept<InterfaceType> : LocalSessionRegistration<InterfaceType>
     {
-        internal LocalSessionRegistrationIntercept(TalkCompositionHost source) 
+        internal LocalSessionRegistrationIntercept(TalkCompositionHost source)
             : base(source)
         {
         }
@@ -20,9 +20,27 @@ namespace BSAG.IOCTalk.Composition.Fluent
         public LocalSessionRegistrationMultiImportBranch<InterfaceType> AddMultiImportBranchImplementation<InterceptImplementation>()
         where InterceptImplementation : class, InterfaceType
         {
+            return AddMultiImportBranchImplementationInternal(typeof(InterceptImplementation));
+        }
+
+        /// <summary>
+        /// Adds an additional implementation at the same level used when the parent intercept implementation requests multiple instances of the interface type (inject constructor collection/array interface).
+        /// </summary>
+        /// <param name="implementationType"></param>
+        /// <returns></returns>
+        public LocalSessionRegistrationMultiImportBranch<InterfaceType> AddMultiImportBranchImplementation(Type implementationType)
+        {
+            if (typeof(InterfaceType).IsAssignableFrom(implementationType) == false)
+                throw new InvalidOperationException($"Multi import branch implementation type {implementationType.FullName} must implement the interface {typeof(InterfaceType).FullName}");
+
+            return AddMultiImportBranchImplementationInternal(implementationType);
+        }
+
+        private LocalSessionRegistrationMultiImportBranch<InterfaceType> AddMultiImportBranchImplementationInternal(Type implementationType)
+        {
             TypeHierachy typeHierachy = source.GetInterfaceImplementationTypeHierachy(typeof(InterfaceType));
 
-            typeHierachy.AddBreakoutType(typeof(InterceptImplementation));
+            typeHierachy.AddBreakoutType(implementationType);
 
             return new LocalSessionRegistrationMultiImportBranch<InterfaceType>(source);
         }

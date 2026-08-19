@@ -231,6 +231,54 @@ namespace IOCTalk.UnitTests.Interceptor
         // Note: calling InterceptMultiImportWithImplementation without a preceding AddMultiImportBranchImplementation
         // is a compile error by design (only LocalSharedRegistrationMultiImportBranch/LocalSessionRegistrationMultiImportBranch offer the method).
 
+
+        [Fact]
+        public void TestInterceptServiceImplementationMultiImportBranchInterceptionTypeParameter()
+        {
+            LocalShareContext localShareContext = new LocalShareContext(nameof(UnitTestInterceptor));
+            localShareContext.RegisterLocalSharedService<ITestOutputHelper>(xUnitLog);
+
+            // same registration as the generic variant but with Type parameter overloads
+            localShareContext.RegisterLocalSharedService<IMyImportantService, MyImportantServiceImplementation>()
+                                .InterceptWithImplementation(typeof(MyImportantServiceYRouter))
+                                    .AddMultiImportBranchImplementation(typeof(MyDifferentImportantServiceImplementation))
+                                        .InterceptMultiImportWithImplementation(typeof(MyImportantServiceLogInterception));
+
+            localShareContext.Init();
+
+            IMyImportantService myImportantService = localShareContext.GetExport<IMyImportantService>();
+
+            myImportantService.Multiply(1, 1);
+            myImportantService.Multiply(2, 2);
+
+            MyImportantServiceYRouter yRouter = (MyImportantServiceYRouter)myImportantService;
+
+            Assert.IsType<MyImportantServiceImplementation>(yRouter.Service1);
+
+            // expect branch implementation encapsulated by the multi import interception
+            Assert.IsType<MyImportantServiceLogInterception>(yRouter.Service2);
+            MyImportantServiceLogInterception branchInterception = (MyImportantServiceLogInterception)yRouter.Service2;
+            Assert.IsType<MyDifferentImportantServiceImplementation>(branchInterception.NestedService);
+        }
+
+
+        [Fact]
+        public void TestMultiImportBranchTypeParameterValidation()
+        {
+            LocalShareContext localShareContext = new LocalShareContext(nameof(UnitTestInterceptor));
+            localShareContext.RegisterLocalSharedService<ITestOutputHelper>(xUnitLog);
+
+            var interceptRegistration = localShareContext.RegisterLocalSharedService<IMyImportantService, MyImportantServiceImplementation>()
+                                                            .InterceptWithImplementation<MyImportantServiceYRouter>();
+
+            // OtherTestService does not implement IMyImportantService > expect validation exception
+            Assert.Throws<InvalidOperationException>(() => interceptRegistration.AddMultiImportBranchImplementation(typeof(OtherTestService)));
+
+            var branchRegistration = interceptRegistration.AddMultiImportBranchImplementation(typeof(MyDifferentImportantServiceImplementation));
+
+            Assert.Throws<InvalidOperationException>(() => branchRegistration.InterceptMultiImportWithImplementation(typeof(OtherTestService)));
+        }
+
         [Fact]
         public void TestInterceptServiceImplementationYEncapsulationsIndirectInjection()
         {
