@@ -142,8 +142,15 @@ namespace IOCTalk.Communication.WebSocketClient
                 }
                 catch (Exception ex)
                 {
-                    if (Logger != null)
-                        Logger.Error(ex.ToString());
+                    try
+                    {
+                        if (Logger != null)
+                            Logger.Error(ex.ToString());
+                    }
+                    catch
+                    {
+                        // a throwing logger must not escape the async void reconnect processing (would crash the process)
+                    }
 
                     await Task.Delay(1000);    // pause between reconnect
                 }

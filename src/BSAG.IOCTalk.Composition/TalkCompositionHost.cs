@@ -705,14 +705,23 @@ namespace BSAG.IOCTalk.Composition
                 return true;
             }
 
-            if (localShare.SharedLocalInstances.TryGetValue(type, out instance))
+            var contract = currentContract;
+
+            // a local session service registration has a higher priority than a shared registration:
+            // within a session contract creation context a new session instance is created instead of reusing the shared instance
+            bool isPrioritizedLocalSessionService = contract != null
+                                                    && localSessionServiceInterfaceTypesResolved != null
+                                                    && (localSessionServiceInterfaceTypesResolved.Contains(type)
+                                                        || (LocalSessionServiceTypeMappings != null && LocalSessionServiceTypeMappings.ContainsKey(type)));
+
+            if (!isPrioritizedLocalSessionService
+                && localShare.SharedLocalInstances.TryGetValue(type, out instance))
             {
                 return true;
             }
 
             bool registerTargetInstance = true;
             Type targetType;
-            var contract = currentContract;
             if (type.IsInterface)
             {
                 if (contract != null)
@@ -766,7 +775,7 @@ namespace BSAG.IOCTalk.Composition
             instance = TypeService.CreateInstance(targetType, (t, paramName, targetT, pendingList) => DetermineConstructorImportInstance(t, paramName, targetT, pendingList, branchContext), pendingCreateList, out outParams, out outParamsInfo);
             localShare.CheckOutParamsSubscriptions(instance, outParams, this, type, injectTargetType);
 
-            if (registerTargetInstance)
+            if (registerTargetInstance && !isPrioritizedLocalSessionService)
                 localShare.RegisterSharedConstructorInstances(type, instance, outParams, outParamsInfo);
 
             if (contract != null)

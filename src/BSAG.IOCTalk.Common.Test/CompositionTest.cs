@@ -288,6 +288,44 @@ namespace BSAG.IOCTalk.Common.Test
             Assert.Equal(1, SessionServiceRegOrderTest1.InstanceCount);
             Assert.Equal(1, SessionServiceRegOrderTest2.InstanceCount);
         }
+
+        [Fact]
+        public void TestMethodLocalSessionServiceHigherPriorityThanSharedService()
+        {
+            MyLocalService.InstanceCount = 0;
+
+            DummyCommunicationService dummyComm = new DummyCommunicationService();
+
+            LocalShareContext localShareContext = new LocalShareContext();
+            localShareContext.RegisterLocalSharedService<IMyLocalService, MyLocalService>();
+
+            TalkCompositionHost clientHost = new TalkCompositionHost(localShareContext);
+            clientHost.RegisterLocalSessionService<IMyLocalService>();
+
+            clientHost.InitGenericCommunication(dummyComm);
+
+            // shared instance is created eagerly on init
+            var sharedInstance = localShareContext.GetExport<IMyLocalService>();
+            Assert.Equal(1, MyLocalService.InstanceCount);
+
+            var session1 = new Common.Session.Session(dummyComm, 1, "Unit Test Dummy Session 1", null);
+            SessionContract contract1 = (SessionContract)clientHost.CreateSessionContractInstance(session1);
+
+            var session2 = new Common.Session.Session(dummyComm, 2, "Unit Test Dummy Session 2", null);
+            SessionContract contract2 = (SessionContract)clientHost.CreateSessionContractInstance(session2);
+
+            var sessionInstance1 = contract1.GetSessionInstance<IMyLocalService>();
+            var sessionInstance2 = contract2.GetSessionInstance<IMyLocalService>();
+
+            // local session service registration has higher priority than the shared registration
+            Assert.NotSame(sharedInstance, sessionInstance1);
+            Assert.NotSame(sharedInstance, sessionInstance2);
+            Assert.NotSame(sessionInstance1, sessionInstance2);
+            Assert.Equal(3, MyLocalService.InstanceCount);
+
+            // shared instance must remain untouched by the session instance creations
+            Assert.Same(sharedInstance, localShareContext.GetExport<IMyLocalService>());
+        }
     }
 
 

@@ -436,8 +436,15 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 }
                 catch (Exception ex)
                 {
-                    if (Logger != null)
-                        Logger.Error($"Unexpected tcp auto reconnect error: {ex}");
+                    try
+                    {
+                        if (Logger != null)
+                            Logger.Error($"Unexpected tcp auto reconnect error: {ex}");
+                    }
+                    catch
+                    {
+                        // a throwing logger must not escape the async void reconnect processing (would crash the process)
+                    }
 
                     await Task.Delay(1000);    // pause between reconnect
                 }
