@@ -26,5 +26,15 @@ namespace BSAG.IOCTalk.Test.Interface.Expose
         IExposeTest3Base[] GetTest3BaseItems();
 
         IExposeTest3Other GetTest3OtherItem();
+
+
+        // test 4: same concrete class transferred as base interface and as derived interface (no exposure registration)
+        IExposeTest4Base GetTest4Base();
+
+        IExposeTest4Sub GetTest4Sub();
+
+        string SendTest4Base(IExposeTest4Base item);
+
+        string SendTest4Sub(IExposeTest4Sub item);
     }
 }

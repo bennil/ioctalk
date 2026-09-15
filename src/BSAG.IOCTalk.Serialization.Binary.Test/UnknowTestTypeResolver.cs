@@ -49,7 +49,7 @@ namespace BSAG.IOCTalk.Serialization.Binary.Test
         {
             // fake expose sub type registration
             if (objectType.Equals(typeof(TestInterfaceImpl1)))
-                return ctx.RegisterDifferentTargetType(objectType, defaultInterfaceType, typeof(ITestInterfaceBase), false);
+                return ctx.RegisterDifferentTargetType(objectType, defaultInterfaceType, defaultInterfaceType, typeof(ITestInterfaceBase), false);
 
             return null;
         }

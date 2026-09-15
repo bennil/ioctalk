@@ -186,29 +186,35 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
             if (isObject || isSpecialTargetType)
             {
                 // undefined object -> determine target type first
-                IJsonTypeStructure currentObjectStructure;
-                if (!typeSerializerCache.TryGetValue(objectType, out currentObjectStructure))
+                Type targetType;
+                Type cacheKeyType;
+                if (isSpecialTargetType)
                 {
-                    Type targetType = null;
-                    if (isSpecialTargetType)
+                    // expose specialized sub interface type (depends on the runtime type only)
+                    targetType = exposedSubInterfaceType;
+                    cacheKeyType = objectType;
+                }
+                else
+                {
+                    // The structure depends on the contextual target type (method parameter / return type), not on the runtime type:
+                    // the same concrete class can be transferred as different interfaces (e.g. IBaseData and ISubData : IBaseData)
+                    // > cache by resolved target type (same as StructureArray item handling)
+                    targetType = null;
+                    if (unknownTypeResolver != null)
                     {
-                        // expose specialized sub interface type
-                        targetType = exposedSubInterfaceType;
-                        isSpecialTargetType = true;
+                        context.Key = this.key;
+                        targetType = unknownTypeResolver(context);
                     }
-                    else
+                    if (targetType == null)
                     {
-                        if (unknownTypeResolver != null)
-                        {
-                            context.Key = this.key;
-                            targetType = unknownTypeResolver(context);
-                        }
-                        if (targetType == null)
-                        {
-                            targetType = objectType;
-                        }
+                        targetType = objectType;
                     }
+                    cacheKeyType = targetType;
+                }
 
+                IJsonTypeStructure currentObjectStructure;
+                if (!typeSerializerCache.TryGetValue(cacheKeyType, out currentObjectStructure))
+                {
                     currentObjectStructure = Structure.DetermineStructure(targetType, this.key, context, this.isArrayItem);
 
                     if (isSpecialTargetType)
@@ -216,7 +222,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                         ((StructureComplexObject)currentObjectStructure).IsSpecializedSubType = true;
                     }
 
-                    typeSerializerCache[objectType] = currentObjectStructure;
+                    typeSerializerCache[cacheKeyType] = currentObjectStructure;
                 }
 
                 currentObjectStructure.Serialize(sb, obj, context);

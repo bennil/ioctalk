@@ -72,5 +72,26 @@ namespace BSAG.IOCTalk.Test.Common.Service.Expose
         {
             return new ExposeTest3Combined { SomeBasicProperty = "basic data", OtherTypeProperty = "other data expected" };
         }
+
+        public IExposeTest4Base GetTest4Base()
+        {
+            return new ExposeTest4Combined { BaseProperty = "base data", SubProperty = "sub data (not expected)" };
+        }
+
+        public IExposeTest4Sub GetTest4Sub()
+        {
+            return new ExposeTest4Combined { BaseProperty = "base data", SubProperty = "sub data expected" };
+        }
+
+        public string SendTest4Base(IExposeTest4Base item)
+        {
+            // only the base interface surface is transferred > sub property is not expected
+            return (item as IExposeTest4Sub)?.SubProperty;
+        }
+
+        public string SendTest4Sub(IExposeTest4Sub item)
+        {
+            return item.SubProperty;
+        }
     }
 }

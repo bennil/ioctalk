@@ -60,6 +60,10 @@ namespace BSAG.IOCTalk.Common.Test
                 compositionHostService.RegisterExposedSubInterfaceForType<IExposeTestLevel1, ExposeTestLevel1>();
                 compositionHostService.RegisterExposedSubInterfaceForType<IExposeTestOther, ExposeTestBase>();
 
+                // Test4
+                compositionHostService.MapInterfaceImplementationType<IExposeTest4Base, ExposeTest4Combined>();
+                compositionHostService.MapInterfaceImplementationType<IExposeTest4Sub, ExposeTest4Combined>();
+
                 tcpBackendService = new TcpCommunicationController(new ShortWireFraming(), new JsonMessageSerializer());
 
                 compositionHostService.InitGenericCommunication(tcpBackendService);
@@ -82,6 +86,10 @@ namespace BSAG.IOCTalk.Common.Test
                 compositionHostClient.RegisterRemoteService<IExposeSubTypeRoundTripTest>();
                 compositionHostClient.RegisterExposedSubInterfaceForType<IExposeTestLevel1, ExposeTestLevel1>();
                 compositionHostClient.RegisterExposedSubInterfaceForType<IExposeTestOther, ExposeTestBase>();
+
+                // Test4
+                compositionHostClient.MapInterfaceImplementationType<IExposeTest4Base, ExposeTest4Combined>();
+                compositionHostClient.MapInterfaceImplementationType<IExposeTest4Sub, ExposeTest4Combined>();
 
                 tcpClient = new TcpCommunicationController(new ShortWireFraming(), new JsonMessageSerializer());
                 tcpClient.LogDataStream = true;
@@ -109,6 +117,32 @@ namespace BSAG.IOCTalk.Common.Test
 
             //Assert.Equal(typeof(ExposeTestBase), result2.GetType());
             //Assert.Equal(otherSend.OtherTypeProperty, result2.OtherTypeProperty);
+
+
+            // test 4 - same concrete class as base interface first, then as derived interface
+            {
+                // response direction: base first > only base surface expected
+                var base1 = (ExposeTest4Combined)currentServiceClientProxyInstance.GetTest4Base();
+                Assert.Equal("base data", base1.BaseProperty);
+                Assert.Null(base1.SubProperty);
+
+                // derived interface must transfer the sub property although the same concrete type was cached as base before
+                var sub1 = (ExposeTest4Combined)currentServiceClientProxyInstance.GetTest4Sub();
+                Assert.Equal("base data", sub1.BaseProperty);
+                Assert.Equal("sub data expected", sub1.SubProperty);
+
+                // base again > still only base surface
+                var base2 = (ExposeTest4Combined)currentServiceClientProxyInstance.GetTest4Base();
+                Assert.Equal("base data", base2.BaseProperty);
+                Assert.Null(base2.SubProperty);
+
+                // request direction (object[] parameter items)
+                var combined = new ExposeTest4Combined { BaseProperty = "base", SubProperty = "sub" };
+                Assert.Null(currentServiceClientProxyInstance.SendTest4Base(combined));
+                Assert.Equal("sub", currentServiceClientProxyInstance.SendTest4Sub(combined));
+                Assert.Null(currentServiceClientProxyInstance.SendTest4Base(combined));
+                Assert.Equal("sub", currentServiceClientProxyInstance.SendTest4Sub(combined));
+            }
 
             tcpClient.Shutdown();
             tcpBackendService.Shutdown();

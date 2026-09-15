@@ -302,29 +302,18 @@ namespace BSAG.IOCTalk.Serialization.Binary
 
         public IValueItem DetermineSpecialInterfaceType(Type sourceType, Type defaultInterfaceType, ISerializeContext context)
         {
-            // reverse lookup interfaces
-            Type resultType = null;
-            IValueItem specialTarget;
-            if (context.TryGetDifferentTargetType(sourceType, out specialTarget)
-                && specialTarget != null)
+            if (sourceType.Equals(typeof(Communication.Common.GenericMessage)))
             {
-                if (specialTarget is ComplexStructure cs)
-                {
-                    // check if expected interface is assignable
-                    if (defaultInterfaceType.IsAssignableFrom(cs.RuntimeType) || defaultInterfaceType.Equals(typeof(object)))
-                        return specialTarget;
-                }
-                else
-                    return specialTarget;
+                return null;    // no special interface
             }
 
-            // check contextual target type
+            // check contextual target type first (method parameter / return type)
+            // The contextual type must be part of the cache key: the same concrete class can be transferred
+            // as different interfaces (e.g. IBaseData in one method and ISubData : IBaseData in another one)
+            // while the declared slot type is always System.Object (message payload / parameter array item).
+            Type resultType = null;
             {
-                if (sourceType.Equals(typeof(Communication.Common.GenericMessage)))
-                {
-                    return null;    // no special interface
-                }
-                else if (context.ParentObject is IGenericMessage message)
+                if (context.ParentObject is IGenericMessage message)
                 {
                     resultType = DetermineSpecialInterfaceTypeMessageContext(context, message);
                 }
@@ -333,6 +322,17 @@ namespace BSAG.IOCTalk.Serialization.Binary
                 {
                     resultType = DetermineSpecialInterfaceTypeMessageContext(context, message2);
                 }
+            }
+
+            Type expectedType = resultType ?? defaultInterfaceType;
+
+            // reverse lookup interfaces
+            IValueItem specialTarget;
+            if (context.TryGetDifferentTargetType(sourceType, expectedType, out specialTarget)
+                && specialTarget != null)
+            {
+                if (SerializationContext.IsUsableCachedTargetStructure(specialTarget, defaultInterfaceType))
+                    return specialTarget;
             }
 
             // first check exposed interface by souce type  (prio 1 - by concrete source class)
@@ -376,7 +376,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             if (resultType != null)
             {
                 bool cacheDifference = exposedType is null && exposedInterface is null;
-                return context.RegisterDifferentTargetType(sourceType, defaultInterfaceType, resultType, cacheDifference);
+                return context.RegisterDifferentTargetType(sourceType, expectedType, defaultInterfaceType, resultType, cacheDifference);
             }
             else
             {

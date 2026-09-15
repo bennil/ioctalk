@@ -19,7 +19,12 @@ namespace BSAG.IOCTalk.Serialization.Binary
     {
         private IUnknowContextTypeResolver unknowContextTypeResolver;
 
-        private Dictionary<Type, IValueItem> differentTargetTypes = new Dictionary<Type, IValueItem>();
+        /// <summary>
+        /// Different target structure cache keyed by runtime object type AND expected type.
+        /// The expected type must be part of the key because the same concrete class can be transferred
+        /// as different interfaces (e.g. IBaseData in one method and ISubData : IBaseData in another one).
+        /// </summary>
+        private Dictionary<(Type objectType, Type expectedType), IValueItem> differentTargetTypes = new Dictionary<(Type objectType, Type expectedType), IValueItem>();
         private HashSet<uint> publishedMetaInfosPerInstance = new HashSet<uint>();
         private Dictionary<Type, List<string>> stringHashItemProperties = new Dictionary<Type, List<string>>();
         private Dictionary<uint, string> stringHashValues;
@@ -110,16 +115,12 @@ namespace BSAG.IOCTalk.Serialization.Binary
         public IValueItem DetermineSpecialInterfaceTypeFallback(Type objectType, Type defaultInterfaceType)
         {
             IValueItem result;
-            if (differentTargetTypes.TryGetValue(objectType, out result))
+            if (differentTargetTypes.TryGetValue((objectType, defaultInterfaceType), out result))
             {
-                if (result is ComplexStructure cs)
-                {
-                    // check if expected interface is assignable
-                    if (defaultInterfaceType.IsAssignableFrom(cs.RuntimeType) || defaultInterfaceType.Equals(typeof(object)))
-                        return result;
-                }
-                else
+                if (IsUsableCachedTargetStructure(result, defaultInterfaceType))
                     return result;
+                else
+                    return null;    // cached entry is not applicable for this slot (negative entry or same structure as current) > do not overwrite
             }
 
             // ExposeSubTypeAttribute not supported in binary serialization use RegisterExposedSubInterfaceForType  instead
@@ -131,9 +132,34 @@ namespace BSAG.IOCTalk.Serialization.Binary
             //    diffType = ((ExposeSubTypeAttribute)exposureAttributes[0]).Type;
             //}
 
-            var differentTargetStructure = RegisterDifferentTargetType(objectType, defaultInterfaceType, null, true);
+            var differentTargetStructure = RegisterDifferentTargetType(objectType, defaultInterfaceType, defaultInterfaceType, null, true);
             return differentTargetStructure;
 
+        }
+
+        /// <summary>
+        /// Checks if a cached different target structure can be used for the given declared slot type.
+        /// </summary>
+        /// <param name="cachedTarget">Cached structure (null = negative cache entry)</param>
+        /// <param name="defaultInterfaceType">Declared type of the current structure slot</param>
+        /// <returns><c>true</c> if the cached structure must be used instead of the default structure</returns>
+        public static bool IsUsableCachedTargetStructure(IValueItem cachedTarget, Type defaultInterfaceType)
+        {
+            if (cachedTarget == null)
+                return false;
+
+            if (cachedTarget is ComplexStructure cs)
+            {
+                // recursion guard: the cached structure is the structure of the current slot itself > no different type
+                // (the different structure WriteValue method calls DetermineSpecialInterfaceType again with its own declared type)
+                if (cs.RuntimeType.Equals(defaultInterfaceType))
+                    return false;
+
+                // check if expected interface is assignable
+                return defaultInterfaceType.IsAssignableFrom(cs.RuntimeType) || defaultInterfaceType.Equals(typeof(object));
+            }
+
+            return true;
         }
 
 
@@ -165,27 +191,25 @@ namespace BSAG.IOCTalk.Serialization.Binary
         }
 
 
-        public bool TryGetDifferentTargetType(Type objectType, out IValueItem targetItem)
+        public bool TryGetDifferentTargetType(Type objectType, Type expectedType, out IValueItem targetItem)
         {
-            return differentTargetTypes.TryGetValue(objectType, out targetItem);
+            return differentTargetTypes.TryGetValue((objectType, expectedType), out targetItem);
         }
 
 
-        public IValueItem RegisterDifferentTargetType(Type objectType, Type defaultInterfaceType, Type diffType, bool cacheDifference)
+        public IValueItem RegisterDifferentTargetType(Type objectType, Type expectedType, Type defaultInterfaceType, Type diffType, bool cacheDifference)
         {
             if (diffType != null)
             {
                 if (diffType != defaultInterfaceType)
                 {
                     var differentTargetStructure = serializer.GetByType(diffType, this);
-                    
+
                     if (cacheDifference)
                     {
-                        if (differentTargetStructure is ComplexStructure)
-                        {
-                            ((ComplexStructure)differentTargetStructure).CheckDifferentType = false;
-                        }
-                        differentTargetTypes[objectType] = differentTargetStructure;
+                        // Note: the globally shared structure must not be modified here (e.g. CheckDifferentType = false).
+                        // Recursion is prevented by IsUsableCachedTargetStructure (cached structure == current slot structure > null).
+                        differentTargetTypes[(objectType, expectedType)] = differentTargetStructure;
                     }
 
                     return differentTargetStructure;
@@ -198,7 +222,7 @@ namespace BSAG.IOCTalk.Serialization.Binary
             else
             {
                 if (cacheDifference)
-                    differentTargetTypes[objectType] = null;
+                    differentTargetTypes[(objectType, expectedType)] = null;
 
                 return null;
             }

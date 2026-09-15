@@ -71,9 +71,23 @@ namespace BSAG.IOCTalk.Serialization.Binary.TypeStructure.Interface
         Type DetermineTargetType(Type interfaceType);
 
 
-        bool TryGetDifferentTargetType(Type objectType, out IValueItem targetItem);
+        /// <summary>
+        /// Tries to get a cached different target structure for the given runtime object type and the expected (contextual or declared) type.
+        /// </summary>
+        /// <param name="objectType">Runtime type of the object to serialize</param>
+        /// <param name="expectedType">Expected type of the current slot (method parameter / return type if known, otherwise the declared type)</param>
+        /// <param name="targetItem">Cached structure or null (negative cache entry)</param>
+        bool TryGetDifferentTargetType(Type objectType, Type expectedType, out IValueItem targetItem);
 
-        IValueItem RegisterDifferentTargetType(Type objectType, Type defaultInterfaceType, Type diffType, bool cacheDifference);
+        /// <summary>
+        /// Registers a different target structure for the given runtime object type and expected type.
+        /// </summary>
+        /// <param name="objectType">Runtime type of the object to serialize</param>
+        /// <param name="expectedType">Expected type of the current slot (cache key part)</param>
+        /// <param name="defaultInterfaceType">Declared type of the current structure slot</param>
+        /// <param name="diffType">Resolved target type (null = no different type)</param>
+        /// <param name="cacheDifference">Cache the result for the given (objectType, expectedType) key</param>
+        IValueItem RegisterDifferentTargetType(Type objectType, Type expectedType, Type defaultInterfaceType, Type diffType, bool cacheDifference);
 
 
         //IValueItem DetermineSpecialInterfaceType(Type objectType, Type defaultInterfaceType);
