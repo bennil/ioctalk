@@ -60,27 +60,29 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
                 rawMessageFormat = default;
                 return false;
             }
-            else if (buffer.FirstSpan.Length < HeaderSize)
+            else if (buffer.Length < HeaderSize)
             {
                 // not enough data to read header
                 messagePayload = default;
                 rawMessageFormat = default;
                 return false;
             }
-            else if (buffer.FirstSpan[0] == StartMessageIdentifier1)
-            {
-                // skip message prefix
-                messagePayload = buffer.Slice(3);
 
-                // read message type
-                short messageFormatShort = BitConverter.ToInt16(messagePayload.FirstSpan);
+            // the header can be split over multiple buffer segments (the first segment does not grow with further received data)
+            Span<byte> headerCopy = stackalloc byte[HeaderSize];
+            ReadOnlySpan<byte> header = GetHeader(buffer, headerCopy);
+
+            if (header[0] == StartMessageIdentifier1)
+            {
+                // read message type (after message prefix)
+                short messageFormatShort = BitConverter.ToInt16(header.Slice(3));
                 rawMessageFormat = (RawMessageFormat)messageFormatShort;
 
-                messagePayload = messagePayload.Slice(2);   // set position end of raw message format
+                messagePayload = buffer.Slice(5);   // set position end of raw message format
 
 
                 // read message lenth
-                int msgLength = BitConverter.ToInt32(messagePayload.FirstSpan);
+                int msgLength = BitConverter.ToInt32(header.Slice(5));
 
 
                 if (msgLength > MaxMessageSize)
@@ -88,7 +90,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
                     Logger?.Error($"Max message size threshold of {MaxMessageSize} bytes exeeded! Discard message!!! Received message length: {msgLength}");
                     buffer = buffer.Slice(buffer.End);  // consume invalid data to clear buffer
                 }
-                else if (messagePayload.Length >= msgLength + 5)
+                else if (messagePayload.Length >= msgLength + 6)     // msg length + control byte + payload + footer control byte
                 {
                     messagePayload = messagePayload.Slice(5);   // skip msg length + control byte
                     messagePayload = messagePayload.Slice(messagePayload.Start, msgLength);
@@ -110,7 +112,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
             {
                 string additionalInfo = string.Empty;
                 //if ()
-                Logger?.Error($"Unexpected raw data received! Expected first byte: {StartMessageIdentifier1}; Actual received: {buffer.FirstSpan[0]}{additionalInfo}; Expected Format: {GetType().Name}");
+                Logger?.Error($"Unexpected raw data received! Expected first byte: {StartMessageIdentifier1}; Actual received: {header[0]}{additionalInfo}; Expected Format: {GetType().Name}");
                 buffer = buffer.Slice(buffer.End);  // consume invalid data to clear buffer
             }
 

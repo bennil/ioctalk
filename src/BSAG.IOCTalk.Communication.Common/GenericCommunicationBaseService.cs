@@ -102,6 +102,9 @@ namespace BSAG.IOCTalk.Communication.Common
         private string serializerTypeName = "BSAG.IOCTalk.Serialization.Json.JsonMessageSerializer, BSAG.IOCTalk.Serialization.Json";
         private InvokeThreadModel invokeThreadModel = InvokeThreadModel.CallerThread;
         private Channel<Tuple<ISession, IGenericMessage>> callerQueue;
+        private ConcurrentDictionary<int, SessionCallerQueue> sessionCallerQueues;
+        private int sessionCallerQueueCapacity = 256;
+
         protected Channel<Tuple<int, byte[]>> receiverQueue;
         protected bool supportsReceiverQueue = true;
         protected bool isActive = true;
@@ -377,6 +380,28 @@ namespace BSAG.IOCTalk.Communication.Common
             }
         }
 
+        /// <summary>
+        /// Gets or sets the maximum count of pending method invokes per session (only InvokeThreadModel.CallerThreadPerSession).
+        /// If the queue is full the receiving of further messages of this session is delayed.
+        /// Default: 256
+        /// </summary>
+        public int SessionCallerQueueCapacity
+        {
+            get { return sessionCallerQueueCapacity; }
+            set
+            {
+                if (sessionCallerQueueCapacity != value)
+                {
+                    if (this.containerHost != null)
+                    {
+                        throw new InvalidOperationException("The SessionCallerQueueCapacity can't be changed after container registration!");
+                    }
+
+                    sessionCallerQueueCapacity = value;
+                }
+            }
+        }
+
         // ----------------------------------------------------------------------------------------
         #endregion
 
@@ -412,6 +437,14 @@ namespace BSAG.IOCTalk.Communication.Common
                 {
                     callerQueue.Writer.TryComplete();   // release caller queue thread
                     queueObserver?.UnregisterQueue(callerQueue);
+                }
+
+                if (sessionCallerQueues != null)
+                {
+                    foreach (int sessionId in sessionCallerQueues.Keys)
+                    {
+                        CompleteSessionCallerQueue(sessionId);
+                    }
                 }
 
                 if (DataStreamLogger != null)
@@ -523,6 +556,8 @@ namespace BSAG.IOCTalk.Communication.Common
 
                     sessionDictionary.Remove(session.SessionId);
                     sessions = sessionDictionary.Values.ToArray<ISession>();
+
+                    CompleteSessionCallerQueue(session.SessionId);
 
                     logger.Info($"Session terminated - {session.SessionId} - {session.Description} - {source}");
 
@@ -640,6 +675,11 @@ namespace BSAG.IOCTalk.Communication.Common
 
                 Task.Run(CallerThreadProcess);
             }
+            else if (InvokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.CallerThreadPerSession)
+            {
+                // session caller queues are created on the first received invoke request of a session
+                sessionCallerQueues = new ConcurrentDictionary<int, SessionCallerQueue>();
+            }
 
             methodInfoCache = new ConcurrentDictionary<int, IInvokeMethodInfo>();
 
@@ -750,7 +790,14 @@ namespace BSAG.IOCTalk.Communication.Common
                 // block thread and wait for return object response
                 TimeSpan timeout = invokeInfo.CustomTimeout.HasValue ? invokeInfo.CustomTimeout.Value : requestTimeout;
 
-                if (invokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.CallerThread)
+                SessionCallerQueue callingSessionQueue = CallingSessionContext.Current;
+                if (callingSessionQueue != null)
+                {
+                    // Invoked by a session caller queue (InvokeThreadModel.CallerThreadPerSession) of this or another container:
+                    // only process the further calls of the calling session to keep the other sessions and containers unaffected
+                    WaitForResponseAndProcessSessionCalls(invokeState, timeout, callingSessionQueue, requestId);
+                }
+                else if (invokeThreadModel == IOCTalk.Common.Interface.Communication.InvokeThreadModel.CallerThread)
                 {
                     // Use caller thread wait function (custom response handler is in CallerThread mode not supported)
                     WaitForResponseAndProcessOtherCalls(invokeState, timeout);
@@ -1094,6 +1141,11 @@ namespace BSAG.IOCTalk.Communication.Common
                             {
                                 CallReceivedMethod(session, message);
                             });
+                            break;
+
+                        case InvokeThreadModel.CallerThreadPerSession:
+                            // enqueue invoke in the caller queue of the session
+                            await EnqueueSessionCallerInvoke(session, message).ConfigureAwait(false);
                             break;
                     }
                     break;
@@ -1633,6 +1685,240 @@ namespace BSAG.IOCTalk.Communication.Common
             }
 
             return false;
+        }
+
+
+        /// <summary>
+        /// Enqueues the received invoke request in the caller queue of the session (InvokeThreadModel = CallerThreadPerSession).
+        /// </summary>
+        private async ValueTask EnqueueSessionCallerInvoke(ISession session, IGenericMessage message)
+        {
+            SessionCallerQueue sessionQueue = GetOrCreateSessionCallerQueue(session);
+            if (sessionQueue == null)
+            {
+                logger.Info($"Ignore received \"{message.Target}\" {message.Name} call because session ID {session.SessionId} is disconnected");
+                return;
+            }
+
+            var writer = sessionQueue.Queue.Writer;
+            if (writer.TryWrite(message))
+            {
+                sessionQueue.IsFullWarned = false;
+            }
+            else
+            {
+                if (session.IsActive && !sessionQueue.IsFullWarned)
+                {
+                    IGenericMessage currentMessage = sessionQueue.CurrentMessage;
+                    logger.Warn($"Caller queue of session ID {session.SessionId} - {session.Description} is full ({sessionCallerQueueCapacity} pending invokes)! Receiving is delayed until pending invokes are processed. Current invoke: \"{currentMessage?.Target}\" {currentMessage?.Name}");
+                    sessionQueue.IsFullWarned = true;
+                }
+
+                try
+                {
+                    await writer.WriteAsync(message).ConfigureAwait(false);
+                }
+                catch (ChannelClosedException)
+                {
+                    logger.Info($"Ignore received \"{message.Target}\" {message.Name} call because session ID {session.SessionId} is disconnected");
+                }
+            }
+        }
+
+        private SessionCallerQueue GetOrCreateSessionCallerQueue(ISession session)
+        {
+            SessionCallerQueue sessionQueue;
+            if (sessionCallerQueues.TryGetValue(session.SessionId, out sessionQueue))
+            {
+                return sessionQueue;
+            }
+
+            if (!session.IsActive || !isActive)
+            {
+                return null;
+            }
+
+            SessionCallerQueue newSessionQueue = new SessionCallerQueue(this, session, sessionCallerQueueCapacity);
+            sessionQueue = sessionCallerQueues.GetOrAdd(session.SessionId, newSessionQueue);
+
+            if (ReferenceEquals(sessionQueue, newSessionQueue))
+            {
+                _ = Task.Run(() => SessionCallerProcess(newSessionQueue));
+
+                if (!session.IsActive)
+                {
+                    // session terminated in the meantime
+                    CompleteSessionCallerQueue(session.SessionId);
+                }
+            }
+
+            return sessionQueue;
+        }
+
+        /// <summary>
+        /// Completes the session caller queue. Pending invokes of the terminated session are dismissed by the caller task.
+        /// </summary>
+        private void CompleteSessionCallerQueue(int sessionId)
+        {
+            SessionCallerQueue sessionQueue;
+            if (sessionCallerQueues != null
+                && sessionCallerQueues.TryRemove(sessionId, out sessionQueue))
+            {
+                sessionQueue.Queue.Writer.TryComplete();   // release session caller task
+            }
+        }
+
+        private async Task SessionCallerProcess(SessionCallerQueue sessionQueue)
+        {
+            try
+            {
+                var reader = sessionQueue.Queue.Reader;
+
+                while (await reader.WaitToReadAsync().ConfigureAwait(false))
+                {
+                    IGenericMessage message;
+                    while (reader.TryRead(out message))
+                    {
+                        sessionQueue.CurrentMessage = message;
+
+                        ValueTask invokeTask;
+                        using (CallingSessionContext.Enter(sessionQueue))
+                        {
+                            // only the synchronous part until the first incomplete await runs in the session context (see CallingSessionContext)
+                            invokeTask = CallReceivedMethodAsync(sessionQueue.Session, message);
+                        }
+
+                        await invokeTask.ConfigureAwait(false);
+
+                        sessionQueue.CurrentMessage = null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Unexpected error! Caller processing of session ID {sessionQueue.Session.SessionId} will exit! Details: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// Waits for response and process other calls of the calling session.
+        /// This method can only by invoked by the session caller task (InvokeThreadModel = CallerThreadPerSession) during the synchronous invoke part.
+        /// </summary>
+        private void WaitForResponseAndProcessSessionCalls(InvokeState invokeState, TimeSpan timeout, SessionCallerQueue sessionQueue, long requestId)
+        {
+            var reader = sessionQueue.Queue.Reader;
+            bool otherCallsProcessed = false;
+            DateTime waitStartUtcTime = DateTime.UtcNow;
+
+            // only wait one milisecond max if other invokes are pending
+            while (!invokeState.WaitHandle.Wait(otherCallsProcessed ? 1 : 10))
+            {
+                if (DateTime.UtcNow.Subtract(waitStartUtcTime) > timeout)
+                {
+                    throw new TimeoutException($"Request timeout occured! Request: {invokeState.Method.Name}; timeout time: {timeout}; session ID: {invokeState.Session.SessionId}; request ID: {requestId}; calling session ID: {sessionQueue.Session.SessionId}");
+                }
+
+                if (!isActive)
+                {
+                    // process shutdown pending
+                    break;
+                }
+
+                // check if other invoke requests of the calling session are received during waiting phase (nested back calls)
+                IGenericMessage message;
+                otherCallsProcessed = reader.TryRead(out message);
+                if (otherCallsProcessed)
+                {
+                    sessionQueue.Owner.CallReceivedMethod(sessionQueue.Session, message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Caller queue of a single session (InvokeThreadModel = CallerThreadPerSession)
+        /// </summary>
+        private sealed class SessionCallerQueue
+        {
+            public SessionCallerQueue(GenericCommunicationBaseService owner, ISession session, int capacity)
+            {
+                Owner = owner;
+                Session = session;
+
+                BoundedChannelOptions channelOptions = new BoundedChannelOptions(capacity);
+                channelOptions.FullMode = BoundedChannelFullMode.Wait;
+                channelOptions.SingleReader = true;     // session caller task or the nested response wait of the same session (never concurrent)
+                channelOptions.SingleWriter = false;
+
+                Queue = Channel.CreateBounded<IGenericMessage>(channelOptions);
+            }
+
+            /// <summary>
+            /// Communication service which received the invokes (the nested response wait can run in the InvokeMethod of another container)
+            /// </summary>
+            public GenericCommunicationBaseService Owner { get; }
+
+            public ISession Session { get; }
+
+            public Channel<IGenericMessage> Queue { get; }
+
+            /// <summary>
+            /// Currently processed invoke (diagnostics only)
+            /// </summary>
+            public IGenericMessage CurrentMessage { get; set; }
+
+            public bool IsFullWarned { get; set; }
+        }
+
+        /// <summary>
+        /// Tells a synchronous remote call (InvokeMethod) which session caller queue it was invoked from,
+        /// so it can process the further calls of this session while waiting for the response.
+        /// </summary>
+        /// <remarks>
+        /// The calling session can't be passed as parameter: the generated proxy only calls InvokeMethod(source, method, args)
+        /// and the proxy can belong to another container (e.g. frontend method calls device proxy).
+        /// Therefore the context is stored per thread:
+        /// - static: visible in the InvokeMethod of every container
+        /// - ThreadStatic instead of AsyncLocal: tasks or timers started by the invoked method must not inherit the context,
+        ///   otherwise they would read the session queue concurrently to the session caller task.
+        /// - Only set during the synchronous invoke part. After the first incomplete await the method continues
+        ///   on another thread without context and a synchronous remote call simply waits (no nested call processing).
+        /// </remarks>
+        private static class CallingSessionContext
+        {
+            [ThreadStatic]
+            private static SessionCallerQueue current;
+
+            /// <summary>
+            /// Gets the session caller queue of the current thread or null if not called by a session caller queue
+            /// </summary>
+            public static SessionCallerQueue Current => current;
+
+            /// <summary>
+            /// Sets the session caller queue for the current thread until the returned scope is disposed.
+            /// The previous context is restored because the session caller task can continue inline on a thread
+            /// which is already processing an invoke of another session.
+            /// </summary>
+            public static Scope Enter(SessionCallerQueue sessionQueue)
+            {
+                Scope scope = new Scope(current);
+                current = sessionQueue;
+                return scope;
+            }
+
+            public readonly struct Scope : IDisposable
+            {
+                private readonly SessionCallerQueue previous;
+
+                public Scope(SessionCallerQueue previous)
+                {
+                    this.previous = previous;
+                }
+
+                public void Dispose()
+                {
+                    current = previous;
+                }
+            }
         }
 
 

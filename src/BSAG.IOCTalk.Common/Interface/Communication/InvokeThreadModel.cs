@@ -25,5 +25,12 @@ namespace BSAG.IOCTalk.Common.Interface.Communication
         /// Every method call will be processed in a separate task (thread).
         /// </summary>
         IndividualTask = 2,
+
+        /// <summary>
+        /// One caller task for sequential method invokes will be created for each session.
+        /// A blocking or long running call only delays the further calls of the same session, the other sessions are processed independently.
+        /// If a call awaits a remote invoke response other pending calls of the same session will be processed in the meantime (nested synchronous back calls).
+        /// </summary>
+        CallerThreadPerSession = 3,
     }
 }

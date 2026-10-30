@@ -53,7 +53,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
                 return false;
             }
 
-            if (buffer.FirstSpan.Length < HeaderSize)
+            if (buffer.Length < HeaderSize)
             {
                 // not enough data to read header
                 messagePayload = default;
@@ -61,16 +61,17 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
                 return false;
             }
 
-            var firstMsgTypeByte = buffer.FirstSpan[0];
+            // the header can be split over multiple buffer segments (the first segment does not grow with further received data)
+            Span<byte> headerCopy = stackalloc byte[HeaderSize];
+            ReadOnlySpan<byte> header = GetHeader(buffer, headerCopy);
+
+            var firstMsgTypeByte = header[0];
 
             if (firstMsgTypeByte == messageFormatByte)
             {
-                // skip message type byte
-                messagePayload = buffer.Slice(1);
-
-                // read message length
-                uint msgLength = IntegerHelper.DecodeUInt24(messagePayload.FirstSpan);
-                messagePayload = messagePayload.Slice(3);
+                // read message length (after message type byte)
+                uint msgLength = IntegerHelper.DecodeUInt24(header.Slice(1));
+                messagePayload = buffer.Slice(HeaderSize);
 
                 if (msgLength > MaxMessageSize)
                 {
@@ -104,7 +105,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp.WireFraming
                 {
                     additionalInfo = $" Looks like the remote host uses Binary format and own serializer {messageFormat}";
                 }
-                Logger?.Error($"Unexpected raw data received! Expected first byte: {messageFormatByte}; Actual received: {buffer.FirstSpan[0]}{additionalInfo}; Expected Format: {GetType().Name}");
+                Logger?.Error($"Unexpected raw data received! Expected first byte: {messageFormatByte}; Actual received: {firstMsgTypeByte}{additionalInfo}; Expected Format: {GetType().Name}");
                 buffer = buffer.Slice(buffer.End);  // consume invalid data to clear buffer
             }
 
