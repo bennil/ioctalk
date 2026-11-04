@@ -531,7 +531,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
 
         private static bool IsSystemCollection(Type collectionType)
         {
-            return collectionType.Namespace.StartsWith("System.Collections");
+            return collectionType.Namespace.StartsWith("System.Collections", StringComparison.Ordinal);
         }
 
         // ----------------------------------------------------------------------------------------

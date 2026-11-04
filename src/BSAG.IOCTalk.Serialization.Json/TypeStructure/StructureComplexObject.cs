@@ -406,10 +406,15 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                     var setPropertyAccessor = setAccessorByPropertyIndex[propIndex];
 
                     // check out of order json
+                    // Compare the key only at the expected position (ordinal). A culture-sensitive json.IndexOf(key, start)
+                    // scanned the whole remaining json for every property (no ASCII fast path for e.g. de-DE / missing keys)
+                    // -> deserialization time grew quadratically with the payload size.
                     int expectedKeyStartIndex = currentReadIndex + 1;
-                    int actualKeyIndex = json.IndexOf(structure.Key, expectedKeyStartIndex);
-                    if (actualKeyIndex != expectedKeyStartIndex
-                        || json[structure.Key.Length + actualKeyIndex] != Structure.CharQuotationMark)  // Recognize key with the same begin string but different ending
+                    string expectedKey = structure.Key;
+                    int keyCloseIndex = expectedKeyStartIndex + expectedKey.Length;
+                    if (keyCloseIndex >= json.Length
+                        || string.CompareOrdinal(json, expectedKeyStartIndex, expectedKey, 0, expectedKey.Length) != 0
+                        || json[keyCloseIndex] != Structure.CharQuotationMark)  // Recognize key with the same begin string but different ending
                     {
                         // out of order key recognized  
 
@@ -594,12 +599,12 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                     if (json[keyEndIndex + 2] == Structure.CharQuotationMark)
                     {
                         // Read string considering escaped quotations
-                        int endValueIndex = json.IndexOf(Structure.QuotationMark, keyEndIndex + 3);
+                        int endValueIndex = json.IndexOf(Structure.CharQuotationMark, keyEndIndex + 3);
                         while (json[endValueIndex - 1] == Structure.CharEscape)
                         {
                             // escaped quotation mark
                             // read further to find string ending
-                            endValueIndex = json.IndexOf(Structure.QuotationMark, endValueIndex + 1);
+                            endValueIndex = json.IndexOf(Structure.CharQuotationMark, endValueIndex + 1);
                         }
 
                         currentReadIndex = endValueIndex + 2;

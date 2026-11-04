@@ -113,7 +113,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
             {
                 startValueIndex++;
 
-                int endValueIndex = json.IndexOf(Structure.QuotationMark, startValueIndex);
+                int endValueIndex = json.IndexOf(Structure.CharQuotationMark, startValueIndex);
                 bool replaceEscapeChars = false;
                 while (json[endValueIndex - 1] == Structure.CharEscape)
                 {
@@ -131,7 +131,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
                     }
 
                     // read further to find string ending
-                    endValueIndex = json.IndexOf(Structure.QuotationMark, endValueIndex + 1);
+                    endValueIndex = json.IndexOf(Structure.CharQuotationMark, endValueIndex + 1);
 
                     replaceEscapeChars = true;
                 }

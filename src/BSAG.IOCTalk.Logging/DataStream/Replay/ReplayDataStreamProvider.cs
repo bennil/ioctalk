@@ -219,7 +219,7 @@ namespace BSAG.IOCTalk.Logging.DataStream.Replay
         private static string GetJsonSimpleStringValue(string json, string key)
         {
             string keyTag = "\"" + key + "\":";
-            int startIndex = json.IndexOf(keyTag);
+            int startIndex = json.IndexOf(keyTag, StringComparison.Ordinal);
             int endIndex;
 
             startIndex += keyTag.Length;
@@ -242,7 +242,7 @@ namespace BSAG.IOCTalk.Logging.DataStream.Replay
             else
             {
                 // value ends with comma
-                endIndex = json.IndexOf(Comma, startIndex);
+                endIndex = json.IndexOf(Comma, startIndex, StringComparison.Ordinal);
 
                 if (endIndex == -1)
                 {

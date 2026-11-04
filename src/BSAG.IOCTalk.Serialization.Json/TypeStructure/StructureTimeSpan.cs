@@ -59,7 +59,7 @@ namespace BSAG.IOCTalk.Serialization.Json.TypeStructure
             {
                 startValueIndex++;
 
-                int endValueIndex = json.IndexOf(Structure.QuotationMark, startValueIndex);
+                int endValueIndex = json.IndexOf(Structure.CharQuotationMark, startValueIndex);
 
                 currentReadIndex = endValueIndex + 1;
 
