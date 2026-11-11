@@ -101,6 +101,10 @@ namespace IOCTalk.Communication.WebSocketListener
         {
             if (clients.TryGetValue(receiverSessionId, out Client client))
             {
+                // serialize and send as one atomic step per session (see GetSessionSendLock)
+                SemaphoreSlim sendLock = GetSessionSendLock(receiverSessionId);
+                await sendLock.WaitAsync().ConfigureAwait(false);
+
                 OutputBuffer writer = outputBufferObjectPool.Get();
                 try
                 {
@@ -128,6 +132,7 @@ namespace IOCTalk.Communication.WebSocketListener
                 {
                     writer.Reset();
                     outputBufferObjectPool.Return(writer);
+                    sendLock.Release();
                 }
             }
         }

@@ -496,6 +496,10 @@ namespace BSAG.IOCTalk.Communication.NetTcp
         /// <param name="context">The context.</param>
         public void SendMessage(IGenericMessage message, int receiverSessionId, object context)
         {
+            // serialize and send as one atomic step per session (see GetSessionSendLock)
+            SemaphoreSlim sendLock = GetSessionSendLock(receiverSessionId);
+            sendLock.Wait();
+
             OutputBuffer writer = outputBufferObjectPool.Get();
             try
             {
@@ -526,12 +530,17 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             {
                 writer.Reset();
                 outputBufferObjectPool.Return(writer);
+                sendLock.Release();
             }
         }
 
 
         public async ValueTask SendMessageAsync(IGenericMessage message, int receiverSessionId, object context)
         {
+            // serialize and send as one atomic step per session (see GetSessionSendLock)
+            SemaphoreSlim sendLock = GetSessionSendLock(receiverSessionId);
+            await sendLock.WaitAsync().ConfigureAwait(false);
+
             OutputBuffer writer = outputBufferObjectPool.Get();
             try
             {
@@ -563,6 +572,7 @@ namespace BSAG.IOCTalk.Communication.NetTcp
             {
                 writer.Reset();
                 outputBufferObjectPool.Return(writer);
+                sendLock.Release();
             }
         }
 

@@ -269,6 +269,10 @@ namespace IOCTalk.Communication.WebSocketClient
         {
             if (currentSocket != null)
             {
+                // serialize and send as one atomic step per session (see GetSessionSendLock)
+                SemaphoreSlim sendLock = GetSessionSendLock(receiverSessionId);
+                await sendLock.WaitAsync().ConfigureAwait(false);
+
                 OutputBuffer writer = outputBufferObjectPool.Get();
                 try
                 {
@@ -296,6 +300,7 @@ namespace IOCTalk.Communication.WebSocketClient
                 {
                     writer.Reset();
                     outputBufferObjectPool.Return(writer);
+                    sendLock.Release();
                 }
             }
         }

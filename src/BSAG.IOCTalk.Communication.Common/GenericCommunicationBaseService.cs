@@ -104,6 +104,7 @@ namespace BSAG.IOCTalk.Communication.Common
         private Channel<Tuple<ISession, IGenericMessage>> callerQueue;
         private ConcurrentDictionary<int, SessionCallerQueue> sessionCallerQueues;
         private int sessionCallerQueueCapacity = 256;
+        private readonly ConcurrentDictionary<int, SemaphoreSlim> sessionSendLocks = new ConcurrentDictionary<int, SemaphoreSlim>();
 
         protected Channel<Tuple<int, byte[]>> receiverQueue;
         protected bool supportsReceiverQueue = true;
@@ -558,6 +559,7 @@ namespace BSAG.IOCTalk.Communication.Common
                     sessions = sessionDictionary.Values.ToArray<ISession>();
 
                     CompleteSessionCallerQueue(session.SessionId);
+                    sessionSendLocks.TryRemove(session.SessionId, out _);
 
                     logger.Info($"Session terminated - {session.SessionId} - {session.Description} - {source}");
 
@@ -580,6 +582,26 @@ namespace BSAG.IOCTalk.Communication.Common
                     return false;
                 }
             }
+        }
+
+
+        /// <summary>
+        /// Gets the send lock of the session.
+        /// Message serialization and transfer must be one atomic step per session:
+        /// serializers keep a state per session (binary: already published type meta data and string hashes)
+        /// and the receiver must get the messages in the same order as they were serialized.
+        /// Without the lock two threads sending to the same session (e.g. method response and a notification of another session)
+        /// corrupt the serialize context or transfer a message before the meta data it depends on.
+        /// </summary>
+        /// <param name="sessionId">The receiver session id.</param>
+        protected SemaphoreSlim GetSessionSendLock(int sessionId)
+        {
+            SemaphoreSlim sendLock;
+            if (!sessionSendLocks.TryGetValue(sessionId, out sendLock))
+            {
+                sendLock = sessionSendLocks.GetOrAdd(sessionId, new SemaphoreSlim(1, 1));
+            }
+            return sendLock;
         }
 
 

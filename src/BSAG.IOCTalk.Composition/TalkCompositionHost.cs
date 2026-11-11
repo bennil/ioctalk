@@ -41,7 +41,7 @@ namespace BSAG.IOCTalk.Composition
         private Dictionary<string, Type> interfaceTypeCache;
         private Dictionary<Type, TypeHierachy> interfaceImplementationMapping = new Dictionary<Type, TypeHierachy>();
 
-        private Dictionary<int, SessionContract> sessionIdContractMapping = new Dictionary<int, SessionContract>();
+        private System.Collections.Concurrent.ConcurrentDictionary<int, SessionContract> sessionIdContractMapping = new System.Collections.Concurrent.ConcurrentDictionary<int, SessionContract>();   // read by the caller threads without lock
         private LocalShareContext localShare;
         private Dictionary<Type, object> hostSessionsSharedInstances = new Dictionary<Type, object>();
         internal static object syncObj = new object();
@@ -427,7 +427,7 @@ namespace BSAG.IOCTalk.Composition
                         }
                     }
 
-                    sessionIdContractMapping.Add(session.SessionId, sessionContract);
+                    sessionIdContractMapping[session.SessionId] = sessionContract;
                 }
                 finally
                 {
@@ -465,7 +465,7 @@ namespace BSAG.IOCTalk.Composition
 
                 SessionTerminated?.Invoke(e.SessionContract, e);
 
-                sessionIdContractMapping.Remove(e.Session.SessionId);
+                sessionIdContractMapping.TryRemove(e.Session.SessionId, out _);
             }
             catch (Exception ex)
             {
