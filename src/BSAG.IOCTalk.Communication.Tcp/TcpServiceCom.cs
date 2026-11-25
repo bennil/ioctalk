@@ -172,27 +172,60 @@ namespace BSAG.IOCTalk.Communication.Tcp
         {
             Socket listener = (Socket)asyncResult.AsyncState;
 
+            Socket clientSocket = null;
             try
             {
-                Socket clientSocket = listener.EndAccept(asyncResult);
+                clientSocket = listener.EndAccept(asyncResult);
                 clientSocket.ReceiveBufferSize = this.ReceiveBufferSize;
-                
+
                 Client client = new Client(clientSocket, new NetworkStream(clientSocket), new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, clientSocket.RemoteEndPoint, Logger, this);
-                clients.Add(client.SessionId, client);
+                lock (clients)
+                {
+                    clients.Add(client.SessionId, client);
+                }
 
                 OnConnectionEstablished(client);
 
                 StartReceivingData(client);
-                
-                listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
-            }
-            catch (SocketException)
-            {
-                /* ignore */
             }
             catch (ObjectDisposedException)
             {
                 /* ignore */
+            }
+            catch (Exception ex)
+            {
+                if (ex is SocketException)
+                {
+                    // e.g. connection reset by the remote endpoint before it was accepted
+                    Logger?.Warn($"Accept connection failed: {ex.Message}");
+                }
+                else
+                {
+                    Logger?.Error($"Accept connection failed: {ex}");
+                }
+
+                try
+                {
+                    clientSocket?.Close();
+                }
+                catch
+                {
+                    /* ignore */
+                }
+            }
+
+            // always continue accepting - otherwise the listener stops accepting connections after the first error
+            try
+            {
+                listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
+            }
+            catch (ObjectDisposedException)
+            {
+                /* listener closed */
+            }
+            catch (Exception ex)
+            {
+                Logger?.Error($"Error accepting new connections: {ex}");
             }
         }
 
@@ -208,12 +241,21 @@ namespace BSAG.IOCTalk.Communication.Tcp
                 this.socket.Close();
             }
 
-            foreach (var client in clients.Values)
+            Client[] clientsSnapshot;
+            lock (clients)
+            {
+                clientsSnapshot = clients.Values.ToArray();
+            }
+
+            foreach (var client in clientsSnapshot)
             {
                 Close(client, "Close client");
             }
 
-            clients.Clear();
+            lock (clients)
+            {
+                clients.Clear();
+            }
         }
 
 

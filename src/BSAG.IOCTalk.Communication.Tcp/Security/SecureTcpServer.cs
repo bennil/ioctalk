@@ -9,6 +9,9 @@ using System.Collections.Concurrent;
 using BSAG.IOCTalk.Common.Interface.Communication;
 using System.Net.Security;
 using System.Security.Authentication;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace BSAG.IOCTalk.Communication.Tcp.Security
 {
@@ -26,6 +29,8 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
 
         private SslProtocols protocol = SslProtocols.Tls12;
         private X509Certificate2 certificate;
+        private readonly object certificateSyncLock = new object();
+        private bool certificateInfoLogged;
 
         #endregion
 
@@ -86,6 +91,12 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
         public StoreLocation Location { get; set; } = StoreLocation.LocalMachine;
 
         /// <summary>
+        /// Gets or sets the max. duration of the TLS handshake. Connections not completing the handshake in time are closed.
+        /// <see cref="TimeSpan.Zero"/> or a negative value disables the timeout. Default: 30 seconds.
+        /// </summary>
+        public TimeSpan HandshakeTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+        /// <summary>
         /// Gets or sets the certificate filename (no store is used).
         /// </summary>
         public string CertificateFilename { get; set; }
@@ -108,8 +119,100 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
             try
             {
                 clientSocket = listener.EndAccept(asyncResult);
+            }
+            catch (ObjectDisposedException)
+            {
+                /* listener closed */
+            }
+            catch (Exception ex)
+            {
+                Logger?.Error(ex.ToString());
+            }
+
+            // Accept the next connection immediately. The TLS handshake must not run inside the accept loop:
+            // a remote endpoint that connects but never completes the handshake (e.g. a port scanner) would otherwise
+            // block all further connections until the listen backlog is full.
+            try
+            {
+                listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
+            }
+            catch (ObjectDisposedException)
+            {
+                /* listener closed */
+            }
+            catch (Exception ex)
+            {
+                Logger?.Error($"Error accepting new connections: {ex}");
+            }
+
+            if (clientSocket != null)
+            {
+                Task.Run(() => AuthenticateClientAsync(clientSocket));
+            }
+        }
+
+        private async Task AuthenticateClientAsync(Socket clientSocket)
+        {
+            EndPoint remoteEndPoint = null;
+            SslStream tlsStream = null;
+            try
+            {
+                remoteEndPoint = clientSocket.RemoteEndPoint;
                 clientSocket.ReceiveBufferSize = this.ReceiveBufferSize;
 
+                X509Certificate2 serverCertificate = GetServerCertificate();
+
+                tlsStream = new SslStream(new NetworkStream(clientSocket), false);
+
+                Task authTask = tlsStream.AuthenticateAsServerAsync(serverCertificate, ClientCertificateRequired, protocol, true);
+
+                TimeSpan handshakeTimeout = HandshakeTimeout;
+                if (handshakeTimeout > TimeSpan.Zero)
+                {
+                    using (var delayCts = new CancellationTokenSource())
+                    {
+                        Task completedTask = await Task.WhenAny(authTask, Task.Delay(handshakeTimeout, delayCts.Token)).ConfigureAwait(false);
+                        delayCts.Cancel();
+
+                        if (completedTask != authTask)
+                        {
+                            // observe the exception raised by the pending handshake after the socket is closed
+                            _ = authTask.ContinueWith(t => { var ignored = t.Exception; }, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+
+                            Logger?.Warn($"TLS handshake timeout ({handshakeTimeout.TotalSeconds:0.#} s) - close connection from {remoteEndPoint}");
+                            CloseQuietly(tlsStream, clientSocket);
+                            return;
+                        }
+                    }
+                }
+
+                // throws if the handshake failed
+                await authTask.ConfigureAwait(false);
+
+                Client client = new Client(clientSocket, tlsStream, new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, remoteEndPoint, Logger, this);
+                StartReceivingData(client);
+                lock (clients)
+                {
+                    clients.Add(client.SessionId, client);
+                }
+
+                OnConnectionEstablished(client);
+            }
+            catch (ObjectDisposedException)
+            {
+                CloseQuietly(tlsStream, clientSocket);
+            }
+            catch (Exception ex)
+            {
+                Logger?.Error($"TLS connection setup for {remoteEndPoint} failed: {ex}");
+                CloseQuietly(tlsStream, clientSocket);
+            }
+        }
+
+        private X509Certificate2 GetServerCertificate()
+        {
+            lock (certificateSyncLock)
+            {
                 if (certificate == null)
                 {
                     if (!string.IsNullOrEmpty(CertificateFilename))
@@ -123,41 +226,36 @@ namespace BSAG.IOCTalk.Communication.Tcp.Security
                         certificate = GetCertificateByName(CertificateName, Location);
                     }
                 }
-                
-                Logger?.Info($"Use certificate \"{certificate.SubjectName.Name}\"; Thumbprint: {certificate.Thumbprint}; Issuer: {certificate.Issuer}");
 
-                SslStream tlsStream = new SslStream(new NetworkStream(clientSocket), false);
-                tlsStream.AuthenticateAsServer(certificate, ClientCertificateRequired, protocol, true);
+                if (!certificateInfoLogged)
+                {
+                    Logger?.Info($"Use certificate \"{certificate.SubjectName.Name}\"; Thumbprint: {certificate.Thumbprint}; Issuer: {certificate.Issuer}");
+                    certificateInfoLogged = true;
+                }
 
-                Client client = new Client(clientSocket, tlsStream, new ConcurrentQueue<IGenericMessage>(), clientSocket.LocalEndPoint, clientSocket.RemoteEndPoint, Logger, this);
-                StartReceivingData(client);
-                clients.Add(client.SessionId, client);
-
-                OnConnectionEstablished(client);
+                return certificate;
             }
-            catch (ObjectDisposedException)
+        }
+
+        private static void CloseQuietly(SslStream tlsStream, Socket clientSocket)
+        {
+            try
+            {
+                tlsStream?.Dispose();
+            }
+            catch
             {
                 /* ignore */
             }
-            catch (Exception ex)
+
+            try
             {
-                Logger.Error(ex.ToString());
-
-                try
-                {
-                    if (clientSocket != null
-                        && clientSocket.Connected)
-                    {
-                        clientSocket.Close();
-                    }
-                }
-                catch
-                {
-                    /* ignore */
-                }
+                clientSocket?.Close();
             }
-
-            listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);         
+            catch
+            {
+                /* ignore */
+            }
         }
 
         public static X509Certificate2 GetCertificateByName(string name, StoreLocation location)
